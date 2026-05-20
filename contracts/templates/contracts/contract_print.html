@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hợp đồng {{ contract.contract_number }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 13pt;
+      color: #000;
+      background: #fff;
+      padding: 0;
+    }
+    .page {
+      width: 21cm;
+      min-height: 29.7cm;
+      margin: 0 auto;
+      padding: 2cm 2.5cm 2cm 3cm;
+    }
+    .header-block { text-align: center; margin-bottom: 28px; }
+    .company-name { font-size: 12pt; font-weight: bold; text-transform: uppercase; }
+    .doc-title {
+      font-size: 16pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 18px 0 6px;
+      letter-spacing: 1px;
+    }
+    .doc-subtitle { font-size: 11pt; font-style: italic; color: #333; }
+    .contract-number {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 8px;
+      color: #1565C0;
+    }
+    .divider { border: none; border-top: 2px solid #000; margin: 20px 0; }
+    .section-title {
+      font-size: 13pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 20px 0 10px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 4px;
+    }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    .info-table td { padding: 5px 6px; vertical-align: top; }
+    .info-table td.label { width: 40%; font-weight: bold; white-space: nowrap; }
+    .info-table td.value { border-bottom: 1px dotted #aaa; }
+    .info-table td.value.highlight { font-weight: bold; color: #c62828; }
+    p.clause { margin: 10px 0; line-height: 1.8; text-align: justify; }
+    p.clause strong { font-weight: bold; }
+    .signature-block {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .sig-party { text-align: center; width: 44%; }
+    .sig-party .sig-title { font-weight: bold; margin-bottom: 6px; text-transform: uppercase; font-size: 12pt; }
+    .sig-party .sig-note { font-style: italic; font-size: 11pt; color: #555; margin-bottom: 60px; }
+    .sig-party .sig-name { font-weight: bold; border-top: 1px solid #000; padding-top: 6px; display: inline-block; min-width: 160px; }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11pt;
+      font-weight: bold;
+      color: #fff;
+    }
+    .badge-hieu_luc    { background: #4CAF50; }
+    .badge-sap_het_han { background: #FF9800; }
+    .badge-het_han     { background: #c62828; }
+    .badge-gia_han     { background: #7B1FA2; }
+    .badge-cham_dut    { background: #607D8B; }
+    .no-print {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 9999;
+    }
+    .btn-print {
+      background: #1565C0;
+      color: #fff;
+      border: none;
+      padding: 9px 22px;
+      border-radius: 6px;
+      font-size: 13pt;
+      cursor: pointer;
+      font-family: sans-serif;
+    }
+    .btn-back {
+      background: #757575;
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 13pt;
+      cursor: pointer;
+      font-family: sans-serif;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-print:hover { background: #0d47a1; }
+    .btn-back:hover  { background: #424242; }
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 0; }
+      .page { padding: 1.5cm 2cm 1.5cm 2.5cm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn-back">← Quay lại</a>
+  <button class="btn-print" onclick="window.print()">🖨 In hợp đồng</button>
+</div>
+
+<div class="page">
+
+  <!-- Tiêu đề -->
+  <div class="header-block">
+    <div class="company-name">Công ty / Doanh nghiệp</div>
+    <div class="doc-title">Hợp đồng lao động</div>
+    <div class="doc-subtitle">{{ contract.get_contract_type_display }}</div>
+    <div class="contract-number">Số: {{ contract.contract_number }}</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Điều khoản mở đầu -->
+  <p class="clause">
+    Căn cứ Bộ luật Lao động nước Cộng hòa xã hội chủ nghĩa Việt Nam;<br>
+    Căn cứ nhu cầu của hai bên;<br>
+    Hôm nay, ngày <strong>{% if contract.signed_date %}{{ contract.signed_date|date:"d" }} tháng {{ contract.signed_date|date:"m" }} năm {{ contract.signed_date|date:"Y" }}{% else %}______ tháng ______ năm ______{% endif %}</strong>,
+    tại trụ sở công ty, hai bên gồm:
+  </p>
+
+  <!-- Bên A: Công ty -->
+  <div class="section-title">Bên A (Người sử dụng lao động)</div>
+  <table class="info-table">
+    <tr>
+      <td class="label">Tên công ty:</td>
+      <td class="value">______________________________________________</td>
+    </tr>
+    <tr>
+      <td class="label">Đại diện:</td>
+      <td class="value">______________________________________________</td>
+    </tr>
+    <tr>
+      <td class="label">Chức vụ:</td>
+      <td class="value">______________________________________________</td>
+    </tr>
+    <tr>
+      <td class="label">Địa chỉ:</td>
+      <td class="value">______________________________________________</td>
+    </tr>
+  </table>
+
+  <!-- Bên B: Nhân viên -->
+  <div class="section-title">Bên B (Người lao động)</div>
+  <table class="info-table">
+    <tr>
+      <td class="label">Họ và tên:</td>
+      <td class="value">{{ contract.employee.full_name }}</td>
+    </tr>
+    <tr>
+      <td class="label">Mã nhân viên:</td>
+      <td class="value">{{ contract.employee.employee_code }}</td>
+    </tr>
+    <tr>
+      <td class="label">Số CCCD/CMND:</td>
+      <td class="value">{{ contract.employee.id_number|default:"__________________________" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Địa chỉ:</td>
+      <td class="value">{{ contract.employee.address|default:"__________________________" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Số điện thoại:</td>
+      <td class="value">{{ contract.employee.phone|default:"__________________________" }}</td>
+    </tr>
+  </table>
+
+  <!-- Nội dung hợp đồng -->
+  <div class="section-title">Điều 1 — Công việc và thời hạn hợp đồng</div>
+  <table class="info-table">
+    <tr>
+      <td class="label">Loại hợp đồng:</td>
+      <td class="value">{{ contract.get_contract_type_display }}</td>
+    </tr>
+    <tr>
+      <td class="label">Chức vụ / Vị trí:</td>
+      <td class="value">{{ contract.position|default:"__________________________" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Phòng ban:</td>
+      <td class="value">{{ contract.department.name }}</td>
+    </tr>
+    <tr>
+      <td class="label">Ngày bắt đầu:</td>
+      <td class="value"><strong>{{ contract.start_date|date:"d/m/Y" }}</strong></td>
+    </tr>
+    <tr>
+      <td class="label">Ngày kết thúc:</td>
+      <td class="value">
+        {% if contract.end_date %}
+          <strong>{{ contract.end_date|date:"d/m/Y" }}</strong>
+        {% else %}
+          <strong>Không xác định thời hạn</strong>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td class="label">Trạng thái:</td>
+      <td class="value">
+        <span class="status-badge badge-{{ contract.status }}">
+          {{ contract.get_status_display }}
+        </span>
+      </td>
+    </tr>
+  </table>
+
+  <div class="section-title">Điều 2 — Lương và chế độ đãi ngộ</div>
+  <table class="info-table">
+    <tr>
+      <td class="label">Mức lương theo HĐ:</td>
+      <td class="value highlight">
+        {% if contract.salary %}
+          {{ contract.salary|floatformat:0 }} VNĐ / tháng
+        {% else %}
+          __________________________
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td class="label">Hình thức trả lương:</td>
+      <td class="value">Chuyển khoản ngân hàng</td>
+    </tr>
+    <tr>
+      <td class="label">Ngày trả lương:</td>
+      <td class="value">Ngày ______ hàng tháng</td>
+    </tr>
+  </table>
+
+  <div class="section-title">Điều 3 — Điều khoản chấm dứt hợp đồng</div>
+  <p class="clause">
+    Thời hạn báo trước khi chấm dứt hợp đồng lao động:
+    <strong>{{ contract.notice_period_days }} ngày</strong> làm việc.
+  </p>
+  {% if contract.status == 'cham_dut' %}
+  <table class="info-table" style="margin-top:10px">
+    <tr>
+      <td class="label">Ngày chấm dứt:</td>
+      <td class="value">{{ contract.termination_date|date:"d/m/Y"|default:"__________" }}</td>
+    </tr>
+    <tr>
+      <td class="label">Lý do:</td>
+      <td class="value">{{ contract.get_termination_reason_display|default:"__________" }}</td>
+    </tr>
+    {% if contract.termination_note %}
+    <tr>
+      <td class="label">Ghi chú:</td>
+      <td class="value">{{ contract.termination_note }}</td>
+    </tr>
+    {% endif %}
+  </table>
+  {% endif %}
+
+  {% if contract.note %}
+  <div class="section-title">Điều 4 — Ghi chú khác</div>
+  <p class="clause">{{ contract.note }}</p>
+  {% endif %}
+
+  <!-- Chữ ký -->
+  <div class="signature-block">
+    <div class="sig-party">
+      <div class="sig-title">Bên A</div>
+      <div class="sig-note">(Ký, ghi rõ họ tên, đóng dấu)</div>
+      <div class="sig-name">&nbsp;</div>
+    </div>
+    <div class="sig-party">
+      <div class="sig-title">Bên B</div>
+      <div class="sig-note">(Ký, ghi rõ họ tên)</div>
+      <div class="sig-name">{{ contract.employee.full_name }}</div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</body>
+</html>

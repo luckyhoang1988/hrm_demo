@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách chứng chỉ</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 10px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue  { background: #1565C0; color: white; }
+        .container { padding: 24px 30px; }
+        .filter-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+        .filter-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; }
+        .filter-box input, .filter-box select { padding: 7px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; height: 34px; outline: none; }
+        .table-box { background: white; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 11px 16px; text-align: left; font-size: 13px; }
+        td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-valid   { background: #e8f5e9; color: #2e7d32; }
+        .pill-expired { background: #ffebee; color: #c62828; }
+        .pill-soon    { background: #fff3e0; color: #e65100; }
+        .pill-nolimit { background: #f3e5f5; color: #6a1b9a; }
+        .empty-state { padding: 60px 20px; text-align: center; color: #bbb; }
+        .pagination { display: flex; gap: 6px; padding: 14px 18px; align-items: center; }
+        .pagination a, .pagination span { padding: 6px 12px; border-radius: 6px; font-size: 13px; text-decoration: none; border: 1px solid #e0e0e0; }
+        .pagination a { color: #1565C0; background: white; }
+        .pagination .current { background: #1565C0; color: white; border-color: #1565C0; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🏆 Chứng chỉ đào tạo</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:talent_home' %}" class="btn btn-white">← Tổng quan</a>
+    </div>
+</div>
+<div class="container">
+    <form method="get" class="filter-box">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="q" value="{{ q }}" placeholder="Tên NV, mã CC, khóa học..." style="width:260px;">
+            </div>
+            <div class="filter-group">
+                <label>Trạng thái</label>
+                <select name="active">
+                    <option value="">Tất cả</option>
+                    <option value="1" {% if active_f == '1' %}selected{% endif %}>Còn hiệu lực</option>
+                    <option value="0" {% if active_f == '0' %}selected{% endif %}>Đã thu hồi</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-blue" style="height:34px;">Lọc</button>
+            <a href="{% url 'talent:certificate_list' %}" class="btn" style="background:#e0e0e0; color:#555; height:34px; line-height:20px;">Xóa lọc</a>
+        </div>
+    </form>
+    <div class="table-box">
+        {% if page_obj.object_list %}
+        <table>
+            <thead>
+                <tr><th>Mã chứng chỉ</th><th>Nhân viên</th><th>Phòng ban</th><th>Khóa học</th><th>Ngày cấp</th><th>Hết hạn</th><th>Trạng thái</th></tr>
+            </thead>
+            <tbody>
+                {% for cert in page_obj %}
+                <tr>
+                    <td><a href="{% url 'talent:certificate_detail' cert.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none; font-family:monospace;">{{ cert.certificate_number }}</a></td>
+                    <td>{{ cert.employee.full_name }}</td>
+                    <td>{{ cert.employee.department.name }}</td>
+                    <td>{{ cert.course.name }}</td>
+                    <td>{{ cert.issued_date|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if cert.expiry_date %}
+                        {{ cert.expiry_date|date:"d/m/Y" }}
+                        {% if cert.expiry_date < today %}<span style="color:#c62828; font-size:11px;"> (đã HH)</span>{% endif %}
+                        {% else %}Không HH
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not cert.is_active %}
+                        <span class="pill pill-expired">Đã thu hồi</span>
+                        {% elif cert.expiry_date and cert.expiry_date < today %}
+                        <span class="pill pill-expired">Hết hạn</span>
+                        {% elif cert.expiring_soon %}
+                        <span class="pill pill-soon">Sắp HH</span>
+                        {% elif not cert.expiry_date %}
+                        <span class="pill pill-nolimit">Không HH</span>
+                        {% else %}
+                        <span class="pill pill-valid">Còn hiệu lực</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&active={{ active_f }}">‹</a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}<span class="current">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}<a href="?page={{ num }}&q={{ q }}&active={{ active_f }}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q }}&active={{ active_f }}">›</a>{% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size:40px; margin-bottom:12px;">🏆</div>
+            <p>Chưa có chứng chỉ nào. Chứng chỉ tự động cấp khi học viên được đánh dấu <strong>Đạt</strong>.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

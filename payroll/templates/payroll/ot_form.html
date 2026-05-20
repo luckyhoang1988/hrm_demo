@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thêm bản ghi OT — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:580px;margin:0 auto;padding:24px}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden}
+.card-header{background:#f8f9fa;padding:12px 20px;font-weight:700;font-size:15px;border-bottom:1px solid #e0e0e0;color:#1a1a2e}
+.card-body{padding:24px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:13px}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#1565C0}
+.form-group small{color:#999;font-size:11px;margin-top:4px;display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-actions{display:flex;gap:10px;margin-top:24px}
+.btn{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.btn-outline{background:#fff;color:#555;border:1.5px solid #ddd}
+.msg-error{background:#ffebee;color:#c62828;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.info-box{background:#fff3e0;border-radius:8px;padding:10px 14px;font-size:12px;color:#e65100;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'payroll:ot_list' %}">⏰ Bản ghi OT</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  {% for msg in messages %}
+  <div class="msg-error">{{ msg }}</div>
+  {% endfor %}
+
+  <div class="card">
+    <div class="card-header">⏰ Thêm bản ghi tăng ca</div>
+    <div class="card-body">
+      <div class="info-box">Bản ghi tạo ra sẽ ở trạng thái <strong>Chờ duyệt</strong>. Quản trị viên cần duyệt trước khi được tính vào phiếu lương.</div>
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>Nhân viên *</label>
+          <select name="employee" required>
+            <option value="">— Chọn nhân viên —</option>
+            {% for emp in employees %}
+            <option value="{{ emp.pk }}">{{ emp.employee_code }} — {{ emp.full_name }} ({{ emp.department.name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ngày tăng ca *</label>
+            <input type="date" name="date" value="{{ today }}" required>
+          </div>
+          <div class="form-group">
+            <label>Số giờ OT *</label>
+            <input type="number" name="hours" value="" min="0.5" max="24" step="0.5" placeholder="VD: 2.5" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Loại tăng ca *</label>
+          <select name="ot_type" required>
+            {% for val, label in ot_choices %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <small>Hệ số lương sẽ được tự động điền theo loại OT</small>
+        </div>
+
+        <div class="form-group">
+          <label>Lý do tăng ca</label>
+          <textarea name="reason" rows="3" placeholder="Mô tả ngắn lý do cần tăng ca..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+          <a href="{% url 'payroll:ot_list' %}" class="btn btn-outline">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

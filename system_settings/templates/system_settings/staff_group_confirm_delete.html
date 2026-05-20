@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xóa nhóm người dùng</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: white; border-radius: 12px; padding: 36px 40px; max-width: 420px; width: 100%; border: 1px solid #e0e0e0; box-shadow: 0 4px 16px rgba(0,0,0,0.08); text-align: center; }
+        .icon { font-size: 48px; margin-bottom: 16px; }
+        h2 { font-size: 18px; font-weight: 700; color: #c62828; margin-bottom: 10px; }
+        .group-name { font-size: 20px; font-weight: 700; color: #333; margin: 10px 0 6px; padding: 10px 20px; background: #f5f5f5; border-radius: 8px; }
+        p { font-size: 14px; color: #666; margin-bottom: 8px; }
+        .warn { color: #c62828; font-size: 13px; margin-top: 10px; }
+        .actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+        .btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-block; }
+        .btn-delete { background: #c62828; color: white; }
+        .btn-cancel { background: #e0e0e0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">⚠️</div>
+        <h2>Xác nhận xóa nhóm người dùng</h2>
+        <div class="group-name">{{ sg.name }}</div>
+        <p>Nhóm này có <strong>{{ sg.members.count }}</strong> thành viên.</p>
+        <p class="warn">Xóa nhóm sẽ thu hồi toàn bộ quyền nhóm của các thành viên.<br>Quyền cá nhân không bị ảnh hưởng.</p>
+        <div class="actions">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-delete">Xóa nhóm</button>
+            </form>
+            <a href="{% url 'system_settings:user_list' %}" class="btn btn-cancel">Hủy</a>
+        </div>
+    </div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

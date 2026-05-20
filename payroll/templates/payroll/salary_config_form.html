@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if is_create %}Tạo{% else %}Sửa{% endif %} cấu hình lương — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:680px;margin:0 auto;padding:24px}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden}
+.card-header{background:#f8f9fa;padding:12px 20px;font-weight:700;font-size:15px;border-bottom:1px solid #e0e0e0;color:#1a1a2e}
+.card-body{padding:24px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:13px}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#1565C0}
+.form-group small{color:#999;font-size:11px;margin-top:4px;display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-check{display:flex;align-items:center;gap:8px;margin-top:8px}
+.form-check input{width:auto}
+.form-actions{display:flex;gap:10px;margin-top:24px}
+.btn{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.btn-outline{background:#fff;color:#555;border:1.5px solid #ddd}
+.msg-success{background:#e8f5e9;color:#2e7d32;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.msg-error{background:#ffebee;color:#c62828;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.info{background:#e3f2fd;border-radius:8px;padding:10px 14px;font-size:12px;color:#1565C0;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'payroll:salary_config_list' %}">💼 Cấu hình lương</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  {% for msg in messages %}
+  <div class="msg-{% if msg.tags == 'error' %}error{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+
+  <div class="card">
+    <div class="card-header">💼 {% if is_create %}Tạo cấu hình lương mới{% else %}Sửa cấu hình lương — {{ cfg.employee.full_name }}{% endif %}</div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        {% if is_create %}
+        <div class="form-group">
+          <label>Nhân viên</label>
+          <select name="employee" required>
+            <option value="">— Chọn nhân viên —</option>
+            {% for emp in employees %}
+            <option value="{{ emp.pk }}" {% if emp_prefill == emp.pk|stringformat:'s' %}selected{% endif %}>{{ emp.employee_code }} — {{ emp.full_name }} ({{ emp.department.name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% else %}
+        <div class="form-group">
+          <label>Nhân viên</label>
+          <input type="text" value="{{ cfg.employee.employee_code }} — {{ cfg.employee.full_name }}" disabled>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label>Hợp đồng liên kết (tuỳ chọn)</label>
+          <select name="contract">
+            <option value="">— Không liên kết —</option>
+            {% for c in contracts %}
+            <option value="{{ c.pk }}" {% if cfg.contract_id == c.pk %}selected{% endif %}>{{ c.contract_number }} — {{ c.employee.full_name }}</option>
+            {% endfor %}
+          </select>
+          <small>Để tham chiếu, không bắt buộc.</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Lương cơ bản (đ/tháng) *</label>
+            <input type="number" name="basic_salary" value="{{ cfg.basic_salary|default:'' }}" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Số người phụ thuộc</label>
+            <input type="number" name="dependents" value="{{ cfg.dependents|default:0 }}" min="0">
+            <small>Dùng để tính giảm trừ thuế TNCN</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Phụ cấp chi tiết (JSON)</label>
+          <textarea name="allowances" rows="4" placeholder='{"Phụ cấp nhà ở": 2000000, "Phụ cấp xăng xe": 500000}'>{{ allowances_json|default:'{}' }}</textarea>
+          <div class="info">Nhập dạng JSON: tên phụ cấp là key, số tiền (đồng) là value. VD: {"Nhà ở": 2000000, "Xăng xe": 500000}</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hiệu lực từ ngày *</label>
+            <input type="date" name="effective_from" value="{{ cfg.effective_from|date:'Y-m-d'|default:'' }}" required>
+          </div>
+          <div class="form-group">
+            <label>Hiệu lực đến ngày</label>
+            <input type="date" name="effective_to" value="{{ cfg.effective_to|date:'Y-m-d'|default:'' }}">
+            <small>Để trống = áp dụng không thời hạn</small>
+          </div>
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" name="is_active" id="is_active" {% if cfg.is_active|default:True %}checked{% endif %}>
+          <label for="is_active" style="font-size:13px;font-weight:500;text-transform:none">Đang áp dụng (ưu tiên khi tính lương)</label>
+        </div>
+
+        <div class="form-group" style="margin-top:16px">
+          <label>Ghi chú</label>
+          <textarea name="note" rows="2">{{ cfg.note|default:'' }}</textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">💾 Lưu</button>
+          <a href="{% url 'payroll:salary_config_list' %}" class="btn btn-outline">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

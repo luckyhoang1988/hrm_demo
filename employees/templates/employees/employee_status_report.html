@@ -1,0 +1,512 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    {% load humanize %}
+    <meta charset="UTF-8">
+    <title>Báo cáo trạng thái nhân viên</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #333; min-height: 100vh; }
+
+        /* TOPBAR */
+        .topbar {
+            background: #1565C0;
+            color: white;
+            padding: 0 28px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar h1 { font-size: 17px; font-weight: 700; }
+        .breadcrumb { font-size: 13px; opacity: 0.65; }
+        .breadcrumb a { color: white; text-decoration: none; }
+        .btn-top {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .btn-top:hover { background: rgba(255,255,255,0.25); }
+
+        /* CONTAINER */
+        .container { padding: 24px 28px; }
+
+        /* ── SUMMARY ROW ─────────────────────────────── */
+        .summary-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+
+        /* Chart card */
+        .chart-card {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 20px;
+            width: 260px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 14px;
+            align-self: flex-start;
+        }
+        .chart-wrap { position: relative; width: 180px; height: 180px; }
+        .chart-center-label {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+        .chart-center-num  { font-size: 28px; font-weight: 800; color: #222; line-height: 1; }
+        .chart-center-text { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+        /* Stat cards grid */
+        .stats-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e8ecf0;
+            border-left: 4px solid var(--c);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.18s;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .stat-card.active { background: var(--sb); border-color: var(--c); box-shadow: 0 0 0 2px var(--c); }
+        .stat-card.inactive { opacity: 0.45; }
+        .stat-card input { display: none; }
+
+        .stat-num  { font-size: 28px; font-weight: 800; color: var(--c); line-height: 1; }
+        .stat-name { font-size: 11px; font-weight: 600; color: #555; margin: 4px 0 8px; }
+        .stat-bar-bg { height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; background: var(--c); border-radius: 2px; transition: width 0.4s; }
+        .stat-pct { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+        /* ── FILTER ROW ──────────────────────────────── */
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex: 1;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid #e0e0e0;
+            background: white;
+            color: #666;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .chip:hover { border-color: var(--c); color: var(--c); }
+        .chip input { display: none; }
+        .chip.on {
+            background: var(--sb);
+            border-color: var(--c);
+            color: var(--c);
+        }
+        .chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+        .chip-count {
+            background: var(--c);
+            color: white;
+            border-radius: 10px;
+            padding: 1px 7px;
+            font-size: 10px;
+        }
+        .chip.on .chip-count { opacity: 1; }
+        .chip:not(.on) .chip-count { opacity: 0.5; }
+
+        .filter-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .link-btn {
+            font-size: 12px;
+            color: #1565C0;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #90CAF9;
+            background: white;
+            font-weight: 600;
+            transition: background 0.1s;
+        }
+        .link-btn:hover { background: #E3F2FD; }
+
+        /* ── RESULT INFO ─────────────────────────────── */
+        .result-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 0 2px;
+        }
+        .result-count { font-size: 14px; color: #555; }
+        .result-count strong { color: #1565C0; font-size: 16px; }
+
+        /* ── TABLE ───────────────────────────────────── */
+        .table-box {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 12px 14px; font-size: 12px; font-weight: 700; text-align: left; letter-spacing: 0.3px; white-space: nowrap; }
+        td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #F5F9FF; }
+        tbody tr.row-terminated { background: #FEFAFA; }
+        tbody tr.row-terminated td { color: #999; }
+        tbody tr.row-terminated:hover { background: #FFF5F5; }
+
+        /* Status badge */
+        .s-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* Date display */
+        .date-val { font-size: 12px; color: #555; font-family: monospace; }
+        .date-range { display: flex; align-items: center; gap: 6px; }
+        .date-sep { color: #ccc; font-size: 12px; }
+        .date-end { color: #aaa; font-size: 12px; font-family: monospace; }
+
+        /* Duration pill */
+        .dur-pill {
+            display: inline-block;
+            background: #E8F5E9;
+            color: #2E7D32;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .dur-pill.terminated { background: #FFEBEE; color: #C62828; }
+
+        /* Note text */
+        .note-text { font-size: 12px; color: #777; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Empty */
+        .empty-row td { text-align: center; color: #aaa; padding: 48px; font-size: 15px; }
+
+        @media (max-width: 1100px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .summary-row { flex-direction: column; }
+            .chart-card { width: 100%; flex-direction: row; align-items: center; gap: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="topbar-left">
+        <h1>📋 Báo cáo trạng thái nhân viên</h1>
+        <span class="breadcrumb">/ <a href="{% url 'employee_list' %}">Danh sách</a></span>
+    </div>
+    <a href="{% url 'employee_list' %}" class="btn-top">← Quay lại danh sách</a>
+</div>
+
+<div class="container">
+
+    <!-- FORM bao toàn bộ (GET) -->
+    <form method="get" id="reportForm">
+
+        <!-- ── SUMMARY ROW ─────────────────────────── -->
+        <div class="summary-row">
+
+            <!-- Donut chart -->
+            <div class="chart-card">
+                <div class="chart-title">Phân bổ trạng thái</div>
+                <div class="chart-wrap">
+                    <canvas id="statusChart"></canvas>
+                    <div class="chart-center-label">
+                        <div class="chart-center-num">{{ total_all }}</div>
+                        <div class="chart-center-text">nhân viên</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stat cards (7 cards) -->
+            <div class="stats-grid">
+                {% for sd in status_data %}
+                <label class="stat-card {% if sd.selected %}active{% else %}inactive{% endif %}"
+                       style="--c:{{ sd.color }}; --sb:{{ sd.color }}18;">
+                    <input type="checkbox" name="status" value="{{ sd.code }}"
+                           {% if sd.selected %}checked{% endif %}
+                           onchange="submitForm()">
+                    <div class="stat-num">{{ sd.count }}</div>
+                    <div class="stat-name">{{ sd.label }}</div>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-fill" style="width:{{ sd.pct }}%;"></div>
+                    </div>
+                    <div class="stat-pct">{{ sd.pct }}% tổng số</div>
+                </label>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <!-- ── FILTER ROW ─────────────────────────── -->
+        <div class="filter-section">
+            <span class="filter-label">Lọc hiển thị:</span>
+            <div class="filter-chips">
+                {% for sd in status_data %}
+                <label class="chip {% if sd.selected %}on{% endif %}"
+                       style="--c:{{ sd.color }}; --sb:{{ sd.color }}18;">
+                    <input type="checkbox" name="status" value="{{ sd.code }}"
+                           {% if sd.selected %}checked{% endif %}
+                           onchange="submitForm()">
+                    <span class="chip-dot"></span>
+                    {{ sd.label }}
+                    <span class="chip-count">{{ sd.count }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            <div class="filter-actions">
+                <button type="button" class="link-btn" onclick="selectAll()">Tất cả</button>
+                <button type="button" class="link-btn" onclick="clearAll()">Bỏ chọn</button>
+            </div>
+        </div>
+
+        <!-- ── RESULT INFO ──────────────────────────── -->
+        <div class="result-info">
+            <div class="result-count">
+                Đang hiển thị <strong>{{ total_filtered }}</strong> nhân viên
+                {% if total_filtered != total_all %}
+                    <span style="color:#aaa;">(trên tổng số {{ total_all }})</span>
+                {% endif %}
+            </div>
+        </div>
+
+    </form><!-- end form -->
+
+    <!-- ── TABLE ────────────────────────────────────── -->
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã NV</th>
+                    <th>Họ tên</th>
+                    <th>Bộ phận</th>
+                    <th>Chức vụ</th>
+                    <th>Trạng thái</th>
+                    <th>Từ ngày</th>
+                    <th>Đến ngày</th>
+                    <th>Thời gian</th>
+                    <th>Ghi chú / Lý do</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ed in employees_data %}
+                {% with e=ed.emp %}
+                <tr class="{% if ed.is_terminated %}row-terminated{% endif %}">
+                    <td style="font-family:monospace; color:#777; font-size:12px;">{{ e.employee_code|default:"—" }}</td>
+                    <td>
+                        <a href="{% url 'employee_detail' e.pk %}"
+                           style="color:#1565C0; text-decoration:none; font-weight:700; font-size:13px;">
+                            {{ e.full_name }}
+                        </a>
+                    </td>
+                    <td style="color:#555;">{{ e.department }}</td>
+                    <td style="color:#666;">{{ e.position }}</td>
+                    <td>
+                        {% if e.status == 'dang_lam' %}
+                            <span class="s-badge" style="background:#E8F5E9; color:#2E7D32;">● Đang làm việc</span>
+                        {% elif e.status == 'thu_viec' %}
+                            <span class="s-badge" style="background:#E3F2FD; color:#1565C0;">● Thử việc</span>
+                        {% elif e.status == 'nghi_phep' %}
+                            <span class="s-badge" style="background:#E0F2F1; color:#00695C;">● Nghỉ phép</span>
+                        {% elif e.status == 'nghi_sinh' %}
+                            <span class="s-badge" style="background:#FCE4EC; color:#C2185B;">● Nghỉ thai sản</span>
+                        {% elif e.status == 'nghi_khong_luong' %}
+                            <span class="s-badge" style="background:#FFF3E0; color:#E65100;">● Nghỉ không lương</span>
+                        {% elif e.status == 'nghi_om' %}
+                            <span class="s-badge" style="background:#F3E5F5; color:#6A1B9A;">● Nghỉ ốm dài ngày</span>
+                        {% else %}
+                            <span class="s-badge" style="background:#FFEBEE; color:#C62828;">○ Nghỉ việc</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ed.display_from %}
+                            <span class="date-val">{{ ed.display_from }}</span>
+                        {% else %}
+                            <span style="color:#ddd;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ed.display_to %}
+                            <span class="date-end">{{ ed.display_to }}</span>
+                        {% else %}
+                            <span style="color:#ddd;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ed.duration %}
+                            <span class="dur-pill {% if ed.is_terminated %}terminated{% endif %}">{{ ed.duration }}</span>
+                        {% elif ed.is_terminated %}
+                            <span class="dur-pill terminated">Đã nghỉ</span>
+                        {% else %}
+                            <span style="color:#ddd;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ed.note %}
+                            <span class="note-text" title="{{ ed.note }}">{{ ed.note }}</span>
+                        {% else %}
+                            <span style="color:#ddd;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="9">Không có nhân viên nào phù hợp với bộ lọc đã chọn.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div><!-- /container -->
+
+<script>
+    // ── Donut chart ──────────────────────────────────────
+    (function () {
+        const labels = [{% for sd in status_data %}'{{ sd.label }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+        const counts = [{% for sd in status_data %}{{ sd.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+        const colors = [{% for sd in status_data %}'{{ sd.color }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverBorderWidth: 3,
+                }]
+            },
+            options: {
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total ? Math.round(ctx.parsed * 100 / total) : 0;
+                                return ` ${ctx.label}: ${ctx.parsed} người (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: { duration: 600 },
+            }
+        });
+    })();
+
+    // ── Filter helpers ───────────────────────────────────
+    function submitForm() {
+        // Sync stat-card checkboxes ↔ chip checkboxes
+        const cards  = document.querySelectorAll('.stats-grid input[type=checkbox]');
+        const chips  = document.querySelectorAll('.filter-chips input[type=checkbox]');
+        const last   = event.target;
+        const val    = last.value;
+        const checked = last.checked;
+
+        // Find the paired checkbox and sync
+        cards.forEach(cb => { if (cb.value === val) cb.checked = checked; });
+        chips.forEach(cb => { if (cb.value === val) cb.checked = checked; });
+
+        // Update visual states
+        document.querySelectorAll('.stat-card').forEach(card => {
+            const cb = card.querySelector('input');
+            card.classList.toggle('active',   cb.checked);
+            card.classList.toggle('inactive', !cb.checked);
+        });
+        document.querySelectorAll('.chip').forEach(chip => {
+            const cb = chip.querySelector('input');
+            chip.classList.toggle('on', cb.checked);
+        });
+
+        document.getElementById('reportForm').submit();
+    }
+
+    function selectAll() {
+        document.querySelectorAll('#reportForm input[type=checkbox]').forEach(cb => cb.checked = true);
+        document.getElementById('reportForm').submit();
+    }
+
+    function clearAll() {
+        document.querySelectorAll('#reportForm input[type=checkbox]').forEach(cb => cb.checked = false);
+        document.getElementById('reportForm').submit();
+    }
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

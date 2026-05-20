@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; transition: opacity 0.2s; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .container { padding: 24px 30px; max-width: 900px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden; }
+        .card-header { padding: 12px 18px; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; background: #f8f9fa; color: #1565C0; }
+        .card-body { padding: 20px; }
+        .form-row { display: flex; gap: 16px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.08);
+        }
+        .error-list { color: #c62828; font-size: 13px; margin-bottom: 14px; background: #ffebee; border-radius: 6px; padding: 10px 14px; }
+        .actions { display: flex; gap: 12px; margin-top: 6px; }
+        .btn-save { background: #1565C0; color: white; padding: 10px 26px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-save:hover { background: #0D47A1; }
+        .btn-cancel { background: #e0e0e0; color: #555; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>💼 {{ title }}</h1>
+    <a href="{% url 'talent:job_list' %}" class="btn btn-white">← Danh sách</a>
+</div>
+<div class="container">
+    <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="error-list">
+            {% for field in form %}{% for error in field.errors %}<div>{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">📋 Thông tin chung</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;">
+                        <label>Tiêu đề vị trí *</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="form-group">
+                        <label>Phòng ban *</label>
+                        {{ form.department }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số lượng cần tuyển</label>
+                        {{ form.headcount }}
+                    </div>
+                    <div class="form-group">
+                        <label>Loại hình</label>
+                        {{ form.employment_type }}
+                    </div>
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        {{ form.status }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Lương tối thiểu</label>
+                        {{ form.salary_min }}
+                    </div>
+                    <div class="form-group">
+                        <label>Lương tối đa</label>
+                        {{ form.salary_max }}
+                    </div>
+                    <div class="form-group">
+                        <label>Địa điểm</label>
+                        {{ form.location }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ngày mở hồ sơ *</label>
+                        {{ form.open_date }}
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày đóng hồ sơ</label>
+                        {{ form.close_date }}
+                    </div>
+                    <div class="form-group">
+                        <label>Người phụ trách</label>
+                        {{ form.hiring_manager }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">📝 Nội dung tuyển dụng</div>
+            <div class="card-body">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>Mô tả công việc</label>
+                    {{ form.description }}
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>Yêu cầu ứng viên</label>
+                    {{ form.requirements }}
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>Quyền lợi</label>
+                    {{ form.benefits }}
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>Kênh đăng tuyển</label>
+                    {{ form.source_channels }}
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú nội bộ</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn-save">💾 Lưu</button>
+            <a href="{% url 'talent:job_list' %}" class="btn-cancel">Hủy</a>
+        </div>
+    </form>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

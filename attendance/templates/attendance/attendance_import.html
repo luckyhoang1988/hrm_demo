@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Import chấm công — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;gap:12px;align-items:center;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:700px;margin:32px auto;padding:0 20px}
+.card{background:#fff;border-radius:12px;padding:28px;border:1px solid #e0e0e0;margin-bottom:20px}
+.card-title{font-size:17px;font-weight:700;color:#1a1a2e;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #e0e0e0}
+.info-box{background:#e3f2fd;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#1565C0;line-height:1.7}
+.info-box strong{display:block;margin-bottom:6px}
+.drop-area{border:2.5px dashed #90caf9;border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.drop-area:hover{border-color:#1565C0;background:#f0f7ff}
+.drop-area input{display:none}
+.drop-area p{color:#888;font-size:14px;margin-top:8px}
+.file-name{font-size:13px;color:#1565C0;font-weight:600;margin-top:8px;display:none}
+.form-actions{display:flex;gap:10px}
+.btn{padding:9px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.btn-cancel{background:#f5f5f5;color:#555;border:1.5px solid #ddd;text-decoration:none}
+.result-card{background:#fff;border-radius:12px;padding:24px;border:1px solid #e0e0e0}
+.result-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.res-box{border-radius:8px;padding:16px;text-align:center}
+.res-box .r-num{font-size:28px;font-weight:800}
+.res-box .r-lbl{font-size:12px;font-weight:600;margin-top:4px}
+.res-success{background:#e8f5e9;color:#2e7d32}
+.res-skip{background:#fff3e0;color:#e65100}
+.res-error{background:#ffebee;color:#c62828}
+.error-list{max-height:260px;overflow-y:auto}
+.error-item{padding:6px 10px;border-radius:6px;background:#fff3e0;color:#c62828;font-size:12px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:attendance_list' %}">← Danh sách</a>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="card-title">📥 Import chấm công từ Excel</div>
+    <div class="info-box">
+      <strong>📌 Định dạng file Excel (.xlsx)</strong>
+      Cột A: Mã NV | Cột B: Ngày (dd/mm/yyyy) | Cột C: Giờ vào (HH:MM) | Cột D: Giờ ra (HH:MM) | Cột E: Ghi chú<br>
+      <em>Bỏ qua hàng tiêu đề. Nếu mã NV không tồn tại sẽ bỏ qua hàng đó.</em>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="drop-area" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:36px">📂</div>
+        <p>Kéo thả hoặc <strong>nhấn để chọn file</strong></p>
+        <input type="file" id="file-input" name="file" accept=".xlsx" onchange="showFileName(this)">
+        <div class="file-name" id="file-name-display"></div>
+      </div>
+      {% if form.file.errors %}
+      <div style="color:#c62828;font-size:13px;margin-bottom:12px">{{ form.file.errors }}</div>
+      {% endif %}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">📥 Import</button>
+        <a href="{% url 'attendance:attendance_list' %}" class="btn btn-cancel">Hủy</a>
+      </div>
+    </form>
+  </div>
+
+  {% if results %}
+  <div class="result-card">
+    <div class="card-title">Kết quả Import</div>
+    <div class="result-row">
+      <div class="res-box res-success"><div class="r-num">{{ results.success }}</div><div class="r-lbl">✅ Thành công</div></div>
+      <div class="res-box res-skip"><div class="r-num">{{ results.skipped }}</div><div class="r-lbl">⏭ Bỏ qua (trùng)</div></div>
+      <div class="res-box res-error"><div class="r-num">{{ results.errors|length }}</div><div class="r-lbl">❌ Lỗi</div></div>
+    </div>
+    {% if results.errors %}
+    <h4 style="font-size:13px;color:#c62828;margin-bottom:8px">Chi tiết lỗi:</h4>
+    <div class="error-list">
+      {% for err in results.errors %}
+      <div class="error-item">{{ err }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+<script>
+function showFileName(input) {
+  const display = document.getElementById('file-name-display');
+  if (input.files.length > 0) {
+    display.textContent = '📄 ' + input.files[0].name;
+    display.style.display = 'block';
+  }
+}
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

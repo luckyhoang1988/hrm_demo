@@ -1,0 +1,354 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chi tiết HĐ {{ contract.contract_number }} — HRM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+.topbar {
+    background: #1565C0; color: white;
+    padding: 0 30px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.topbar-brand { font-size: 17px; font-weight: 700; }
+.breadcrumb { font-size: 13px; opacity: 0.8; }
+.breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.btn-logout {
+    padding: 5px 13px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: white;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer; font-family: inherit;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+.container { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
+
+.alert { border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+.alert-expired  { background: #ffebee; border: 1px solid #ffcdd2; color: #c62828; }
+.alert-expiring { background: #fff8e1; border: 1px solid #ffe082; color: #f57f17; }
+
+.layout { display: flex; gap: 24px; align-items: flex-start; }
+
+/* SIDEBAR */
+.sidebar {
+    width: 280px; flex-shrink: 0;
+}
+.sidebar-card {
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.06); margin-bottom: 14px;
+}
+.sidebar-header {
+    background: #1565C0; color: white; padding: 16px;
+    text-align: center;
+}
+.sidebar-header .contract-number { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+.sidebar-header .contract-type { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+.badge {
+    display: inline-block; padding: 4px 12px; border-radius: 12px;
+    font-size: 12px; font-weight: 700; color: white; margin-top: 8px;
+}
+.sidebar-body { padding: 14px 16px; }
+.info-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #888; }
+.info-value { font-weight: 600; color: #333; text-align: right; max-width: 60%; }
+
+.actions-card { background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 16px; }
+.actions-card h4 { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; margin-bottom: 10px; }
+.btn-action-full {
+    display: block; width: 100%; padding: 9px 14px; border-radius: 7px; font-size: 13px;
+    font-weight: 600; text-align: center; text-decoration: none; margin-bottom: 8px;
+    border: 1px solid transparent; cursor: pointer; font-family: inherit;
+}
+.btn-action-full:last-child { margin-bottom: 0; }
+.btn-edit-full   { background: #fff8e1; color: #f57f17; border-color: #ffe082; }
+.btn-renew-full  { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.btn-term-full   { background: #fce4ec; color: #c62828; border-color: #f48fb1; }
+.btn-del-full    { background: #fafafa; color: #777;    border-color: #e0e0e0; }
+.btn-back-full   { background: #e3f2fd; color: #1565C0; border-color: #bbdefb; }
+
+/* MAIN */
+.main { flex: 1; }
+.main-card {
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 22px 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); margin-bottom: 16px;
+}
+.main-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #1a1a1a; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+.detail-item { }
+.detail-item .d-label { font-size: 11px; color: #999; text-transform: uppercase; font-weight: 600; margin-bottom: 3px; }
+.detail-item .d-value { font-size: 14px; color: #333; font-weight: 500; }
+
+.file-box {
+    display: flex; align-items: center; gap: 12px;
+    background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px;
+    padding: 12px 16px; font-size: 13px;
+}
+.file-box .file-icon { font-size: 22px; }
+.file-box .file-info { flex: 1; }
+.file-box .file-name { font-weight: 600; color: #1a1a1a; }
+.file-box .file-actions { display: flex; gap: 8px; }
+.btn-download {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    text-decoration: none; background: #1565C0; color: white;
+}
+.btn-download:hover { background: #0d47a1; }
+
+/* TIMELINE */
+.timeline { padding: 0; list-style: none; }
+.timeline-item { display: flex; gap: 14px; margin-bottom: 14px; }
+.timeline-dot { width: 12px; height: 12px; border-radius: 50%; background: #1565C0; flex-shrink: 0; margin-top: 4px; }
+.timeline-content { flex: 1; font-size: 13px; }
+.timeline-content a { color: #1565C0; text-decoration: none; font-weight: 600; }
+.timeline-content .t-meta { color: #999; font-size: 12px; margin-top: 3px; }
+.empty-msg { color: #bbb; font-size: 13px; font-style: italic; }
+
+.renewed-from-note {
+    background: #f3e5f5; border: 1px solid #ce93d8; border-radius: 7px;
+    padding: 10px 14px; font-size: 13px; color: #6a1b9a; margin-bottom: 14px;
+}
+.renewed-from-note a { color: #7b1fa2; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="topbar-brand">📄 Hợp đồng Lao động</div>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">🏠 Trang chủ</a> ›
+            <a href="{% url 'contracts:contract_list' %}">Danh sách</a> ›
+            {{ contract.contract_number }}
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span style="font-size:13px; opacity:0.85;">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+
+    {% if contract.is_expired %}
+    <div class="alert alert-expired">⛔ Hợp đồng này đã hết hạn ({{ contract.end_date|date:"d/m/Y" }}).</div>
+    {% elif contract.is_expiring_soon %}
+    <div class="alert alert-expiring">⚠ Hợp đồng sắp hết hạn — còn <strong>{{ contract.days_until_expiry }}</strong> ngày ({{ contract.end_date|date:"d/m/Y" }}).</div>
+    {% endif %}
+
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <div class="sidebar-header">
+                    <div class="contract-number">{{ contract.contract_number }}</div>
+                    <div class="contract-type">{{ contract.get_contract_type_display }}</div>
+                    {% if contract.status == 'hieu_luc' %}
+                        <span class="badge" style="background:#4CAF50;">{{ contract.get_status_display }}</span>
+                    {% elif contract.status == 'sap_het_han' %}
+                        <span class="badge" style="background:#FF9800;">{{ contract.get_status_display }}</span>
+                    {% elif contract.status == 'het_han' %}
+                        <span class="badge" style="background:#c62828;">{{ contract.get_status_display }}</span>
+                    {% elif contract.status == 'gia_han' %}
+                        <span class="badge" style="background:#7B1FA2;">{{ contract.get_status_display }}</span>
+                    {% elif contract.status == 'cham_dut' %}
+                        <span class="badge" style="background:#607D8B;">{{ contract.get_status_display }}</span>
+                    {% endif %}
+                </div>
+                <div class="sidebar-body">
+                    <div class="info-row">
+                        <span class="info-label">Nhân viên</span>
+                        <span class="info-value">
+                            <a href="{% url 'employee_detail' contract.employee.pk %}" style="color:#1565C0; text-decoration:none;">{{ contract.employee.full_name }}</a>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Phòng ban</span>
+                        <span class="info-value">{{ contract.department.name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ngày bắt đầu</span>
+                        <span class="info-value">{{ contract.start_date|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ngày kết thúc</span>
+                        <span class="info-value">{% if contract.end_date %}{{ contract.end_date|date:"d/m/Y" }}{% else %}<em style="color:#999;">Không XĐ</em>{% endif %}</span>
+                    </div>
+                    {% if contract.position %}
+                    <div class="info-row">
+                        <span class="info-label">Chức vụ</span>
+                        <span class="info-value">{{ contract.position }}</span>
+                    </div>
+                    {% endif %}
+                    {% if contract.salary %}
+                    <div class="info-row">
+                        <span class="info-label">Lương HĐ</span>
+                        <span class="info-value">{{ contract.salary|floatformat:0 }} ₫</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="actions-card">
+                <h4>Thao tác</h4>
+                <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-action-full btn-edit-full">✏ Chỉnh sửa</a>
+                {% if contract.status not in 'gia_han,cham_dut' %}
+                <a href="{% url 'contracts:contract_renew' contract.pk %}" class="btn-action-full btn-renew-full">🔄 Gia hạn hợp đồng</a>
+                {% endif %}
+                {% if contract.status != 'cham_dut' %}
+                <a href="{% url 'contracts:contract_terminate' contract.pk %}" class="btn-action-full btn-term-full">🚫 Chấm dứt hợp đồng</a>
+                {% endif %}
+                <a href="{% url 'contracts:contract_delete' contract.pk %}" class="btn-action-full btn-del-full">🗑 Xóa</a>
+                <a href="{% url 'contracts:contract_print' contract.pk %}" target="_blank" class="btn-action-full" style="background:#e8eaf6;color:#3949ab;border-color:#9fa8da;">🖨 In hợp đồng</a>
+                <a href="{% url 'contracts:contract_list' %}" class="btn-action-full btn-back-full">← Quay lại danh sách</a>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="main">
+            {% if contract.renewed_from %}
+            <div class="renewed-from-note">
+                🔄 Hợp đồng này được gia hạn từ:
+                <a href="{% url 'contracts:contract_detail' contract.renewed_from.pk %}">{{ contract.renewed_from.contract_number }}</a>
+                ({{ contract.renewed_from.start_date|date:"d/m/Y" }} — {% if contract.renewed_from.end_date %}{{ contract.renewed_from.end_date|date:"d/m/Y" }}{% else %}Không XĐ{% endif %})
+            </div>
+            {% endif %}
+
+            <div class="main-card">
+                <h3>Thông tin chi tiết</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="d-label">Số hợp đồng</div>
+                        <div class="d-value">{{ contract.contract_number }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Loại hợp đồng</div>
+                        <div class="d-value">{{ contract.get_contract_type_display }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Nhân viên</div>
+                        <div class="d-value">
+                            <a href="{% url 'employee_detail' contract.employee.pk %}" style="color:#1565C0; text-decoration:none;">
+                                {{ contract.employee.full_name }}
+                                {% if contract.employee.employee_code %}({{ contract.employee.employee_code }}){% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Phòng ban</div>
+                        <div class="d-value">{{ contract.department.name }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Chức vụ</div>
+                        <div class="d-value">{{ contract.position|default:"—" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Lương hợp đồng</div>
+                        <div class="d-value">{% if contract.salary %}{{ contract.salary|floatformat:0 }} ₫{% else %}—{% endif %}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Ngày bắt đầu</div>
+                        <div class="d-value">{{ contract.start_date|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Ngày kết thúc</div>
+                        <div class="d-value">{% if contract.end_date %}{{ contract.end_date|date:"d/m/Y" }}{% else %}<em style="color:#999;">Không xác định thời hạn</em>{% endif %}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Ngày ký hợp đồng</div>
+                        <div class="d-value">{% if contract.signed_date %}{{ contract.signed_date|date:"d/m/Y" }}{% else %}<em style="color:#bbb;">Chưa ghi nhận</em>{% endif %}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Thời hạn báo trước</div>
+                        <div class="d-value">{{ contract.notice_period_days }} ngày</div>
+                    </div>
+                    {% if contract.note %}
+                    <div class="detail-item" style="grid-column: span 2;">
+                        <div class="d-label">Ghi chú</div>
+                        <div class="d-value">{{ contract.note }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if contract.status == 'cham_dut' %}
+            <div class="main-card">
+                <h3>Thông tin chấm dứt</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="d-label">Ngày chấm dứt</div>
+                        <div class="d-value" style="color:#c62828;">{{ contract.termination_date|date:"d/m/Y"|default:"—" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="d-label">Lý do</div>
+                        <div class="d-value">{{ contract.get_termination_reason_display|default:"—" }}</div>
+                    </div>
+                    {% if contract.termination_note %}
+                    <div class="detail-item" style="grid-column: span 2;">
+                        <div class="d-label">Ghi chú chấm dứt</div>
+                        <div class="d-value">{{ contract.termination_note }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="main-card">
+                <h3>File hợp đồng</h3>
+                {% if contract.contract_file %}
+                <div class="file-box">
+                    <div class="file-icon">📎</div>
+                    <div class="file-info">
+                        <div class="file-name">{{ contract.contract_file_name }}</div>
+                        <div style="color:#888; font-size:12px; margin-top:2px;">Đính kèm với hợp đồng {{ contract.contract_number }}</div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="{{ contract.contract_file.url }}" target="_blank" class="btn-download">⬇ Tải về</a>
+                    </div>
+                </div>
+                {% else %}
+                <p style="color:#bbb; font-size:13px; font-style:italic;">Chưa có file đính kèm. <a href="{% url 'contracts:contract_update' contract.pk %}" style="color:#1565C0;">Tải file lên</a> khi chỉnh sửa hợp đồng.</p>
+                {% endif %}
+            </div>
+
+            <div class="main-card">
+                <h3>Lịch sử gia hạn</h3>
+                {% if renewals %}
+                <ul class="timeline">
+                    {% for r in renewals %}
+                    <li class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <a href="{% url 'contracts:contract_detail' r.pk %}">{{ r.contract_number }}</a>
+                            — {{ r.get_contract_type_display }}
+                            <div class="t-meta">
+                                {{ r.start_date|date:"d/m/Y" }} — {% if r.end_date %}{{ r.end_date|date:"d/m/Y" }}{% else %}Không XĐ{% endif %}
+                                &nbsp;·&nbsp;
+                                {% if r.status == 'hieu_luc' %}<span style="color:#4CAF50;">{{ r.get_status_display }}</span>
+                                {% elif r.status == 'sap_het_han' %}<span style="color:#FF9800;">{{ r.get_status_display }}</span>
+                                {% elif r.status == 'het_han' %}<span style="color:#c62828;">{{ r.get_status_display }}</span>
+                                {% elif r.status == 'gia_han' %}<span style="color:#7B1FA2;">{{ r.get_status_display }}</span>
+                                {% else %}<span style="color:#607D8B;">{{ r.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="empty-msg">Chưa có hợp đồng gia hạn nào từ hợp đồng này.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý nhóm quyền</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 16px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+        .container { padding: 24px 30px; }
+        .btn { padding: 7px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+
+        .group-card {
+            background: white; border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .group-card-header {
+            background: #1565C0; color: white;
+            padding: 14px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .group-card-header h3 { font-size: 15px; font-weight: 600; }
+        .group-card-header p  { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+        .group-card-body { padding: 16px 18px; }
+
+        .section-label { font-size: 11px; color: #999; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+        .dept-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; min-height: 28px; }
+        .dept-tag { background: #E3F2FD; color: #1565C0; border-radius: 20px; padding: 4px 12px; font-size: 12px; }
+        .no-dept { color: #bbb; font-size: 13px; font-style: italic; }
+
+        .user-count { font-size: 13px; color: #555; }
+        .user-count strong { color: #1565C0; }
+
+        .card-actions { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid #f0f0f0; background: #fafafa; }
+        .btn-edit   { background: #E3F2FD; color: #1565C0; }
+        .btn-delete { background: #FFEBEE; color: #c62828; }
+
+        .empty-state { text-align: center; color: #aaa; padding: 60px 20px; background: white; border-radius: 10px; border: 2px dashed #ddd; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>🗂 Quản lý nhóm quyền</h1>
+        <a href="{% url 'system_settings:settings_home' %}" class="btn" style="background:rgba(255,255,255,0.2); color:white;">← Cài đặt</a>
+    </div>
+    <div class="container">
+        <div class="action-bar">
+            <a href="{% url 'system_settings:group_create' %}" class="btn" style="background:#4CAF50; color:white;">+ Tạo nhóm mới</a>
+            <a href="{% url 'system_settings:permission_manage' %}" class="btn" style="background:#1565C0; color:white;">🔐 Phân quyền user</a>
+        </div>
+
+        {% if groups %}
+        <div class="groups-grid">
+            {% for group in groups %}
+            <div class="group-card">
+                <div class="group-card-header">
+                    <div>
+                        <h3>{{ group.name }}</h3>
+                        {% if group.description %}<p>{{ group.description }}</p>{% endif %}
+                    </div>
+                </div>
+                <div class="group-card-body">
+                    <div class="section-label">Bộ phận được phép</div>
+                    <div class="dept-tags">
+                        {% for dept in group.departments.all %}
+                            <span class="dept-tag">{{ dept.name }}</span>
+                        {% empty %}
+                            <span class="no-dept">Chưa có bộ phận nào</span>
+                        {% endfor %}
+                    </div>
+                    <div class="section-label">Số user thuộc nhóm</div>
+                    <div class="user-count">
+                        <strong>{{ group.user_perms.count }}</strong> tài khoản
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="{% url 'system_settings:group_update' group.pk %}" class="btn btn-edit">Chỉnh sửa</a>
+                    <a href="{% url 'system_settings:group_delete' group.pk %}" class="btn btn-delete">Xóa</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🗂</div>
+            <p>Chưa có nhóm nào. Bấm <strong>"+ Tạo nhóm mới"</strong> để bắt đầu.</p>
+        </div>
+        {% endif %}
+    </div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,170 @@
+{% load humanize %}
+<style>
+.notif-bell-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.notif-bell-btn {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: white;
+    font-size: 18px;
+    line-height: 1;
+    display: flex; align-items: center; gap: 5px;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+.notif-bell-btn:hover { background: rgba(255,255,255,0.3); }
+.notif-badge {
+    background: #f44336;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+.notif-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 9999;
+    overflow: hidden;
+}
+.notif-dropdown.open { display: block; }
+.notif-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.notif-header span { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+.notif-mark-all {
+    font-size: 12px; color: #1565C0; text-decoration: none; cursor: pointer;
+    background: none; border: none; padding: 0;
+}
+.notif-mark-all:hover { text-decoration: underline; }
+.notif-list { max-height: 320px; overflow-y: auto; }
+.notif-item {
+    display: flex; gap: 12px; padding: 12px 16px;
+    border-bottom: 1px solid #f8f8f8;
+    text-decoration: none; color: inherit;
+    transition: background 0.1s;
+}
+.notif-item:hover { background: #f5f8ff; }
+.notif-item.unread { background: #e8f4fd; }
+.notif-item.unread:hover { background: #d6ecfa; }
+.notif-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 5px;
+}
+.notif-dot.info    { background: #42a5f5; }
+.notif-dot.success { background: #66bb6a; }
+.notif-dot.warning { background: #ffa726; }
+.notif-dot.danger  { background: #ef5350; }
+.notif-content { flex: 1; min-width: 0; }
+.notif-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-msg { font-size: 12px; color: #666; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.notif-time { font-size: 11px; color: #aaa; margin-top: 4px; }
+.notif-empty { padding: 32px 16px; text-align: center; color: #bbb; font-size: 13px; }
+.notif-footer { padding: 10px 16px; border-top: 1px solid #f0f0f0; text-align: center; }
+.notif-footer a { font-size: 13px; color: #1565C0; text-decoration: none; font-weight: 600; }
+.notif-footer a:hover { text-decoration: underline; }
+</style>
+
+<div class="notif-bell-wrap" id="notifBellWrap">
+    <a class="notif-bell-btn" id="notifBellBtn" href="#" onclick="toggleNotifDropdown(event)">
+        🔔
+        {% if notif_unread_count %}
+        <span class="notif-badge" id="notifBadge">{{ notif_unread_count }}</span>
+        {% else %}
+        <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+        {% endif %}
+    </a>
+    <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-header">
+            <span>Thông báo {% if notif_unread_count %}<span style="color:#f44336;">({{ notif_unread_count }})</span>{% endif %}</span>
+            {% if notif_unread_count %}
+            <button class="notif-mark-all" onclick="markAllRead(event)">Đánh dấu tất cả đã đọc</button>
+            {% endif %}
+        </div>
+        <div class="notif-list" id="notifList">
+            {% if notif_recent %}
+                {% for n in notif_recent %}
+                <a href="{% if n.link %}{{ n.link }}{% else %}{% url 'core:notification_list' %}{% endif %}"
+                   class="notif-item {% if not n.is_read %}unread{% endif %}"
+                   onclick="markRead(event, {{ n.pk }}, this)">
+                    <span class="notif-dot {{ n.type }}"></span>
+                    <div class="notif-content">
+                        <div class="notif-title">{{ n.title }}</div>
+                        <div class="notif-msg">{{ n.message }}</div>
+                        <div class="notif-time">{{ n.created_at|timesince }} trước</div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="notif-empty">Không có thông báo nào</div>
+            {% endif %}
+        </div>
+        <div class="notif-footer">
+            <a href="{% url 'core:notification_list' %}">Xem tất cả thông báo</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleNotifDropdown(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('notifDropdown').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('notifBellWrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('open');
+    }
+});
+function markRead(e, pk, el) {
+    // Đánh dấu đã đọc ngầm — không chặn navigation
+    fetch(`/core/notifications/${pk}/read/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+    });
+    el.classList.remove('unread');
+    updateBadge(-1);
+}
+function markAllRead(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    fetch('/core/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+    }).then(() => {
+        document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+        const badge = document.getElementById('notifBadge');
+        if (badge) badge.style.display = 'none';
+        e.target.parentElement.querySelector('span').innerHTML = 'Thông báo';
+        e.target.remove();
+    });
+}
+function updateBadge(delta) {
+    const badge = document.getElementById('notifBadge');
+    if (!badge) return;
+    let count = parseInt(badge.textContent || '0') + delta;
+    if (count <= 0) { badge.style.display = 'none'; }
+    else { badge.style.display = ''; badge.textContent = count; }
+}
+function getCookie(name) {
+    const v = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
+    return v ? decodeURIComponent(v.split('=')[1]) : '';
+}
+</script>

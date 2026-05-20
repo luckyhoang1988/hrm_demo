@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận xóa</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; }
+        .container { padding: 60px 30px; max-width: 500px; margin: 0 auto; text-align: center; }
+        .warn-icon { font-size: 52px; margin-bottom: 16px; }
+        h2 { font-size: 20px; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; margin-bottom: 24px; }
+        .actions { display: flex; justify-content: center; gap: 12px; }
+        .btn-del { background: #c62828; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-cancel { background: #e0e0e0; color: #555; padding: 10px 20px; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🗑 Xóa vị trí tuyển dụng</h1>
+    <a href="{% url 'talent:job_detail' job.pk %}" class="btn-white">← Quay lại</a>
+</div>
+<div class="container">
+    <div class="warn-icon">⚠️</div>
+    <h2>Bạn có chắc muốn xóa?</h2>
+    <p>Vị trí <strong>"{{ job.title }}"</strong> sẽ bị xóa vĩnh viễn cùng toàn bộ ứng viên liên quan. Hành động này không thể hoàn tác.</p>
+    <div class="actions">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn-del">🗑 Xóa vĩnh viễn</button>
+        </form>
+        <a href="{% url 'talent:job_detail' job.pk %}" class="btn-cancel">Hủy</a>
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

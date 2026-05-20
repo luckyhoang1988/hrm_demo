@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 14px; border-radius: 6px; font-size: 13px; text-decoration: none; }
+        .container { padding: 24px 30px; max-width: 860px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden; }
+        .card-header { padding: 12px 18px; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; background: #f8f9fa; color: #1565C0; }
+        .card-body { padding: 20px; }
+        .form-row { display: flex; gap: 16px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 13px; outline: none; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #1565C0;
+        }
+        .error-list { color: #c62828; font-size: 13px; margin-bottom: 14px; background: #ffebee; border-radius: 6px; padding: 10px 14px; }
+        .actions { display: flex; gap: 12px; margin-top: 6px; }
+        .btn-save { background: #1565C0; color: white; padding: 10px 26px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-save:hover { background: #0D47A1; }
+        .btn-cancel { background: #e0e0e0; color: #555; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>👤 {{ title }}</h1>
+    <a href="{% url 'talent:applicant_list' %}" class="btn-white">← Danh sách</a>
+</div>
+<div class="container">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div class="error-list">
+            {% for field in form %}{% for error in field.errors %}<div>{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">📋 Thông tin cá nhân</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Vị trí ứng tuyển *</label>
+                        {{ form.job_position }}
+                    </div>
+                    <div class="form-group">
+                        <label>Giai đoạn</label>
+                        {{ form.stage }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Họ tên *</label>
+                        {{ form.full_name }}
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        {{ form.email }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="form-group">
+                        <label>Nguồn</label>
+                        {{ form.source }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Địa chỉ</label>
+                        {{ form.address }}
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn</label>
+                        {{ form.linkedin_url }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Người giới thiệu (nội bộ)</label>
+                        {{ form.referrer }}
+                    </div>
+                    <div class="form-group">
+                        <label>CV (file)</label>
+                        {{ form.cv_file }}
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>Thư ngỏ</label>
+                    {{ form.cover_letter }}
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn-save">💾 Lưu</button>
+            <a href="{% url 'talent:applicant_list' %}" class="btn-cancel">Hủy</a>
+        </div>
+    </form>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

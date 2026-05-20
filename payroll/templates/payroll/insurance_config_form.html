@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cấu hình bảo hiểm năm {{ year_prefill }} — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:820px;margin:0 auto;padding:24px}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden;margin-bottom:16px}
+.card-header{background:#f8f9fa;padding:12px 20px;font-weight:700;font-size:14px;border-bottom:1px solid #e0e0e0;color:#1a1a2e}
+.card-body{padding:24px}
+.section-label{font-size:12px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:2px solid #e3f2fd}
+.form-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:5px}
+.form-group input{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:13px}
+.form-group input:focus{outline:none;border-color:#1565C0}
+.form-group small{color:#999;font-size:11px;margin-top:4px;display:block}
+.pit-section{background:#fff8e1;border-radius:8px;padding:16px;border:1px solid #ffe082}
+.pit-row{display:grid;grid-template-columns:40px 1fr 1fr 80px 32px;gap:8px;align-items:center;margin-bottom:8px;font-size:13px}
+.pit-row.header{font-weight:700;font-size:11px;color:#666;text-transform:uppercase}
+.pit-row input{padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;width:100%}
+.btn-add-row{background:#fff3e0;color:#e65100;border:1.5px solid #ffcc02;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
+.btn-remove{background:#ffebee;color:#c62828;border:none;border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:14px;font-weight:700}
+.form-actions{display:flex;gap:10px;margin-top:20px}
+.btn{padding:9px 22px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.btn-outline{background:#fff;color:#555;border:1.5px solid #ddd}
+.msg-success{background:#e8f5e9;color:#2e7d32;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.msg-error{background:#ffebee;color:#c62828;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'payroll:insurance_config_list' %}">🔧 Cấu hình BH</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  {% for msg in messages %}
+  <div class="msg-{% if msg.tags == 'error' %}error{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+
+  <form method="post" action="{% url 'payroll:insurance_config_create' %}">
+    {% csrf_token %}
+
+    <!-- Chọn năm -->
+    <div class="card">
+      <div class="card-header">📅 Năm áp dụng</div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:12px">
+          <input type="number" name="year" value="{{ year_prefill }}" min="2020" max="2035" style="width:120px;padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:16px;font-weight:700">
+          <span style="font-size:13px;color:#666">Nhập năm và nhấn "Lưu" — nếu năm đã tồn tại sẽ được cập nhật.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tỷ lệ bảo hiểm -->
+    <div class="card">
+      <div class="card-header">🏥 Tỷ lệ bảo hiểm</div>
+      <div class="card-body">
+        <div class="section-label">Người lao động đóng</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>BHXH (%)</label>
+            <input type="number" name="si_employee_rate" value="{{ existing.si_employee_rate|default:'8.00' }}" step="0.01">
+            <small>Thường: 8%</small>
+          </div>
+          <div class="form-group">
+            <label>BHYT (%)</label>
+            <input type="number" name="hi_employee_rate" value="{{ existing.hi_employee_rate|default:'1.50' }}" step="0.01">
+            <small>Thường: 1.5%</small>
+          </div>
+          <div class="form-group">
+            <label>BHTN (%)</label>
+            <input type="number" name="ui_employee_rate" value="{{ existing.ui_employee_rate|default:'1.00' }}" step="0.01">
+            <small>Thường: 1%</small>
+          </div>
+        </div>
+
+        <div class="section-label">Chủ sử dụng lao động đóng</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>BHXH (%)</label>
+            <input type="number" name="si_employer_rate" value="{{ existing.si_employer_rate|default:'17.50' }}" step="0.01">
+            <small>Thường: 17.5%</small>
+          </div>
+          <div class="form-group">
+            <label>BHYT (%)</label>
+            <input type="number" name="hi_employer_rate" value="{{ existing.hi_employer_rate|default:'3.00' }}" step="0.01">
+            <small>Thường: 3%</small>
+          </div>
+          <div class="form-group">
+            <label>BHTN (%)</label>
+            <input type="number" name="ui_employer_rate" value="{{ existing.ui_employer_rate|default:'1.00' }}" step="0.01">
+            <small>Thường: 1%</small>
+          </div>
+        </div>
+
+        <div class="section-label">Mức trần và giảm trừ</div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Mức trần đóng BH (đ/tháng)</label>
+            <input type="number" name="salary_cap" value="{{ existing.salary_cap|default:'46800000' }}" min="0">
+            <small>= 20 × Lương cơ sở. Hiện hành: 46,800,000 đ</small>
+          </div>
+          <div class="form-group"></div>
+          <div class="form-group">
+            <label>Giảm trừ bản thân (đ/tháng)</label>
+            <input type="number" name="personal_deduction" value="{{ existing.personal_deduction|default:'15500000' }}" min="0">
+            <small>Nghị quyết 110/2025 (2026+): 15,500,000 đ</small>
+          </div>
+          <div class="form-group">
+            <label>Giảm trừ người phụ thuộc (đ/người/tháng)</label>
+            <input type="number" name="dependent_deduction" value="{{ existing.dependent_deduction|default:'6200000' }}" min="0">
+            <small>Nghị quyết 110/2025 (2026+): 6,200,000 đ</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bậc thuế TNCN -->
+    <div class="card">
+      <div class="card-header">📊 Bậc thuế TNCN (lũy tiến)</div>
+      <div class="card-body">
+        <div class="pit-section">
+          <div class="pit-row header">
+            <div>Bậc</div>
+            <div>Thu nhập từ (đ/tháng)</div>
+            <div>Thu nhập đến (đ/tháng, trống = ∞)</div>
+            <div>Thuế suất</div>
+            <div></div>
+          </div>
+          <div id="pit-rows">
+            {% if pit_brackets %}
+              {% for b in pit_brackets %}
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">{{ b.order }}</div>
+                <input type="number" name="pit_min_{{ b.order }}" value="{{ b.min_income }}" min="0" placeholder="0">
+                <input type="number" name="pit_max_{{ b.order }}" value="{{ b.max_income|default:'' }}" min="0" placeholder="Không giới hạn">
+                <input type="number" name="pit_rate_{{ b.order }}" value="{{ b.rate }}" min="0" max="1" step="0.01" placeholder="0.05">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">1</div>
+                <input type="number" name="pit_min_1" value="0" min="0">
+                <input type="number" name="pit_max_1" value="5000000" min="0">
+                <input type="number" name="pit_rate_1" value="0.05" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">2</div>
+                <input type="number" name="pit_min_2" value="5000000" min="0">
+                <input type="number" name="pit_max_2" value="10000000" min="0">
+                <input type="number" name="pit_rate_2" value="0.10" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">3</div>
+                <input type="number" name="pit_min_3" value="10000000" min="0">
+                <input type="number" name="pit_max_3" value="18000000" min="0">
+                <input type="number" name="pit_rate_3" value="0.15" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">4</div>
+                <input type="number" name="pit_min_4" value="18000000" min="0">
+                <input type="number" name="pit_max_4" value="32000000" min="0">
+                <input type="number" name="pit_rate_4" value="0.20" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">5</div>
+                <input type="number" name="pit_min_5" value="32000000" min="0">
+                <input type="number" name="pit_max_5" value="52000000" min="0">
+                <input type="number" name="pit_rate_5" value="0.25" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">6</div>
+                <input type="number" name="pit_min_6" value="52000000" min="0">
+                <input type="number" name="pit_max_6" value="80000000" min="0">
+                <input type="number" name="pit_rate_6" value="0.30" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+              <div class="pit-row">
+                <div style="font-weight:700;color:#666">7</div>
+                <input type="number" name="pit_min_7" value="80000000" min="0">
+                <input type="number" name="pit_max_7" value="" placeholder="Không giới hạn">
+                <input type="number" name="pit_rate_7" value="0.35" min="0" max="1" step="0.01">
+                <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+              </div>
+            {% endif %}
+          </div>
+          <button type="button" class="btn-add-row" onclick="addRow()" style="margin-top:10px">+ Thêm bậc</button>
+        </div>
+        <div style="font-size:11px;color:#999;margin-top:8px">Thuế suất nhập dạng thập phân: 0.05 = 5%, 0.35 = 35%</div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">💾 Lưu cấu hình</button>
+      <a href="{% url 'payroll:insurance_config_list' %}" class="btn btn-outline">Quay lại</a>
+    </div>
+  </form>
+</div>
+
+<script>
+let rowCount = {{ pit_brackets|length|default:7 }};
+
+function addRow() {
+  rowCount++;
+  const container = document.getElementById('pit-rows');
+  const div = document.createElement('div');
+  div.className = 'pit-row';
+  div.innerHTML = `
+    <div style="font-weight:700;color:#666">${rowCount}</div>
+    <input type="number" name="pit_min_${rowCount}" value="0" min="0">
+    <input type="number" name="pit_max_${rowCount}" value="" placeholder="Không giới hạn">
+    <input type="number" name="pit_rate_${rowCount}" value="" step="0.01" placeholder="0.05">
+    <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+  `;
+  container.appendChild(div);
+  renumberRows();
+}
+
+function removeRow(btn) {
+  btn.closest('.pit-row').remove();
+  renumberRows();
+}
+
+function renumberRows() {
+  document.querySelectorAll('#pit-rows .pit-row').forEach((row, i) => {
+    const order = i + 1;
+    row.querySelector('div').textContent = order;
+    row.querySelectorAll('input').forEach(inp => {
+      inp.name = inp.name.replace(/_\d+$/, `_${order}`);
+    });
+  });
+  rowCount = document.querySelectorAll('#pit-rows .pit-row').length;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ session.session_code }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 10px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue  { background: #1565C0; color: white; }
+        .btn-green { background: #4CAF50; color: white; }
+        .container { padding: 24px 30px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+        .card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .card-title { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; margin-bottom: 12px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: #888; }
+        .stat-value { font-weight: 600; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-planned   { background: #e3f2fd; color: #1565C0; }
+        .pill-ongoing   { background: #e8f5e9; color: #2e7d32; }
+        .pill-completed { background: #f3e5f5; color: #6a1b9a; }
+        .pill-cancelled { background: #ffebee; color: #c62828; }
+        .pill-pass      { background: #e8f5e9; color: #2e7d32; }
+        .pill-fail      { background: #ffebee; color: #c62828; }
+        .pill-pending   { background: #f5f5f5; color: #888; }
+        .pill-registered { background: #e3f2fd; color: #1565C0; }
+        .pill-attended  { background: #e8f5e9; color: #2e7d32; }
+        .pill-absent    { background: #fff3e0; color: #e65100; }
+        .main-table { background: white; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .table-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 10px 16px; text-align: left; font-size: 13px; }
+        td { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        .empty-state { padding: 40px; text-align: center; color: #bbb; }
+        .inline-form { display: flex; align-items: center; gap: 6px; }
+        .inline-form input, .inline-form select { padding: 4px 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; width: auto; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 5px; border: none; cursor: pointer; }
+        .btn-sm-blue { background: #1565C0; color: white; }
+        .btn-sm-red  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🗓 {{ session.session_code }}</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:session_list' %}" class="btn btn-white">← Danh sách</a>
+        <a href="{% url 'talent:session_update' session.pk %}" class="btn btn-blue">Sửa</a>
+        <a href="{% url 'talent:enrollment_add' session.pk %}" class="btn btn-green">+ Đăng ký NV</a>
+    </div>
+</div>
+<div class="container">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+            <div class="card-title">Thông tin buổi học</div>
+            <div class="stat-row"><span class="stat-label">Khóa học</span><span class="stat-value"><a href="{% url 'talent:course_detail' session.course.pk %}" style="color:#1565C0; text-decoration:none;">{{ session.course.name }}</a></span></div>
+            <div class="stat-row"><span class="stat-label">Giảng viên</span><span class="stat-value">{{ session.trainer_name }}</span></div>
+            <div class="stat-row"><span class="stat-label">Địa điểm</span><span class="stat-value">{{ session.location }}</span></div>
+            <div class="stat-row"><span class="stat-label">Bắt đầu</span><span class="stat-value">{{ session.start_date|date:"d/m/Y" }}</span></div>
+            <div class="stat-row"><span class="stat-label">Kết thúc</span><span class="stat-value">{{ session.end_date|date:"d/m/Y" }}</span></div>
+            <div class="stat-row"><span class="stat-label">Đăng ký</span><span class="stat-value">{{ session.enrolled_count }}{% if session.max_participants %}/{{ session.max_participants }}{% endif %}</span></div>
+            <div class="stat-row"><span class="stat-label">Trạng thái</span><span class="stat-value"><span class="pill pill-{{ session.status }}">{{ session.get_status_display }}</span></span></div>
+        </div>
+        {% if session.notes %}
+        <div class="card">
+            <div class="card-title">Ghi chú</div>
+            <div style="font-size:13px; color:#555;">{{ session.notes }}</div>
+        </div>
+        {% endif %}
+        <div style="display:flex; gap:8px;">
+            <a href="{% url 'talent:session_update' session.pk %}" class="btn btn-blue" style="flex:1; text-align:center;">Sửa</a>
+            <a href="{% url 'talent:session_delete' session.pk %}" class="btn" style="background:#ffebee; color:#c62828; flex:1; text-align:center;">Xóa</a>
+        </div>
+    </div>
+
+    <!-- Hidden form for bulk score submit -->
+    <form id="bulk-score-form" method="post" action="{% url 'talent:bulk_score_update' session.pk %}">
+        {% csrf_token %}
+        <div id="bulk-score-inputs"></div>
+    </form>
+
+    <div class="main-table">
+        <div class="table-header">
+            <strong style="font-size:14px;">Danh sách học viên ({{ enrollments|length }})</strong>
+            <div style="display:flex; gap:8px;">
+                {% if enrollments %}
+                <button type="button" onclick="submitAllScores()" class="btn btn-blue" style="font-size:12px; padding:5px 14px;">💾 Lưu tất cả điểm</button>
+                {% endif %}
+                <a href="{% url 'talent:enrollment_add' session.pk %}" class="btn btn-green" style="font-size:12px; padding:5px 12px;">+ Thêm nhân viên</a>
+            </div>
+        </div>
+        {% if enrollments %}
+        <table>
+            <thead>
+                <tr><th>Nhân viên</th><th>Phòng ban</th><th>Tham dự</th><th>Điểm</th><th>Kết quả</th><th>Chứng chỉ</th><th>Cập nhật</th></tr>
+            </thead>
+            <tbody>
+                {% for e in enrollments %}
+                <tr data-eid="{{ e.pk }}">
+                    <td><strong>{{ e.employee.full_name }}</strong></td>
+                    <td>{{ e.employee.department.name }}</td>
+                    <td>
+                        <span class="pill pill-{{ e.status }}">{{ e.get_status_display }}</span>
+                    </td>
+                    <td>{{ e.score|default:"—" }}</td>
+                    <td><span class="pill pill-{{ e.result }}">{{ e.get_result_display }}</span></td>
+                    <td>
+                        {% if e.result == 'pass' %}
+                        {% with cert=e.certificate %}
+                        {% if cert %}
+                        <a href="{% url 'talent:certificate_detail' cert.pk %}" style="color:#2e7d32; font-size:12px;">🏆 {{ cert.certificate_number }}</a>
+                        {% else %}—{% endif %}
+                        {% endwith %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'talent:enrollment_update' e.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <select name="status" class="status-sel" style="width:110px;">
+                                <option value="registered" {% if e.status == 'registered' %}selected{% endif %}>Đã đăng ký</option>
+                                <option value="attended" {% if e.status == 'attended' %}selected{% endif %}>Đã tham dự</option>
+                                <option value="absent" {% if e.status == 'absent' %}selected{% endif %}>Vắng mặt</option>
+                                <option value="cancelled" {% if e.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+                            </select>
+                            <select name="result" class="result-sel" style="width:90px;">
+                                <option value="pending" {% if e.result == 'pending' %}selected{% endif %}>Chờ KQ</option>
+                                <option value="pass" {% if e.result == 'pass' %}selected{% endif %}>Đạt</option>
+                                <option value="fail" {% if e.result == 'fail' %}selected{% endif %}>Không đạt</option>
+                            </select>
+                            <input type="number" name="score" class="score-inp" value="{{ e.score|default:'' }}" placeholder="Điểm" min="0" max="100" style="width:65px;">
+                            <button type="submit" class="btn-sm btn-sm-blue">Lưu</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">Chưa có học viên nào. <a href="{% url 'talent:enrollment_add' session.pk %}" style="color:#1565C0;">Đăng ký ngay</a></div>
+        {% endif %}
+    </div>
+
+<script>
+function submitAllScores() {
+    const container = document.getElementById('bulk-score-inputs');
+    container.innerHTML = '';
+    document.querySelectorAll('tr[data-eid]').forEach(row => {
+        const eid = row.dataset.eid;
+        container.innerHTML += `<input type="hidden" name="enrollment_ids" value="${eid}">`;
+        container.innerHTML += `<input type="hidden" name="status_${eid}" value="${row.querySelector('.status-sel').value}">`;
+        container.innerHTML += `<input type="hidden" name="result_${eid}" value="${row.querySelector('.result-sel').value}">`;
+        const sv = row.querySelector('.score-inp').value;
+        container.innerHTML += `<input type="hidden" name="score_${eid}" value="${sv}">`;
+    });
+    document.getElementById('bulk-score-form').submit();
+}
+</script>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

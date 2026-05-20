@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xóa nhóm</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .box { background: white; border: 1px solid #FFCDD2; border-radius: 10px; padding: 32px; max-width: 420px; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+        .icon { font-size: 44px; margin-bottom: 14px; }
+        h2 { color: #c62828; font-size: 18px; margin-bottom: 10px; }
+        p  { color: #555; font-size: 14px; margin-bottom: 6px; }
+        .group-name { font-size: 18px; font-weight: 700; color: #333; margin: 12px 0 4px; }
+        .warn { color: #999; font-size: 12px; margin-bottom: 24px; }
+        .actions { display: flex; gap: 10px; justify-content: center; }
+        .btn { padding: 9px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-confirm { background: #f44336; color: white; }
+        .btn-cancel  { background: #e0e0e0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="icon">⚠️</div>
+        <h2>Xác nhận xóa nhóm</h2>
+        <p>Bạn có chắc muốn xóa nhóm</p>
+        <div class="group-name">{{ group.name }}</div>
+        <p>Nhóm này đang có <strong>{{ group.user_perms.count }}</strong> user.</p>
+        <p class="warn">Xóa nhóm sẽ thu hồi quyền của tất cả user thuộc nhóm này.</p>
+        <div class="actions">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-confirm">Xóa nhóm</button>
+            </form>
+            <a href="{% url 'system_settings:group_list' %}" class="btn btn-cancel">Hủy</a>
+        </div>
+    </div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

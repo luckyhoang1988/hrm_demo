@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách ứng viên</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 8px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue  { background: #1565C0; color: white; }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-red   { background: #c62828; color: white; }
+        .container { padding: 24px 30px; }
+        .filter-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .filter-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; }
+        .filter-box input, .filter-box select { padding: 7px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; height: 34px; }
+        .filter-box input:focus, .filter-box select:focus { border-color: #1565C0; }
+
+        /* Bulk action bar */
+        .bulk-bar {
+            display: none;
+            background: #0D47A1;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .bulk-bar.visible { display: flex; }
+        .bulk-bar .selected-count { font-size: 13px; font-weight: 600; }
+        .bulk-bar select { padding: 5px 10px; border-radius: 5px; font-size: 13px; border: none; outline: none; height: 30px; }
+        .bulk-bar .btn-apply { background: white; color: #0D47A1; border: none; padding: 5px 14px; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; height: 30px; }
+        .bulk-bar .btn-delete { background: #ef9a9a; color: #b71c1c; border: none; padding: 5px 14px; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; height: 30px; }
+        .bulk-bar .btn-cancel { background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; height: 30px; }
+
+        .table-box { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+        .result-info { padding: 10px 18px; font-size: 13px; color: #888; border-bottom: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 11px 16px; text-align: left; font-size: 13px; }
+        td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        th.cb-col, td.cb-col { width: 40px; padding: 8px 12px; }
+        input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #1565C0; }
+        tr.row-selected td { background: #e3f2fd !important; }
+
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-new        { background: #e3f2fd; color: #1565C0; }
+        .pill-screening  { background: #fff8e1; color: #f57f17; }
+        .pill-interview  { background: #e8f5e9; color: #2e7d32; }
+        .pill-offer      { background: #f3e5f5; color: #6a1b9a; }
+        .pill-hired      { background: #e8f5e9; color: #1b5e20; }
+        .pill-rejected   { background: #ffebee; color: #c62828; }
+
+        .action-links a { color: #1565C0; text-decoration: none; font-size: 12px; margin-right: 8px; }
+        .action-links a:hover { text-decoration: underline; }
+
+        .pagination { display: flex; gap: 6px; padding: 14px 18px; align-items: center; }
+        .pagination a, .pagination span { padding: 6px 12px; border-radius: 6px; font-size: 13px; text-decoration: none; border: 1px solid #e0e0e0; }
+        .pagination a { color: #1565C0; background: white; }
+        .pagination a:hover { background: #e3f2fd; }
+        .pagination .current { background: #1565C0; color: white; border-color: #1565C0; }
+
+        .empty-state { padding: 60px 20px; text-align: center; color: #bbb; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>👤 Ứng viên</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:applicant_kanban' %}" class="btn btn-white">🗂 Tiến trình
+        <a href="{% url 'talent:talent_home' %}" class="btn btn-white">← Tuyển dụng & ĐT</a>
+        <a href="{% url 'talent:applicant_create' %}" class="btn btn-green">+ Thêm ứng viên</a>
+    </div>
+</div>
+<div class="container">
+    {% if messages %}
+    {% for m in messages %}
+    <div style="background:{% if m.tags == 'error' %}#ffebee{% else %}#e8f5e9{% endif %}; border:1px solid {% if m.tags == 'error' %}#ef9a9a{% else %}#a5d6a7{% endif %}; border-radius:8px; padding:10px 16px; margin-bottom:12px; font-size:13px; color:{% if m.tags == 'error' %}#c62828{% else %}#2e7d32{% endif %};">{{ m }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="get" class="filter-box">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="q" value="{{ q }}" placeholder="Tên, email, SĐT..." style="width:200px;">
+            </div>
+            <div class="filter-group">
+                <label>Giai đoạn</label>
+                <select name="stage">
+                    <option value="">Tất cả</option>
+                    {% for key, label in stage_choices %}
+                    <option value="{{ key }}" {% if stage_f == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Vị trí</label>
+                <select name="job">
+                    <option value="">Tất cả</option>
+                    {% for j in jobs %}
+                    <option value="{{ j.pk }}" {% if job_f == j.pk|stringformat:"s" %}selected{% endif %}>{{ j.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Nguồn</label>
+                <select name="source">
+                    <option value="">Tất cả</option>
+                    {% for key, label in source_choices %}
+                    <option value="{{ key }}" {% if source_f == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-blue" style="height:34px; padding:0 16px;">Lọc</button>
+            <a href="{% url 'talent:applicant_list' %}" class="btn" style="background:#e0e0e0; color:#555; height:34px; line-height:20px;">Xóa lọc</a>
+        </div>
+    </form>
+
+    <!-- Bulk Action Form -->
+    <form method="post" id="bulk-form" action="?{{ base_filter_qs }}">
+        {% csrf_token %}
+        <input type="hidden" name="bulk_action" id="bulk-action-input" value="">
+        <input type="hidden" name="new_stage" id="bulk-stage-input" value="">
+
+        <!-- Bulk action bar -->
+        <div class="bulk-bar" id="bulk-bar">
+            <span class="selected-count">Đã chọn <strong id="selected-num">0</strong> ứng viên</span>
+            <select id="bulk-stage-select">
+                <option value="">-- Chọn giai đoạn mới --</option>
+                {% for key, label in stage_choices %}
+                <option value="{{ key }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn-apply" onclick="submitBulk('change_stage')">Áp dụng</button>
+            <button type="button" class="btn-delete" onclick="if(confirm('Xóa các ứng viên đã chọn?')) submitBulk('delete')">🗑 Xóa</button>
+            <button type="button" class="btn-cancel" onclick="clearSelection()">✕ Bỏ chọn</button>
+        </div>
+
+        <div class="table-box">
+            <div class="result-info">Tìm thấy <strong>{{ total_count }}</strong> ứng viên</div>
+            {% if page_obj.object_list %}
+            <table>
+                <thead>
+                    <tr>
+                        <th class="cb-col"><input type="checkbox" id="check-all" title="Chọn tất cả"></th>
+                        <th>Họ tên</th>
+                        <th>Vị trí</th>
+                        <th>Email</th>
+                        <th>Nguồn</th>
+                        <th>Giai đoạn</th>
+                        <th>Ngày nộp</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in page_obj %}
+                    <tr id="row-{{ a.pk }}">
+                        <td class="cb-col">
+                            <input type="checkbox" name="selected_ids" value="{{ a.pk }}" class="row-cb" onchange="updateBulkBar()">
+                        </td>
+                        <td><a href="{% url 'talent:applicant_detail' a.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ a.full_name }}</a></td>
+                        <td>{{ a.job_position.title }}</td>
+                        <td>{{ a.email }}</td>
+                        <td>{{ a.get_source_display }}</td>
+                        <td><span class="pill pill-{{ a.stage }}">{{ a.get_stage_display }}</span></td>
+                        <td>{{ a.applied_at|date:"d/m/Y" }}</td>
+                        <td class="action-links">
+                            <a href="{% url 'talent:applicant_detail' a.pk %}">Chi tiết</a>
+                            <a href="{% url 'talent:applicant_change_stage' a.pk %}">Đổi GĐ</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}<a href="?{{ base_filter_qs }}&page={{ page_obj.previous_page_number }}">‹</a>{% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}<span class="current">{{ num }}</span>
+                {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}<a href="?{{ base_filter_qs }}&page={{ num }}">{{ num }}</a>{% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}<a href="?{{ base_filter_qs }}&page={{ page_obj.next_page_number }}">›</a>{% endif %}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="empty-state">
+                <div style="font-size:40px; margin-bottom:12px;">👤</div>
+                <p>Chưa có ứng viên nào.</p>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+const checkAll = document.getElementById('check-all');
+const bulkBar  = document.getElementById('bulk-bar');
+const selNum   = document.getElementById('selected-num');
+
+function getChecked() {
+    return [...document.querySelectorAll('.row-cb:checked')];
+}
+
+function updateBulkBar() {
+    const checked = getChecked();
+    selNum.textContent = checked.length;
+    bulkBar.classList.toggle('visible', checked.length > 0);
+    // Highlight rows
+    document.querySelectorAll('.row-cb').forEach(cb => {
+        cb.closest('tr').classList.toggle('row-selected', cb.checked);
+    });
+    checkAll.indeterminate = checked.length > 0 && checked.length < document.querySelectorAll('.row-cb').length;
+    checkAll.checked = checked.length === document.querySelectorAll('.row-cb').length && checked.length > 0;
+}
+
+checkAll.addEventListener('change', () => {
+    document.querySelectorAll('.row-cb').forEach(cb => cb.checked = checkAll.checked);
+    updateBulkBar();
+});
+
+function submitBulk(action) {
+    const checked = getChecked();
+    if (!checked.length) { alert('Chưa chọn ứng viên nào.'); return; }
+    if (action === 'change_stage') {
+        const stage = document.getElementById('bulk-stage-select').value;
+        if (!stage) { alert('Vui lòng chọn giai đoạn mới.'); return; }
+        document.getElementById('bulk-stage-input').value = stage;
+    }
+    document.getElementById('bulk-action-input').value = action;
+    document.getElementById('bulk-form').submit();
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
+    checkAll.checked = false;
+    updateBulkBar();
+}
+</script>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

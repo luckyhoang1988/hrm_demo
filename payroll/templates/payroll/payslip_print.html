@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Phiếu lương — {{ payslip.employee.full_name }} {{ payslip.month|stringformat:"02d" }}/{{ payslip.year }}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Times New Roman',serif;background:#fff;color:#000;font-size:13px}
+.page{max-width:720px;margin:20px auto;padding:20px 32px;border:1px solid #ccc}
+.company-header{text-align:center;margin-bottom:24px;border-bottom:2px solid #000;padding-bottom:14px}
+.company-header h2{font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:1px}
+.company-header p{font-size:12px;color:#555;margin-top:4px}
+.doc-title{text-align:center;margin:16px 0 20px}
+.doc-title h1{font-size:20px;font-weight:900;text-transform:uppercase}
+.doc-title p{font-size:13px;color:#333;margin-top:4px}
+.info-table{width:100%;border-collapse:collapse;margin-bottom:20px}
+.info-table td{padding:5px 8px;font-size:13px;vertical-align:top}
+.info-table td:first-child{font-weight:700;width:42%;color:#333}
+.salary-table{width:100%;border-collapse:collapse;margin-bottom:20px}
+.salary-table th{background:#f5f5f5;padding:8px 10px;text-align:left;font-size:12px;border:1px solid #bbb;font-weight:700}
+.salary-table td{padding:7px 10px;border:1px solid #ddd;font-size:13px}
+.salary-table .amount{text-align:right;font-family:'Courier New',monospace}
+.salary-table .section-row td{background:#eef4fb;font-weight:700;font-size:12px;text-transform:uppercase;color:#1565C0}
+.salary-table .total-row td{font-weight:700;font-size:14px;background:#f5f5f5}
+.salary-table .net-row td{font-weight:900;font-size:16px;background:#e8f5e9;color:#2e7d32}
+.salary-table .deduct{color:#c62828}
+.signatures{display:flex;justify-content:space-between;margin-top:40px;text-align:center}
+.sig-box{width:30%}
+.sig-box p{font-size:12px;font-weight:700;text-transform:uppercase;margin-bottom:60px}
+.note-line{font-size:12px;color:#555;font-style:italic;border-top:1px dashed #bbb;padding-top:10px;margin-top:20px}
+@media print{body{margin:0}.page{border:none;margin:0;padding:16px}@page{size:A4;margin:10mm}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="company-header">
+    <h2>Công ty TNHH / Cty CP — HRM System</h2>
+    <p>Địa chỉ: _______________________ | Điện thoại: _______________________</p>
+  </div>
+
+  <div class="doc-title">
+    <h1>Phiếu lương</h1>
+    <p>Tháng {{ payslip.month|stringformat:"02d" }} năm {{ payslip.year }}</p>
+  </div>
+
+  <table class="info-table">
+    <tr><td>Họ và tên:</td><td>{{ payslip.employee.full_name }}</td><td>Mã NV:</td><td>{{ payslip.employee.employee_code }}</td></tr>
+    <tr><td>Phòng ban:</td><td>{{ payslip.employee.department.name }}</td><td>Số HĐ:</td><td>{% if payslip.contract %}{{ payslip.contract.contract_number }}{% else %}—{% endif %}</td></tr>
+    <tr><td>Người phụ thuộc:</td><td>{{ payslip.dependents }} người</td><td>Ngày in:</td><td>{% now "d/m/Y" %}</td></tr>
+  </table>
+
+  <table class="salary-table">
+    <thead>
+      <tr><th style="width:60%">Khoản mục</th><th style="width:40%;text-align:right">Số tiền (đồng)</th></tr>
+    </thead>
+    <tbody>
+      <tr class="section-row"><td colspan="2">A. Thu nhập</td></tr>
+      <tr><td>1. Lương cơ bản</td><td class="amount">{{ payslip.basic_salary|floatformat:0 }}</td></tr>
+      {% if payslip.allowances_detail %}
+      {% for key, val in payslip.allowances_detail.items %}
+      <tr><td>&nbsp;&nbsp;&nbsp;Phụ cấp: {{ key }}</td><td class="amount">{{ val|floatformat:0 }}</td></tr>
+      {% endfor %}
+      {% endif %}
+      {% if payslip.ot_hours %}
+      <tr><td>2. Tiền OT ({{ payslip.ot_hours }} giờ)</td><td class="amount">{{ payslip.ot_pay|floatformat:0 }}</td></tr>
+      {% endif %}
+      {% if payslip.other_additions %}
+      <tr><td>3. Thưởng / Phụ cấp khác</td><td class="amount">{{ payslip.other_additions|floatformat:0 }}</td></tr>
+      {% endif %}
+      <tr class="total-row"><td>Tổng thu nhập (Gross)</td><td class="amount">{{ payslip.gross_salary|floatformat:0 }}</td></tr>
+
+      <tr class="section-row"><td colspan="2">B. Khấu trừ</td></tr>
+      <tr><td class="deduct">1. BHXH nhân viên đóng (8%)</td><td class="amount deduct">{{ payslip.bhxh_amount|floatformat:0 }}</td></tr>
+      <tr><td class="deduct">2. BHYT nhân viên đóng (1.5%)</td><td class="amount deduct">{{ payslip.bhyt_amount|floatformat:0 }}</td></tr>
+      <tr><td class="deduct">3. BHTN nhân viên đóng (1%)</td><td class="amount deduct">{{ payslip.bhtn_amount|floatformat:0 }}</td></tr>
+      <tr><td>   Thu nhập chịu thuế TNCN</td><td class="amount">{{ payslip.taxable_income|floatformat:0 }}</td></tr>
+      <tr><td class="deduct">4. Thuế thu nhập cá nhân (lũy tiến)</td><td class="amount deduct">{{ payslip.pit_amount|floatformat:0 }}</td></tr>
+      {% if payslip.other_deductions %}
+      <tr><td class="deduct">5. Khấu trừ khác</td><td class="amount deduct">{{ payslip.other_deductions|floatformat:0 }}</td></tr>
+      {% endif %}
+
+      <tr class="net-row"><td>LƯƠNG THỰC NHẬN (NET)</td><td class="amount">{{ payslip.net_salary|floatformat:0 }}</td></tr>
+    </tbody>
+  </table>
+
+  {% if payslip.note %}
+  <p style="font-size:12px;font-style:italic;color:#555;margin-bottom:12px">Ghi chú: {{ payslip.note }}</p>
+  {% endif %}
+
+  <div class="signatures">
+    <div class="sig-box"><p>Người nhận lương</p>(Ký, ghi rõ họ tên)</div>
+    <div class="sig-box"><p>Kế toán</p>(Ký, ghi rõ họ tên)</div>
+    <div class="sig-box"><p>Giám đốc</p>(Ký, đóng dấu)</div>
+  </div>
+
+  <p class="note-line">Phiếu lương được tạo tự động bởi HRM System vào {{ payslip.calculated_at|date:"d/m/Y H:i" }}. Trạng thái: {{ payslip.get_status_display }}.</p>
+</div>
+
+<script>window.onload = function(){ window.print(); }</script>
+</body>
+</html>

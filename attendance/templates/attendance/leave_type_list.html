@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Loại nghỉ phép — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;gap:12px;align-items:center;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:1000px;margin:24px auto;padding:0 20px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.toolbar h1{font-size:18px;font-weight:700}
+.btn{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer}
+.btn-primary{background:#1565C0;color:#fff}
+.table-wrap{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fa;padding:10px 12px;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:hover td{background:#fafbff}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-yes{background:#e8f5e9;color:#2e7d32}
+.badge-no{background:#f5f5f5;color:#999}
+.badge-active{background:#e8f5e9;color:#2e7d32}
+.badge-inactive{background:#f5f5f5;color:#999}
+.actions{display:flex;gap:6px}
+.btn-sm{padding:4px 10px;border-radius:6px;font-size:12px;text-decoration:none;font-weight:500;border:none;cursor:pointer}
+.btn-edit{background:#e3f2fd;color:#1565C0}
+.btn-del{background:#ffebee;color:#c62828}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:attendance_home' %}">← Chấm công</a>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+<div class="container">
+  <div class="toolbar">
+    <h1>📂 Loại nghỉ phép</h1>
+    <a href="{% url 'attendance:leave_type_create' %}" class="btn btn-primary">+ Thêm loại</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Tên loại nghỉ</th>
+          <th>Mã</th>
+          <th>Tối đa (ngày/năm)</th>
+          <th>Hưởng lương</th>
+          <th>Cần duyệt</th>
+          <th>Nửa ngày</th>
+          <th>Chuyển năm</th>
+          <th>Giới tính</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lt in leave_types %}
+        <tr>
+          <td><strong>{{ lt.name }}</strong></td>
+          <td><code style="font-size:11px;background:#f5f5f5;padding:2px 6px;border-radius:4px">{{ lt.code }}</code></td>
+          <td>{% if lt.max_days_per_year == 0 %}Không giới hạn{% else %}{{ lt.max_days_per_year }}{% endif %}</td>
+          <td><span class="badge {% if lt.is_paid %}badge-yes{% else %}badge-no{% endif %}">{% if lt.is_paid %}Có{% else %}Không{% endif %}</span></td>
+          <td><span class="badge {% if lt.requires_approval %}badge-yes{% else %}badge-no{% endif %}">{% if lt.requires_approval %}Có{% else %}Không{% endif %}</span></td>
+          <td><span class="badge {% if lt.allow_half_day %}badge-yes{% else %}badge-no{% endif %}">{% if lt.allow_half_day %}Có{% else %}Không{% endif %}</span></td>
+          <td><span class="badge {% if lt.carry_over %}badge-yes{% else %}badge-no{% endif %}">{% if lt.carry_over %}Có{% else %}Không{% endif %}</span></td>
+          <td>{{ lt.get_gender_restriction_display }}</td>
+          <td><span class="badge {% if lt.is_active %}badge-active{% else %}badge-inactive{% endif %}">{% if lt.is_active %}Đang dùng{% else %}Tắt{% endif %}</span></td>
+          <td>
+            <div class="actions">
+              <a href="{% url 'attendance:leave_type_update' lt.pk %}" class="btn-sm btn-edit">Sửa</a>
+              <a href="{% url 'attendance:leave_type_delete' lt.pk %}" class="btn-sm btn-del">Xóa</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" style="text-align:center;padding:32px;color:#999">Chưa có loại nghỉ phép nào.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

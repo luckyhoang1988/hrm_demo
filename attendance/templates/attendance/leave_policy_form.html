@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chính sách phép năm — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right a{color:#bbdefb;text-decoration:none;font-size:13px}
+.container{max-width:600px;margin:32px auto;padding:0 20px}
+.card{background:#fff;border-radius:12px;padding:28px;border:1px solid #e0e0e0}
+.card-title{font-size:17px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #e0e0e0}
+.info-box{background:#e3f2fd;border-radius:8px;padding:14px 18px;font-size:13px;color:#1565C0;line-height:1.7;margin-bottom:20px}
+.formula-box{background:#f3e5f5;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px}
+.formula-box strong{color:#6a1b9a;display:block;margin-bottom:6px}
+.formula{font-family:monospace;font-size:14px;color:#333}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:5px}
+.form-group input{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px}
+.form-group input:focus{outline:none;border-color:#1565C0}
+.form-group .help-text{font-size:11px;color:#999;margin-top:3px}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.form-actions{display:flex;gap:10px;margin-top:22px}
+.btn{padding:9px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-cancel{background:#f5f5f5;color:#555;border:1.5px solid #ddd}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right"><a href="{% url 'attendance:attendance_home' %}">← Chấm công</a></div>
+</div>
+<div class="container">
+  <div class="card">
+    <div class="card-title">📜 Chính sách phép năm</div>
+    <div class="info-box">
+      Chính sách này xác định số ngày phép năm được cấp cho mỗi nhân viên, tính theo Bộ luật Lao động Việt Nam (Điều 113, BLLĐ 2019).
+    </div>
+    {% if policy %}
+    <div class="formula-box">
+      <strong>Công thức tính hiện tại:</strong>
+      <div class="formula">Ngày phép = {{ policy.base_annual_days }} + ⌊năm_thâm_niên / {{ policy.increment_years }}⌋ × {{ policy.increment_days }}</div>
+    </div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Tên chính sách</label>
+        {{ form.name }}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Số ngày cơ bản/năm</label>
+          {{ form.base_annual_days }}
+          <div class="help-text">Mặc định: 12 ngày</div>
+        </div>
+        <div class="form-group">
+          <label>Cứ mỗi X năm</label>
+          {{ form.increment_years }}
+          <div class="help-text">Mặc định: 5 năm</div>
+        </div>
+        <div class="form-group">
+          <label>Cộng thêm X ngày</label>
+          {{ form.increment_days }}
+          <div class="help-text">Mặc định: +1 ngày</div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">💾 Lưu chính sách</button>
+        <a href="{% url 'attendance:attendance_home' %}" class="btn btn-cancel">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

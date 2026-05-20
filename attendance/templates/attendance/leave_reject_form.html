@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Từ chối đơn nghỉ — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right a{color:#bbdefb;text-decoration:none;font-size:13px}
+.container{max-width:600px;margin:36px auto;padding:0 20px}
+.card{background:#fff;border-radius:12px;padding:28px;border:1px solid #e0e0e0}
+.card-title{font-size:17px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #e0e0e0;color:#c62828}
+.info-box{background:#ffebee;border-radius:8px;padding:14px;margin-bottom:20px;font-size:13px}
+.info-row{display:flex;gap:8px;margin-bottom:6px}
+.info-label{width:120px;color:#666;flex-shrink:0}
+.info-value{font-weight:600}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:5px}
+.form-group textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px}
+.form-group textarea:focus{outline:none;border-color:#c62828}
+.errorlist{list-style:none;color:#c62828;font-size:12px;margin-top:4px}
+.form-actions{display:flex;gap:10px;margin-top:22px}
+.btn{padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none}
+.btn-danger{background:#c62828;color:#fff}
+.btn-danger:hover{background:#b71c1c}
+.btn-cancel{background:#f5f5f5;color:#555;border:1.5px solid #ddd}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right"><a href="{% url 'attendance:leave_request_detail' leave_req.pk %}">← Chi tiết đơn</a></div>
+</div>
+<div class="container">
+  <div class="card">
+    <div class="card-title">✗ Từ chối đơn xin nghỉ</div>
+    <div class="info-box">
+      <div class="info-row"><span class="info-label">Nhân viên</span><span class="info-value">{{ leave_req.employee.full_name }}</span></div>
+      <div class="info-row"><span class="info-label">Loại nghỉ</span><span class="info-value">{{ leave_req.leave_type.name }}</span></div>
+      <div class="info-row"><span class="info-label">Thời gian</span><span class="info-value">{{ leave_req.start_date|date:"d/m/Y" }} → {{ leave_req.end_date|date:"d/m/Y" }} ({{ leave_req.total_days }} ngày)</span></div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>{{ form.comment.label }} *</label>
+        {{ form.comment }}
+        {% if form.comment.errors %}<ul class="errorlist">{% for e in form.comment.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-danger">✗ Từ chối đơn</button>
+        <a href="{% url 'attendance:leave_request_detail' leave_req.pk %}" class="btn btn-cancel">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

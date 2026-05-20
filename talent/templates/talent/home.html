@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Tuyển dụng & Đào tạo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; min-height: 100vh; }
+
+        .topbar {
+            background: #1565C0; color: white;
+            padding: 0 30px; height: 52px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .topbar-brand { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .btn-back {
+            background: rgba(255,255,255,0.18); color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.28); }
+
+        .hero {
+            background: linear-gradient(135deg, #1565C0 0%, #6A1B9A 100%);
+            color: white; padding: 44px 32px 40px; text-align: center;
+        }
+        .hero h2 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+        .hero p { font-size: 14px; opacity: 0.85; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 36px 24px 60px; }
+
+        .section-title {
+            font-size: 12px; font-weight: 700; color: #999;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 16px; margin-top: 32px;
+        }
+
+        /* KPI cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 8px; }
+        .kpi-card {
+            background: white; border-radius: 12px; border: 1px solid #e0e0e0;
+            padding: 20px 18px; text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .kpi-num { font-size: 28px; font-weight: 800; color: #1565C0; }
+        .kpi-label { font-size: 12px; color: #888; margin-top: 4px; }
+
+        /* Section cards */
+        .section-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+        .section-card {
+            background: white; border-radius: 14px; border: 1.5px solid #e8ecf0;
+            padding: 28px 22px 22px;
+            text-decoration: none; color: inherit;
+            display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+        }
+        .section-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            border-color: #bbdefb;
+        }
+        .card-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .bg-blue   { background: #e3f2fd; }
+        .bg-purple { background: #f3e5f5; }
+        .bg-orange { background: #fff3e0; }
+        .bg-teal   { background: #e0f2f1; }
+        .bg-green  { background: #e8f5e9; }
+        .card-name { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+        .card-desc { font-size: 12px; color: #888; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-brand">🎯 Tuyển dụng & Đào tạo</div>
+    <div class="topbar-right">
+        <a href="{% url 'home' %}" class="btn-back">← Trang chủ</a>
+    </div>
+</div>
+
+<div class="hero">
+    <h2>🎯 Tuyển dụng & Đào tạo</h2>
+    <p>Quản lý tuyển dụng, phỏng vấn, offer và chương trình đào tạo nhân viên</p>
+</div>
+
+<div class="container">
+
+    <!-- KPIs Tuyển dụng -->
+    <div class="section-title">Tổng quan Tuyển dụng</div>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-num">{{ open_jobs }}</div>
+            <div class="kpi-label">Vị trí đang tuyển</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num">{{ total_applicants }}</div>
+            <div class="kpi-label">Tổng ứng viên</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num">{{ hired_this_month }}</div>
+            <div class="kpi-label">Tuyển dụng tháng này</div>
+        </div>
+    </div>
+
+    <!-- Section cards Tuyển dụng -->
+    <div class="section-title">Quản lý Tuyển dụng</div>
+    <div class="section-grid">
+        <a href="{% url 'talent:job_list' %}" class="section-card">
+            <div class="card-icon bg-blue">💼</div>
+            <div class="card-name">Vị trí tuyển dụng</div>
+            <div class="card-desc">Quản lý các vị trí cần tuyển, theo dõi headcount và trạng thái</div>
+        </a>
+        <a href="{% url 'talent:applicant_list' %}" class="section-card">
+            <div class="card-icon bg-orange">👤</div>
+            <div class="card-name">Ứng viên</div>
+            <div class="card-desc">Danh sách ứng viên, theo dõi giai đoạn, quản lý hồ sơ CV</div>
+        </a>
+        <a href="{% url 'talent:recruitment_dashboard' %}" class="section-card">
+            <div class="card-icon bg-teal">📊</div>
+            <div class="card-name">Dashboard Tuyển dụng</div>
+            <div class="card-desc">Thống kê, KPIs, nguồn ứng viên và phễu tuyển dụng</div>
+        </a>
+    </div>
+
+    <!-- KPIs Đào tạo -->
+    <div class="section-title">Tổng quan Đào tạo</div>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-num">{{ active_courses }}</div>
+            <div class="kpi-label">Khóa học đang hoạt động</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num">{{ upcoming_sessions }}</div>
+            <div class="kpi-label">Buổi học sắp tới</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num">{{ expiring_certs }}</div>
+            <div class="kpi-label">Chứng chỉ còn hiệu lực</div>
+        </div>
+    </div>
+
+    <!-- Section cards Đào tạo -->
+    <div class="section-title">Quản lý Đào tạo</div>
+    <div class="section-grid">
+        <a href="{% url 'talent:course_list' %}" class="section-card">
+            <div class="card-icon bg-purple">📚</div>
+            <div class="card-name">Khóa đào tạo</div>
+            <div class="card-desc">Quản lý danh mục khóa học, mục tiêu và nội dung đào tạo</div>
+        </a>
+        <a href="{% url 'talent:session_list' %}" class="section-card">
+            <div class="card-icon bg-orange">🗓</div>
+            <div class="card-name">Buổi đào tạo</div>
+            <div class="card-desc">Lên lịch, theo dõi tiến độ và kết quả từng buổi học</div>
+        </a>
+        <a href="{% url 'talent:certificate_list' %}" class="section-card">
+            <div class="card-icon bg-green">🏆</div>
+            <div class="card-name">Chứng chỉ</div>
+            <div class="card-desc">Theo dõi chứng chỉ, ngày hết hạn và cần gia hạn</div>
+        </a>
+        <a href="{% url 'talent:training_dashboard' %}" class="section-card">
+            <div class="card-icon bg-teal">📈</div>
+            <div class="card-name">Dashboard Đào tạo</div>
+            <div class="card-desc">Thống kê tỷ lệ đạt, chi phí và hiệu quả đào tạo</div>
+        </a>
+    </div>
+
+    <!-- ── ANALYTICS SECTION ──────────────────────────── -->
+    <div class="section-title" style="margin-top:36px;">📊 Phân tích nhanh</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .an-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .an-card { background: white; border-radius: 14px; border: 1px solid #e8ecf0; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .an-card h4 { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #E3F2FD; }
+        .an-wrap { height: 220px; position: relative; }
+        @media(max-width:700px){ .an-grid{ grid-template-columns:1fr; } }
+    </style>
+    <div class="an-grid">
+        <div class="an-card">
+            <h4>Phễu tuyển dụng (tổng ứng viên)</h4>
+            <div class="an-wrap"><canvas id="an_funnelChart"></canvas></div>
+        </div>
+        <div class="an-card">
+            <h4>Nguồn ứng viên</h4>
+            <div class="an-wrap">
+                {% if source_labels %}
+                <canvas id="an_sourceChart"></canvas>
+                {% else %}
+                <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:13px">Chưa có dữ liệu</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="an-card" style="grid-column:span 2">
+            <h4>Tỷ lệ pass đào tạo theo phòng ban</h4>
+            <div class="an-wrap" style="height:240px">
+                {% if dt_labels %}
+                <canvas id="an_trainingChart"></canvas>
+                {% else %}
+                <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:13px">Chưa có dữ liệu đào tạo</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const palette = ['#1565C0','#42A5F5','#4CAF50','#FF9800','#EF5350','#AB47BC','#26A69A','#FF7043'];
+
+        // Chart 1: Phễu tuyển dụng (bar)
+        new Chart(document.getElementById('an_funnelChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ funnel_labels|safe }},
+                datasets: [{ data: {{ funnel_counts|safe }}, backgroundColor: palette, borderRadius: 5 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                animation: { duration: 400 }
+            }
+        });
+
+        // Chart 2: Nguồn ứng viên (doughnut)
+        {% if source_labels %}
+        new Chart(document.getElementById('an_sourceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ source_labels|safe }},
+                datasets: [{ data: {{ source_counts|safe }}, backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { font: { size: 12 }, padding: 8 } } },
+                animation: { duration: 400 }
+            }
+        });
+        {% endif %}
+
+        // Chart 3: Tỷ lệ pass đào tạo (grouped bar)
+        {% if dt_labels %}
+        new Chart(document.getElementById('an_trainingChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ dt_labels|safe }},
+                datasets: [
+                    { label: 'Tổng ghi danh', data: {{ dt_total|safe }}, backgroundColor: 'rgba(21,101,192,0.3)', borderColor: '#1565C0', borderWidth: 1.5, borderRadius: 4 },
+                    { label: 'Đạt (Pass)',     data: {{ dt_passed|safe }}, backgroundColor: 'rgba(76,175,80,0.6)', borderColor: '#4CAF50', borderWidth: 1.5, borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { font: { size: 12 } } } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                animation: { duration: 400 }
+            }
+        });
+        {% endif %}
+    })();
+    </script>
+
+</div>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

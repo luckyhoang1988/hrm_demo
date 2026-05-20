@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách buổi đào tạo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 10px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-blue  { background: #1565C0; color: white; }
+        .container { padding: 24px 30px; }
+        .filter-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+        .filter-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; }
+        .filter-box input, .filter-box select { padding: 7px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; height: 34px; outline: none; }
+        .table-box { background: white; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 11px 16px; text-align: left; font-size: 13px; }
+        td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-planned   { background: #e3f2fd; color: #1565C0; }
+        .pill-ongoing   { background: #e8f5e9; color: #2e7d32; }
+        .pill-completed { background: #f3e5f5; color: #6a1b9a; }
+        .pill-cancelled { background: #ffebee; color: #c62828; }
+        .action-links a { color: #1565C0; text-decoration: none; font-size: 12px; margin-right: 8px; }
+        .action-links a.del { color: #c62828; }
+        .empty-state { padding: 60px 20px; text-align: center; color: #bbb; }
+        .pagination { display: flex; gap: 6px; padding: 14px 18px; align-items: center; }
+        .pagination a, .pagination span { padding: 6px 12px; border-radius: 6px; font-size: 13px; text-decoration: none; border: 1px solid #e0e0e0; }
+        .pagination a { color: #1565C0; background: white; }
+        .pagination .current { background: #1565C0; color: white; border-color: #1565C0; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🗓 Buổi đào tạo</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:talent_home' %}" class="btn btn-white">← Tổng quan</a>
+        <a href="{% url 'talent:session_create' %}" class="btn btn-green">+ Tạo buổi học</a>
+    </div>
+</div>
+<div class="container">
+    <form method="get" class="filter-box">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="q" value="{{ q }}" placeholder="Mã, tên khóa học, giảng viên..." style="width:220px;">
+            </div>
+            <div class="filter-group">
+                <label>Khóa học</label>
+                <select name="course">
+                    <option value="">Tất cả</option>
+                    {% for c in courses %}
+                    <option value="{{ c.pk }}" {% if course_f == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Trạng thái</label>
+                <select name="status">
+                    <option value="">Tất cả</option>
+                    {% for key, label in session_statuses %}
+                    <option value="{{ key }}" {% if status_f == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-blue" style="height:34px;">Lọc</button>
+            <a href="{% url 'talent:session_list' %}" class="btn" style="background:#e0e0e0; color:#555; height:34px; line-height:20px;">Xóa lọc</a>
+        </div>
+    </form>
+    <div class="table-box">
+        {% if page_obj.object_list %}
+        <table>
+            <thead>
+                <tr><th>Mã lớp</th><th>Khóa học</th><th>Giảng viên</th><th>Địa điểm</th><th>Thời gian</th><th>Đăng ký</th><th>Trạng thái</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                <tr>
+                    <td><a href="{% url 'talent:session_detail' s.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ s.session_code }}</a></td>
+                    <td><a href="{% url 'talent:course_detail' s.course.pk %}" style="color:#555; text-decoration:none;">{{ s.course.name }}</a></td>
+                    <td>{{ s.trainer_name }}</td>
+                    <td>{{ s.location }}</td>
+                    <td>{{ s.start_date|date:"d/m/Y" }}{% if s.end_date != s.start_date %} – {{ s.end_date|date:"d/m/Y" }}{% endif %}</td>
+                    <td>{{ s.enrolled_count }}{% if s.max_participants %}/{{ s.max_participants }}{% endif %}</td>
+                    <td><span class="pill pill-{{ s.status }}">{{ s.get_status_display }}</span></td>
+                    <td class="action-links">
+                        <a href="{% url 'talent:session_detail' s.pk %}">Chi tiết</a>
+                        <a href="{% url 'talent:session_update' s.pk %}">Sửa</a>
+                        <a href="{% url 'talent:session_delete' s.pk %}" class="del">Xóa</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&course={{ course_f }}&status={{ status_f }}">‹</a>{% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}<span class="current">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}<a href="?page={{ num }}&q={{ q }}&course={{ course_f }}&status={{ status_f }}">{{ num }}</a>{% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q }}&course={{ course_f }}&status={{ status_f }}">›</a>{% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size:40px; margin-bottom:12px;">🗓</div>
+            <p>Chưa có buổi học nào. <a href="{% url 'talent:session_create' %}" style="color:#1565C0;">Tạo ngay</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

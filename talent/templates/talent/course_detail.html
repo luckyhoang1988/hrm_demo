@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ course.name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 10px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue  { background: #1565C0; color: white; }
+        .btn-green { background: #4CAF50; color: white; }
+        .container { padding: 24px 30px; display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+        .sidebar { display: flex; flex-direction: column; gap: 16px; }
+        .card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .card-title { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; margin-bottom: 12px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: #888; }
+        .stat-value { font-weight: 600; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-active { background: #e8f5e9; color: #2e7d32; }
+        .pill-inactive { background: #f5f5f5; color: #999; }
+        .pill-mandatory { background: #fff3e0; color: #e65100; }
+        .main { display: flex; flex-direction: column; gap: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 10px 16px; text-align: left; font-size: 13px; }
+        td { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        .action-links a { color: #1565C0; text-decoration: none; font-size: 12px; margin-right: 8px; }
+        .empty-state { padding: 40px; text-align: center; color: #bbb; }
+        .pill-planned   { background: #e3f2fd; color: #1565C0; }
+        .pill-ongoing   { background: #e8f5e9; color: #2e7d32; }
+        .pill-completed { background: #f3e5f5; color: #6a1b9a; }
+        .pill-cancelled { background: #ffebee; color: #c62828; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>📚 {{ course.name }}</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:course_list' %}" class="btn btn-white">← Danh sách</a>
+        <a href="{% url 'talent:course_update' course.pk %}" class="btn btn-blue">Sửa</a>
+        <a href="{% url 'talent:session_create' %}?course={{ course.pk }}" class="btn btn-green">+ Tạo lớp học</a>
+    </div>
+</div>
+<div class="container">
+    <div class="sidebar">
+        <div class="card">
+            <div class="card-title">Thông tin khóa học</div>
+            <div class="stat-row"><span class="stat-label">Mã</span><span class="stat-value" style="font-family:monospace;">{{ course.code }}</span></div>
+            <div class="stat-row"><span class="stat-label">Danh mục</span><span class="stat-value">{{ course.get_category_display }}</span></div>
+            <div class="stat-row"><span class="stat-label">Hình thức</span><span class="stat-value">{{ course.get_delivery_method_display }}</span></div>
+            <div class="stat-row"><span class="stat-label">Số giờ</span><span class="stat-value">{{ course.duration_hours }}h</span></div>
+            <div class="stat-row"><span class="stat-label">Đơn vị tổ chức</span><span class="stat-value">{{ course.provider }}</span></div>
+            {% if course.cost_per_person %}
+            <div class="stat-row"><span class="stat-label">Chi phí/người</span><span class="stat-value">{{ course.cost_per_person|floatformat:0 }} đ</span></div>
+            {% endif %}
+            {% if course.certificate_validity_months %}
+            <div class="stat-row"><span class="stat-label">Hiệu lực CC</span><span class="stat-value">{{ course.certificate_validity_months }} tháng</span></div>
+            {% endif %}
+            <div class="stat-row">
+                <span class="stat-label">Trạng thái</span>
+                <span class="stat-value">
+                    {% if course.is_active %}<span class="pill pill-active">Hoạt động</span>
+                    {% else %}<span class="pill pill-inactive">Không HĐ</span>{% endif %}
+                    {% if course.is_mandatory %}<span class="pill pill-mandatory" style="margin-left:4px;">Bắt buộc</span>{% endif %}
+                </span>
+            </div>
+        </div>
+        {% if course.description %}
+        <div class="card">
+            <div class="card-title">Mô tả</div>
+            <div style="font-size:13px; color:#555; line-height:1.6;">{{ course.description }}</div>
+        </div>
+        {% endif %}
+        {% if course.target_departments.exists %}
+        <div class="card">
+            <div class="card-title">Phòng ban mục tiêu</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                {% for dept in course.target_departments.all %}
+                <span style="background:#e3f2fd; color:#1565C0; font-size:12px; padding:3px 10px; border-radius:12px; font-weight:600;">{{ dept.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <div style="display:flex; gap:8px;">
+            <a href="{% url 'talent:course_update' course.pk %}" class="btn btn-blue" style="flex:1; text-align:center;">Sửa</a>
+            <a href="{% url 'talent:course_delete' course.pk %}" class="btn" style="background:#ffebee; color:#c62828; flex:1; text-align:center;">Xóa</a>
+        </div>
+    </div>
+    <div class="main">
+        <div class="card" style="padding:0;">
+            <div style="padding:14px 18px; border-bottom:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:14px;">Các lớp học ({{ sessions|length }})</strong>
+                <a href="{% url 'talent:session_create' %}?course={{ course.pk }}" class="btn btn-green" style="font-size:12px; padding:5px 12px;">+ Tạo lớp</a>
+            </div>
+            {% if sessions %}
+            <table>
+                <thead>
+                    <tr><th>Mã lớp</th><th>Giảng viên</th><th>Địa điểm</th><th>Thời gian</th><th>Đăng ký</th><th>Trạng thái</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for s in sessions %}
+                    <tr>
+                        <td><a href="{% url 'talent:session_detail' s.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ s.session_code }}</a></td>
+                        <td>{{ s.trainer_name }}</td>
+                        <td>{{ s.location }}</td>
+                        <td>{{ s.start_date|date:"d/m/Y" }}{% if s.end_date != s.start_date %} – {{ s.end_date|date:"d/m/Y" }}{% endif %}</td>
+                        <td>{{ s.enrolled_count }}{% if s.max_participants %}/{{ s.max_participants }}{% endif %}</td>
+                        <td><span class="pill pill-{{ s.status }}">{{ s.get_status_display }}</span></td>
+                        <td class="action-links">
+                            <a href="{% url 'talent:session_detail' s.pk %}">Chi tiết</a>
+                            <a href="{% url 'talent:session_update' s.pk %}">Sửa</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">Chưa có lớp học nào. <a href="{% url 'talent:session_create' %}?course={{ course.pk }}" style="color:#1565C0;">Tạo lớp đầu tiên</a></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

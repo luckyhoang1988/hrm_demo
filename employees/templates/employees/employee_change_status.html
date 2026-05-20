@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thay đổi trạng thái — {{ employee.full_name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px;
+        }
+
+        .page-card {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 680px;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, #1565C0, #1976D2);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-icon {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .page-header h2 { font-size: 18px; font-weight: 700; color: white; margin-bottom: 3px; }
+        .page-header p  { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+        /* Employee summary */
+        .emp-summary {
+            padding: 18px 32px;
+            background: #F8FAFF;
+            border-bottom: 1px solid #E3EAF5;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .emp-avatar {
+            width: 46px; height: 46px; border-radius: 50%;
+            background: #1565C0; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 19px; font-weight: 700; flex-shrink: 0;
+            overflow: hidden;
+        }
+        .emp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .emp-name { font-size: 15px; font-weight: 700; color: #222; }
+        .emp-meta { font-size: 12px; color: #888; margin-top: 3px; }
+        .current-badge {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* Body */
+        .page-body { padding: 28px 32px; }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 14px;
+        }
+
+        /* Status grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .status-grid.single-col { grid-template-columns: 1fr; }
+
+        .status-card { cursor: pointer; }
+        .status-card input[type=radio] { display: none; }
+        .status-card .card-inner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border: 2px solid #e8ecf0;
+            border-radius: 12px;
+            transition: all 0.18s;
+            background: white;
+            position: relative;
+        }
+        .status-card .card-inner:hover {
+            border-color: #90CAF9;
+            background: #F8FAFF;
+        }
+        .status-card input:checked + .card-inner {
+            border-color: var(--sc);
+            background: var(--sb);
+            box-shadow: 0 0 0 1px var(--sc);
+        }
+        .status-card input:checked + .card-inner .s-check {
+            display: flex;
+        }
+        .s-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            background: var(--sb);
+        }
+        .s-text { flex: 1; min-width: 0; }
+        .s-name { font-size: 13px; font-weight: 700; color: #222; }
+        .s-desc { font-size: 11px; color: #aaa; margin-top: 2px; line-height: 1.3; }
+        .s-check {
+            display: none;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: var(--sc);
+            color: white;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        /* Current status indicator */
+        .current-tag {
+            position: absolute;
+            top: -8px; right: 10px;
+            background: #1565C0;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        /* Section divider */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 12px;
+            color: #ccc;
+            font-size: 12px;
+        }
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            border-top: 1px solid #eee;
+        }
+
+        /* Extra fields */
+        .extra-fields {
+            display: none;
+            background: #F8FAFF;
+            border: 1px solid #E3EAF5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        .extra-fields.show { display: block; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .form-group input[type=date],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border 0.2s;
+            background: white;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.1); }
+        .form-group textarea { resize: vertical; min-height: 90px; }
+
+        /* Date range row */
+        .date-range-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .date-range-row .form-group { flex: 1; margin-bottom: 0; }
+        .date-range-arrow {
+            font-size: 20px;
+            color: #bbb;
+            padding-bottom: 10px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .duration-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* Terminate extra (red theme) */
+        .terminate-extra {
+            background: #FFF5F5;
+            border-color: #FFCDD2;
+        }
+        .terminate-extra input:focus,
+        .terminate-extra textarea:focus { border-color: #E53935; box-shadow: 0 0 0 3px rgba(229,57,53,0.1); }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .btn {
+            padding: 11px 24px;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-save   { background: #1565C0; color: white; flex: 1; }
+        .btn-save:hover { background: #0D47A1; }
+        .btn-cancel { background: #f0f0f0; color: #555; flex: 1; }
+        .btn-cancel:hover { background: #e0e0e0; }
+    </style>
+</head>
+<body>
+
+<div class="page-card">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-icon">🔄</div>
+        <div>
+            <h2>Thay đổi trạng thái nhân viên</h2>
+            <p>Cập nhật trạng thái làm việc và ghi chú đi kèm</p>
+        </div>
+    </div>
+
+    <!-- Employee summary -->
+    <div class="emp-summary">
+        <div class="emp-avatar">
+            {% if employee.photo %}
+                <img src="{{ employee.photo.url }}" alt="">
+            {% else %}
+                {{ employee.full_name|first|upper }}
+            {% endif %}
+        </div>
+        <div>
+            <div class="emp-name">{{ employee.full_name }}</div>
+            <div class="emp-meta">
+                {% if employee.employee_code %}<span style="font-family:monospace;">{{ employee.employee_code }}</span> · {% endif %}
+                {{ employee.position }} · {{ employee.department }}
+            </div>
+        </div>
+        <span class="current-badge" id="current-badge-display">{{ employee.get_status_display }}</span>
+    </div>
+
+    <!-- Form -->
+    <div class="page-body">
+        <form method="post" id="status-form">
+            {% csrf_token %}
+
+            <div class="section-label">Đang làm việc</div>
+            <div class="status-grid">
+
+                <label class="status-card"
+                       style="--sc:#2E7D32; --sb:#E8F5E9;">
+                    <input type="radio" name="status" value="dang_lam"
+                           {% if employee.status == 'dang_lam' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'dang_lam' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">💼</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#2E7D32;">Đang làm việc</div>
+                            <div class="s-desc">Làm việc bình thường, hợp đồng còn hiệu lực</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+                <label class="status-card"
+                       style="--sc:#1565C0; --sb:#E3F2FD;">
+                    <input type="radio" name="status" value="thu_viec"
+                           {% if employee.status == 'thu_viec' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'thu_viec' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">📋</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#1565C0;">Thử việc</div>
+                            <div class="s-desc">Đang trong thời gian thử việc</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+                <label class="status-card"
+                       style="--sc:#7B1FA2; --sb:#F3E5F5;">
+                    <input type="radio" name="status" value="thuc_tap_sinh"
+                           {% if employee.status == 'thuc_tap_sinh' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'thuc_tap_sinh' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">🎓</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#7B1FA2;">Thực tập sinh</div>
+                            <div class="s-desc">Đang trong thời gian thực tập</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+            </div>
+
+            <div class="section-divider">Nghỉ có phép (vẫn là nhân viên)</div>
+
+            <div class="status-grid">
+
+                <label class="status-card"
+                       style="--sc:#00897B; --sb:#E0F2F1;">
+                    <input type="radio" name="status" value="nghi_phep"
+                           {% if employee.status == 'nghi_phep' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'nghi_phep' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">🏖</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#00897B;">Nghỉ phép</div>
+                            <div class="s-desc">Nghỉ phép năm hoặc nghỉ theo chế độ</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+                <label class="status-card"
+                       style="--sc:#D81B60; --sb:#FCE4EC;">
+                    <input type="radio" name="status" value="nghi_sinh"
+                           {% if employee.status == 'nghi_sinh' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'nghi_sinh' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">🤱</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#D81B60;">Nghỉ thai sản</div>
+                            <div class="s-desc">Nghỉ sinh, nghỉ chăm con nhỏ</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+                <label class="status-card"
+                       style="--sc:#E65100; --sb:#FFF3E0;">
+                    <input type="radio" name="status" value="nghi_khong_luong"
+                           {% if employee.status == 'nghi_khong_luong' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'nghi_khong_luong' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">⏸</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#E65100;">Nghỉ không lương</div>
+                            <div class="s-desc">Tạm nghỉ theo thỏa thuận, không nhận lương</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+                <label class="status-card"
+                       style="--sc:#6A1B9A; --sb:#F3E5F5;">
+                    <input type="radio" name="status" value="nghi_om"
+                           {% if employee.status == 'nghi_om' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'nghi_om' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">🏥</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#6A1B9A;">Nghỉ ốm dài ngày</div>
+                            <div class="s-desc">Điều trị bệnh, nghỉ ốm kéo dài</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+
+            </div>
+
+            <!-- Extra fields for temporary leave -->
+            <div class="extra-fields" id="note-fields">
+                <div class="date-range-row">
+                    <div class="form-group">
+                        <label>📅 Từ ngày</label>
+                        <input type="date" name="status_start_date"
+                               id="status_start_date"
+                               value="{{ employee.status_start_date|default:'' }}"
+                               onchange="calcDuration()">
+                    </div>
+                    <div class="date-range-arrow">→</div>
+                    <div class="form-group">
+                        <label>📅 Đến ngày (dự kiến)</label>
+                        <input type="date" name="status_end_date"
+                               id="status_end_date"
+                               value="{{ employee.status_end_date|default:'' }}"
+                               onchange="calcDuration()">
+                    </div>
+                </div>
+                <div class="duration-hint" id="duration-hint"></div>
+                <div class="form-group">
+                    <label>📝 Ghi chú / lý do</label>
+                    <textarea name="status_note" placeholder="VD: Nghỉ thai sản con thứ 2, nghỉ không lương để chăm sóc gia đình...">{{ employee.status_note }}</textarea>
+                </div>
+            </div>
+
+            <div class="section-divider">Chấm dứt hợp đồng</div>
+
+            <div class="status-grid single-col">
+                <label class="status-card"
+                       style="--sc:#B71C1C; --sb:#FFEBEE;">
+                    <input type="radio" name="status" value="nghi_viec"
+                           {% if employee.status == 'nghi_viec' %}checked{% endif %}
+                           onchange="onStatusChange(this)">
+                    <div class="card-inner">
+                        {% if employee.status == 'nghi_viec' %}<span class="current-tag">Hiện tại</span>{% endif %}
+                        <div class="s-icon">🚫</div>
+                        <div class="s-text">
+                            <div class="s-name" style="color:#B71C1C;">Nghỉ việc (chính thức)</div>
+                            <div class="s-desc">Chấm dứt hợp đồng lao động — hồ sơ được lưu lại để tra cứu lịch sử</div>
+                        </div>
+                        <div class="s-check">✓</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Extra fields for nghi_viec -->
+            <div class="extra-fields terminate-extra" id="terminate-fields">
+                <div class="form-group">
+                    <label>📅 Ngày nghỉ việc chính thức <span style="color:#E53935;">*</span></label>
+                    <input type="date" id="termination_date" name="termination_date"
+                           value="{{ employee.termination_date|default:today }}">
+                </div>
+                <div class="form-group">
+                    <label>📝 Lý do nghỉ việc</label>
+                    <textarea name="termination_reason"
+                              placeholder="VD: Xin nghỉ tự nguyện, hết hợp đồng, thôi việc theo quyết định...">{{ employee.termination_reason }}</textarea>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-cancel">← Hủy bỏ</a>
+                <button type="submit" class="btn btn-save">✓ Lưu thay đổi</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    const LEAVE_STATUSES = ['nghi_phep', 'nghi_sinh', 'nghi_khong_luong', 'nghi_om', 'thu_viec', 'thuc_tap_sinh'];
+
+    const BADGE_LABELS = {
+        'dang_lam':         'Đang làm việc',
+        'thu_viec':         'Thử việc',
+        'thuc_tap_sinh':    'Thực tập sinh',
+        'nghi_phep':        'Nghỉ phép',
+        'nghi_sinh':        'Nghỉ thai sản',
+        'nghi_khong_luong': 'Nghỉ không lương',
+        'nghi_om':          'Nghỉ ốm dài ngày',
+        'nghi_viec':        'Nghỉ việc',
+    };
+
+    const BADGE_COLORS = {
+        'dang_lam':         '#E8F5E9',
+        'thu_viec':         '#E3F2FD',
+        'thuc_tap_sinh':    '#F3E5F5',
+        'nghi_phep':        '#E0F2F1',
+        'nghi_sinh':        '#FCE4EC',
+        'nghi_khong_luong': '#FFF3E0',
+        'nghi_om':          '#F3E5F5',
+        'nghi_viec':        '#FFEBEE',
+    };
+
+    function onStatusChange(radio) {
+        const val = radio.value;
+        const isLeave     = LEAVE_STATUSES.includes(val);
+        const isTerminate = val === 'nghi_viec';
+
+        document.getElementById('note-fields').classList.toggle('show', isLeave);
+        document.getElementById('terminate-fields').classList.toggle('show', isTerminate);
+        document.getElementById('termination_date').required = isTerminate;
+
+        // Update badge preview
+        const badge = document.getElementById('current-badge-display');
+        badge.textContent = BADGE_LABELS[val] || val;
+        badge.style.background = BADGE_COLORS[val] || '#f0f0f0';
+        badge.style.color = '#333';
+    }
+
+    function calcDuration() {
+        const s = document.getElementById('status_start_date').value;
+        const e = document.getElementById('status_end_date').value;
+        const hint = document.getElementById('duration-hint');
+        if (!s || !e) { hint.textContent = ''; return; }
+        const start = new Date(s);
+        const end   = new Date(e);
+        if (end <= start) { hint.textContent = '⚠ Ngày kết thúc phải sau ngày bắt đầu.'; hint.style.color = '#E53935'; return; }
+        const days   = Math.round((end - start) / 86400000);
+        const months = Math.floor(days / 30);
+        const remDays = days % 30;
+        let txt = `Thời gian: ${days} ngày`;
+        if (months > 0) txt += ` (${months} tháng${remDays > 0 ? ` ${remDays} ngày` : ''})`;
+        hint.textContent = txt;
+        hint.style.color = '#00897B';
+    }
+
+    // Init on page load
+    (function () {
+        const checked = document.querySelector('input[name=status]:checked');
+        if (checked) onStatusChange(checked);
+        calcDuration();
+    })();
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

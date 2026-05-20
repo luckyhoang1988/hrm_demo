@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ job.title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 8px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue  { background: #1565C0; color: white; }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-red   { background: #c62828; color: white; }
+        .container { display: flex; gap: 24px; padding: 24px 30px; }
+        .main { flex: 1; }
+        .sidebar { width: 260px; flex-shrink: 0; }
+
+        .card { background: white; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 18px; overflow: hidden; }
+        .card-header { padding: 12px 18px; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; background: #f8f9fa; color: #1565C0; display: flex; justify-content: space-between; align-items: center; }
+        .card-body { padding: 18px; }
+
+        .stat-item { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-label { color: #888; }
+        .stat-val { font-weight: 600; }
+
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-draft        { background: #f5f5f5; color: #888; }
+        .pill-open         { background: #e8f5e9; color: #2e7d32; }
+        .pill-interviewing { background: #e3f2fd; color: #1565c0; }
+        .pill-filled       { background: #f3e5f5; color: #6a1b9a; }
+        .pill-cancelled    { background: #ffebee; color: #c62828; }
+
+        .pill-stage-new        { background: #e3f2fd; color: #1565C0; }
+        .pill-stage-screening  { background: #fff8e1; color: #f57f17; }
+        .pill-stage-interview  { background: #e8f5e9; color: #2e7d32; }
+        .pill-stage-offer      { background: #f3e5f5; color: #6a1b9a; }
+        .pill-stage-hired      { background: #e8f5e9; color: #1b5e20; }
+        .pill-stage-rejected   { background: #ffebee; color: #c62828; }
+
+        .stage-section { margin-bottom: 20px; }
+        .stage-title { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .stage-count { background: #e3f2fd; color: #1565C0; border-radius: 10px; padding: 1px 8px; font-size: 12px; }
+
+        .applicant-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+        .applicant-row:last-child { border-bottom: none; }
+        .applicant-name { font-size: 13px; font-weight: 600; color: #1565C0; text-decoration: none; }
+        .applicant-name:hover { text-decoration: underline; }
+        .applicant-meta { font-size: 12px; color: #999; margin-top: 2px; }
+        .applicant-actions a { font-size: 12px; color: #888; text-decoration: none; margin-left: 10px; }
+        .applicant-actions a:hover { color: #1565C0; }
+
+        .prose { font-size: 13px; line-height: 1.7; color: #555; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>💼 {{ job.title }}</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:job_list' %}" class="btn btn-white">← Danh sách</a>
+        <a href="{% url 'talent:applicant_create' %}?job={{ job.pk }}" class="btn btn-green">+ Thêm ứng viên</a>
+        <a href="{% url 'talent:job_update' job.pk %}" class="btn btn-blue">Sửa</a>
+        <a href="{% url 'talent:job_delete' job.pk %}" class="btn btn-red">Xóa</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="main">
+
+        <!-- Ứng viên theo giai đoạn -->
+        <div class="card">
+            <div class="card-header">
+                👤 Ứng viên theo giai đoạn
+                <a href="{% url 'talent:applicant_create' %}?job={{ job.pk }}" style="font-size:13px; color:#4CAF50; font-weight:600; text-decoration:none;">+ Thêm</a>
+            </div>
+            <div class="card-body">
+                {% for stage_key, stage_data in applicants_by_stage.items %}
+                {% if stage_data.items %}
+                <div class="stage-section">
+                    <div class="stage-title">
+                        <span class="pill pill-stage-{{ stage_key }}">{{ stage_data.label }}</span>
+                        <span class="stage-count">{{ stage_data.items|length }}</span>
+                    </div>
+                    {% for applicant in stage_data.items %}
+                    <div class="applicant-row">
+                        <div>
+                            <a href="{% url 'talent:applicant_detail' applicant.pk %}" class="applicant-name">{{ applicant.full_name }}</a>
+                            <div class="applicant-meta">{{ applicant.email }}{% if applicant.phone %} · {{ applicant.phone }}{% endif %}</div>
+                        </div>
+                        <div class="applicant-actions">
+                            <a href="{% url 'talent:applicant_detail' applicant.pk %}">Chi tiết</a>
+                            <a href="{% url 'talent:applicant_change_stage' applicant.pk %}">Đổi giai đoạn</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% if not job.applicants.all %}
+                <p style="color:#bbb; text-align:center; padding:20px 0;">Chưa có ứng viên nào.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if job.description %}
+        <div class="card">
+            <div class="card-header">📝 Mô tả công việc</div>
+            <div class="card-body"><div class="prose">{{ job.description }}</div></div>
+        </div>
+        {% endif %}
+
+        {% if job.requirements %}
+        <div class="card">
+            <div class="card-header">✅ Yêu cầu ứng viên</div>
+            <div class="card-body"><div class="prose">{{ job.requirements }}</div></div>
+        </div>
+        {% endif %}
+
+        {% if job.benefits %}
+        <div class="card">
+            <div class="card-header">🎁 Quyền lợi</div>
+            <div class="card-body"><div class="prose">{{ job.benefits }}</div></div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="sidebar">
+        <div class="card">
+            <div class="card-header">Thông tin vị trí</div>
+            <div class="card-body">
+                <div class="stat-item">
+                    <span class="stat-label">Trạng thái</span>
+                    <span><span class="pill pill-{{ job.status }}">{{ job.get_status_display }}</span></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Phòng ban</span>
+                    <span class="stat-val">{{ job.department.name }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Loại hình</span>
+                    <span class="stat-val">{{ job.get_employment_type_display }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Headcount</span>
+                    <span class="stat-val">{{ job.filled_count }}/{{ job.headcount }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Địa điểm</span>
+                    <span class="stat-val">{{ job.location }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Ngày mở</span>
+                    <span class="stat-val">{{ job.open_date|date:"d/m/Y" }}</span>
+                </div>
+                {% if job.close_date %}
+                <div class="stat-item">
+                    <span class="stat-label">Ngày đóng</span>
+                    <span class="stat-val">{{ job.close_date|date:"d/m/Y" }}</span>
+                </div>
+                {% endif %}
+                {% if job.salary_min or job.salary_max %}
+                <div class="stat-item">
+                    <span class="stat-label">Lương</span>
+                    <span class="stat-val">
+                        {% if job.salary_min %}{{ job.salary_min|floatformat:0 }}{% endif %}
+                        {% if job.salary_min and job.salary_max %} — {% endif %}
+                        {% if job.salary_max %}{{ job.salary_max|floatformat:0 }}{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% if job.hiring_manager %}
+                <div class="stat-item">
+                    <span class="stat-label">Phụ trách</span>
+                    <span class="stat-val">{{ job.hiring_manager.get_full_name|default:job.hiring_manager.username }}</span>
+                </div>
+                {% endif %}
+                <div class="stat-item">
+                    <span class="stat-label">Đã mở</span>
+                    <span class="stat-val">{{ job.days_open }} ngày</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Thống kê ứng viên</div>
+            <div class="card-body">
+                {% for stage_key, stage_data in applicants_by_stage.items %}
+                <div class="stat-item">
+                    <span class="stat-label">{{ stage_data.label }}</span>
+                    <span class="stat-val">{{ stage_data.items|length }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

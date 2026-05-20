@@ -1,0 +1,171 @@
+HRM- gồm có những app sau:
+-Quản lý nhân viên->Hợp đồng lao động->chấm công& nghỉ phép->tuyển dung & đào tạo-> Tính lương
+
+1----:Vòng đời nhân viên chuẩn
+Ứng viên
+   ↓
+Phỏng vấn
+   ↓
+Trúng tuyển
+   ↓
+Tạo hồ sơ nhân viên
+   ↓
+Ký hợp đồng
+   ↓
+Đào tạo hội nhập
+   ↓
+Chấm công
+   ↓
+Nghỉ phép
+   ↓
+Đánh giá
+   ↓
+Gia hạn hợp đồng
+   ↓
+Nghỉ việc
+
+2-----Nguyên tắc lớn nhất:CHỈ CÓ 1 NGUỒN DỮ LIỆU GỐC
+Ví dụ: employees là trung tâm, các app khác không lưu lại :
+	tên
+	số điện thoại
+	email
+	phòng ban
+	
+3----:Kiến trúc quan hệ chuẩn:
+App trung tâm:employees
+->Các app phụ liên kết:
+	contracts
+	attendance
+	leave
+	recruitment
+	training
+	
+4-----:Thiết kế quan hệ chuẩn
+-> employees sẽ là lõi của hệ thống
+	Employee
+	- employee_code
+	- full_name
+	- dob
+	- phone
+	- email
+	- department
+	- position
+	- status
+	
+5------:Recruitment(Tuyển dụng) → employees(quản lý nhân viên)
+
+App tuyển dụng KHÔNG tạo nhân viên ngay->chỉ lưu :Candidate
+-->Khi HR bấm “Tuyển dụng thành công :hệ thống tự động :
+Candidate
+   ↓
+Convert
+   ↓
+Employee
+
+6------:Dữ liệu nào được chuyển
+
+	| Candidate        | Employee  |
+	| ---------------- | --------- |
+	| full_name        | full_name |
+	| phone            | phone     |
+	| email            | email     |
+	| applied_position | position  |
+	
+7-----:contracts liên kết employees
+
+Một nhân viên có thể:
+nhiều hợp đồng
+gia hạn nhiều lần
+--->Quan hệ:Employee 1 → N Contract
+8------:Logic hợp đồng
+Khi hợp đồng sắp hết hạn-> Tự động:
+	✅ cảnh báo dashboard
+	✅ gửi email HR
+	✅ hiện popup
+9------:Attendance liên kết employees
+Không lưu lại thông tin nhân viên:->Chỉ lưu:
+	employee_id
+	date
+	check_in
+	check_out
+	
+10-----:leave liên kết attendance + employees
+Ví dụ:
+Nhân viên nghỉ phép
+   ↓
+Tự động ảnh hưởng chấm công
+11-----:Logic rất quan trọng
+Nếu:leave.status = approved
+->thì attendance tự:status = leave
+11------:training liên kết employees
+Một nhân viên:Employee 1 → N Training
+Ví dụ:
+	| Nhân viên | Đào tạo |
+	| --------- | ------- |
+	| A         | ATLĐ    |
+	| A         | PCCC    |
+	| A         | ISO     |
+	
+12------:Logic đào tạo thực tế
+Nếu chưa học ATLĐ:->không được vào công trường
+Nếu chứng chỉ hết hạn:-> dashboard cảnh báo
+13-------:Kiến trúc app chuẩn Django
+	myproject/
+	├── employees/
+	├── recruitment/
+	├── contracts/
+	├── attendance/
+	├── leave/
+	├── training/
+	├── departments/
+	├── dashboard/
+	└── core/
+	
+14-----:core app rất quan trọng
+Dùng cho:
+	base model
+	permissions
+	audit log
+	notifications
+	workflow
+	utilities
+	
+15------:Cần có audit log từ đầu
+Ví dụ:
+Ai sửa hợp đồng
+Ai duyệt nghỉ phép
+Ai xoá dữ liệu
+
+16-----:Thiết kế trạng thái chuẩn
+Employee status:
+	probation
+	active
+	inactive
+	resigned
+	terminated
+	
+Recruitment status:
+	applied
+	interview
+	passed
+	rejected
+	hired
+Leave status:
+	pending
+	approved
+	rejected
+	
+17-------:Điều cực kỳ quan trọng sau này
+employee_code duy nhất:
+Ví dụ:NV-260001
+sang tới năm mới thì thay đổi 2 số đầu là mã 2 số cuối của năm hiện tại
+
+18---:Hướng đi hiện tại cho HRM
+Kiến trúc hiện tại đang đúng với kiểu:
+Enterprise HRM
+Django
+PostgreSQL
+Docker
+workflow tự động
+audit log
+RBAC permission

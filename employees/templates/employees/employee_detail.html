@@ -1,0 +1,923 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    {% load humanize %}
+    <meta charset="UTF-8">
+    <title>{{ employee.full_name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            background: #1565C0;
+            color: white;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar h1 { font-size: 17px; font-weight: 600; }
+        .breadcrumb { font-size: 13px; opacity: 0.7; }
+        .breadcrumb a { color: white; text-decoration: none; }
+        .breadcrumb a:hover { opacity: 0.8; }
+
+        /* LAYOUT */
+        .layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 300px;
+            flex-shrink: 0;
+            background: linear-gradient(170deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-top {
+            padding: 36px 24px 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .avatar-ring {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, #42A5F5, #ffffff55);
+            margin-bottom: 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .avatar-inner {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 42px; font-weight: 800; color: white;
+            overflow: hidden;
+        }
+        .avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Overlay mờ cho avatar nghỉ việc */
+        .avatar-ring.terminated { opacity: 0.65; filter: grayscale(0.5); }
+
+        .emp-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .emp-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
+        .tag {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-pos  { background: rgba(179,136,255,0.3); color: #E1BEE7; border: 1px solid rgba(179,136,255,0.4); }
+        .tag-dept { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.2); }
+
+        .emp-code {
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            font-family: monospace;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        /* Status badge in sidebar */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .badge-active     { background: rgba(76,175,80,0.25); color: #A5D6A7; border: 1px solid rgba(76,175,80,0.4); }
+        .badge-probation  { background: rgba(255,152,0,0.25); color: #FFCC80; border: 1px solid rgba(255,152,0,0.4); }
+        .badge-terminated { background: rgba(244,67,54,0.25); color: #EF9A9A; border: 1px solid rgba(244,67,54,0.4); }
+
+        /* Sidebar stats */
+        .sidebar-stats {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .stat-text { flex: 1; min-width: 0; }
+        .stat-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
+        .stat-value { font-size: 13px; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Sidebar actions */
+        .sidebar-actions {
+            padding: 16px 24px 28px;
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-edit       { background: white; color: #1565C0; }
+        .btn-edit:hover { background: #E3F2FD; }
+        .btn-delete     { background: rgba(244,67,54,0.15); color: #ff8a80; border: 1px solid rgba(244,67,54,0.3); }
+        .btn-delete:hover { background: rgba(244,67,54,0.25); }
+        .btn-terminate  { background: rgba(183,28,28,0.25); color: #EF9A9A; border: 1px solid rgba(183,28,28,0.4); }
+        .btn-terminate:hover { background: rgba(183,28,28,0.4); }
+        .btn-reactivate { background: rgba(76,175,80,0.2); color: #A5D6A7; border: 1px solid rgba(76,175,80,0.4); }
+        .btn-reactivate:hover { background: rgba(76,175,80,0.35); }
+        .btn-back       { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+        .btn-back:hover { background: rgba(255,255,255,0.18); }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            flex: 1;
+            padding: 28px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Top row: 3 cards */
+        .cards-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Bottom: full-width salary */
+        .salary-card {
+            width: 100%;
+        }
+
+        /* CARDS */
+        .card {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 14px 20px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .card-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; flex-shrink: 0;
+        }
+        .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+
+        /* Colors per card */
+        .card-personal .card-icon  { background: #E3F2FD; }
+        .card-personal .card-title { color: #1565C0; }
+        .card-personal .bar        { background: #1565C0; }
+
+        .card-contact  .card-icon  { background: #E8F5E9; }
+        .card-contact  .card-title { color: #2E7D32; }
+        .card-contact  .bar        { background: #43A047; }
+
+        .card-work     .card-icon  { background: #F3E5F5; }
+        .card-work     .card-title { color: #6A1B9A; }
+        .card-work     .bar        { background: #7B1FA2; }
+
+        .card-salary   .card-icon  { background: #FFF3E0; }
+        .card-salary   .card-title { color: #E65100; }
+
+        .card-terminated .card-icon  { background: #FFEBEE; }
+        .card-terminated .card-title { color: #B71C1C; }
+        .card-terminated .bar        { background: #E53935; }
+
+        .bar { height: 3px; width: 100%; }
+
+        /* INFO LIST */
+        .info-list { padding: 6px 0; }
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 11px 20px;
+            gap: 12px;
+            border-bottom: 1px solid #fafafa;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label {
+            font-size: 12px;
+            color: #aaa;
+            width: 110px;
+            flex-shrink: 0;
+            padding-top: 2px;
+            font-weight: 500;
+        }
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #222;
+            flex: 1;
+            word-break: break-word;
+        }
+        .info-value.empty { color: #ccc; font-style: italic; font-weight: 400; }
+
+        /* SALARY DISPLAY */
+        .salary-body {
+            padding: 28px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .salary-main { display: flex; align-items: baseline; gap: 8px; }
+        .salary-num  { font-size: 42px; font-weight: 800; color: #E65100; line-height: 1; }
+        .salary-unit { font-size: 18px; font-weight: 600; color: #E65100; opacity: 0.7; }
+        .salary-label { font-size: 13px; color: #aaa; margin-top: 4px; }
+
+        .hire-box {
+            background: #FFF8E1;
+            border: 1px solid #FFE082;
+            border-radius: 12px;
+            padding: 14px 24px;
+            text-align: center;
+        }
+        .hire-box .hire-date { font-size: 20px; font-weight: 700; color: #F57F17; }
+        .hire-box .hire-label { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+        /* Termination body */
+        .term-body {
+            padding: 20px 24px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .term-field {
+            flex: 1;
+            min-width: 200px;
+        }
+        .term-field-label { font-size: 11px; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .term-field-value { font-size: 14px; color: #222; font-weight: 500; line-height: 1.5; }
+        .term-field-value.empty { color: #ccc; font-style: italic; }
+        .term-date-badge {
+            display: inline-block;
+            background: #FFEBEE;
+            border: 1px solid #FFCDD2;
+            color: #C62828;
+            border-radius: 8px;
+            padding: 6px 16px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* Tags inline */
+        .inline-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-marital  { background: #E8F5E9; color: #2E7D32; }
+        .tag-degree   { background: #E3F2FD; color: #1565C0; }
+        .tag-dept-val { background: #F3E5F5; color: #6A1B9A; }
+        .tag-pos-val  { background: #FFF3E0; color: #E65100; }
+
+        /* Responsive fallback */
+        @media (max-width: 1100px) {
+            .cards-row { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 760px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .cards-row { grid-template-columns: 1fr; }
+        }
+
+        /* ── Timeline lịch sử trạng thái ── */
+        .timeline-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin: 0 30px 30px;
+            overflow: hidden;
+        }
+        .timeline-header {
+            padding: 16px 22px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .timeline-header .tl-icon { font-size: 18px; }
+        .timeline-header h3 { font-size: 15px; font-weight: 700; color: #333; flex: 1; }
+        .timeline-header .tl-count {
+            background: #E3F2FD;
+            color: #1565C0;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .timeline-body {
+            padding: 16px 22px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .timeline-body::-webkit-scrollbar { width: 5px; }
+        .timeline-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+        .tl-item {
+            display: flex;
+            gap: 14px;
+            position: relative;
+            padding-bottom: 18px;
+        }
+        .tl-item:last-child { padding-bottom: 0; }
+        .tl-line-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            width: 28px;
+        }
+        .tl-dot {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #E3F2FD;
+            border: 2px solid #90CAF9;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+        .tl-dot.first { background: #E8F5E9; border-color: #A5D6A7; }
+        .tl-connector {
+            flex: 1;
+            width: 2px;
+            background: #e0e0e0;
+            margin: 4px 0;
+        }
+        .tl-content { flex: 1; padding-top: 3px; }
+        .tl-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+        .tl-status-old {
+            background: #f5f5f5;
+            color: #777;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 10px;
+        }
+        .tl-arrow { color: #bbb; font-size: 12px; }
+        .tl-status-new {
+            background: #E3F2FD;
+            color: #1565C0;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 9px;
+            border-radius: 10px;
+        }
+        .tl-status-new.created { background: #E8F5E9; color: #2E7D32; }
+        .tl-meta { font-size: 12px; color: #aaa; }
+        .tl-meta strong { color: #666; font-weight: 600; }
+        .tl-note { font-size: 12px; color: #888; margin-top: 3px; font-style: italic; }
+        .tl-empty { padding: 28px; text-align: center; color: #bbb; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <h1>Chi tiết nhân viên</h1>
+        <span class="breadcrumb">/ <a href="{% url 'employee_list' %}">Danh sách</a> / {{ employee.full_name }}</span>
+    </div>
+    <a href="{% url 'employee_list' %}" class="btn btn-back" style="padding:8px 16px; font-size:13px; background:rgba(255,255,255,0.15); color:white; border-radius:6px; text-decoration:none; font-weight:500;">← Quay lại</a>
+</div>
+
+<div class="layout">
+
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar">
+
+        <div class="sidebar-top">
+            <div class="avatar-ring {% if employee.status == 'nghi_viec' %}terminated{% endif %}">
+                <div class="avatar-inner">
+                    {% if employee.photo %}
+                        <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}">
+                    {% else %}
+                        {{ employee.full_name|first|upper }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="emp-name">{{ employee.full_name }}</div>
+            <div class="emp-tags">
+                <span class="tag tag-pos">{{ employee.position }}</span>
+                <span class="tag tag-dept">{{ employee.department }}</span>
+            </div>
+            {% if employee.employee_code %}
+            <div class="emp-code">{{ employee.employee_code }}</div>
+            {% endif %}
+
+            <!-- Status badge -->
+            {% if employee.status == 'dang_lam' %}
+                <span class="status-badge badge-active">● Đang làm việc</span>
+            {% elif employee.status == 'thu_viec' %}
+                <span class="status-badge badge-probation">● Thử việc</span>
+            {% elif employee.status == 'thuc_tap_sinh' %}
+                <span class="status-badge" style="background:rgba(123,31,162,0.25);color:#CE93D8;border:1px solid rgba(123,31,162,0.4);">● Thực tập sinh</span>
+            {% elif employee.status == 'nghi_phep' %}
+                <span class="status-badge" style="background:rgba(0,137,123,0.25);color:#80CBC4;border:1px solid rgba(0,137,123,0.4);">● Nghỉ phép</span>
+            {% elif employee.status == 'nghi_sinh' %}
+                <span class="status-badge" style="background:rgba(216,27,96,0.25);color:#F48FB1;border:1px solid rgba(216,27,96,0.4);">● Nghỉ thai sản</span>
+            {% elif employee.status == 'nghi_khong_luong' %}
+                <span class="status-badge" style="background:rgba(230,81,0,0.25);color:#FFCC80;border:1px solid rgba(230,81,0,0.4);">● Nghỉ không lương</span>
+            {% elif employee.status == 'nghi_om' %}
+                <span class="status-badge" style="background:rgba(106,27,154,0.25);color:#CE93D8;border:1px solid rgba(106,27,154,0.4);">● Nghỉ ốm dài ngày</span>
+            {% else %}
+                <span class="status-badge badge-terminated">○ Đã nghỉ việc</span>
+            {% endif %}
+        </div>
+
+        <div class="sidebar-stats">
+            <div class="stat-item">
+                <div class="stat-icon">📧</div>
+                <div class="stat-text">
+                    <div class="stat-label">Email</div>
+                    <div class="stat-value" title="{{ employee.email }}">{{ employee.email }}</div>
+                </div>
+            </div>
+            {% if employee.phone %}
+            <div class="stat-item">
+                <div class="stat-icon">📞</div>
+                <div class="stat-text">
+                    <div class="stat-label">Điện thoại</div>
+                    <div class="stat-value">{{ employee.phone }}</div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="stat-item">
+                <div class="stat-icon">📅</div>
+                <div class="stat-text">
+                    <div class="stat-label">Ngày vào làm</div>
+                    <div class="stat-value">{{ employee.hire_date|date:"d/m/Y" }}</div>
+                </div>
+            </div>
+            {% if employee.status == 'thu_viec' %}
+            <div class="stat-item" style="border:1px solid rgba(255,160,0,0.4); background:rgba(255,111,0,0.12);">
+                <div class="stat-icon" style="background:rgba(255,111,0,0.2);">📋</div>
+                <div class="stat-text">
+                    <div class="stat-label" style="color:rgba(255,200,100,0.8);">Thử việc đến ngày</div>
+                    <div class="stat-value" style="color:#FFCC80;">
+                        {% if employee.status_end_date %}
+                            {{ employee.status_end_date|date:"d/m/Y" }}
+                        {% else %}
+                            Chưa cập nhật
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% elif employee.status == 'thuc_tap_sinh' %}
+            <div class="stat-item" style="border:1px solid rgba(123,31,162,0.4); background:rgba(123,31,162,0.12);">
+                <div class="stat-icon" style="background:rgba(123,31,162,0.2);">🎓</div>
+                <div class="stat-text">
+                    <div class="stat-label" style="color:rgba(206,147,216,0.8);">Thực tập đến ngày</div>
+                    <div class="stat-value" style="color:#CE93D8;">
+                        {% if employee.status_end_date %}
+                            {{ employee.status_end_date|date:"d/m/Y" }}
+                        {% else %}
+                            Chưa cập nhật
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if employee.status == 'nghi_viec' %}
+            <div class="stat-item" style="border:1px solid rgba(239,154,154,0.5); background:rgba(183,28,28,0.15);">
+                <div class="stat-icon" style="background:rgba(183,28,28,0.25);">🚫</div>
+                <div class="stat-text">
+                    <div class="stat-label" style="color:rgba(239,154,154,0.8);">Ngày nghỉ việc</div>
+                    <div class="stat-value" style="color:#EF9A9A;">
+                        {% if employee.termination_date %}
+                            {{ employee.termination_date|date:"d/m/Y" }}
+                        {% else %}
+                            Chưa cập nhật
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="stat-item">
+                <div class="stat-icon">🏢</div>
+                <div class="stat-text">
+                    <div class="stat-label">Bộ phận</div>
+                    <div class="stat-value">{{ employee.department }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-actions">
+            {% if can_edit %}
+                <a href="{% url 'employee_update' employee.pk %}" class="btn btn-edit">✏ Chỉnh sửa thông tin</a>
+                <a href="{% url 'employee_change_status' employee.pk %}" class="btn btn-terminate">🔄 Thay đổi trạng thái</a>
+            {% endif %}
+            {% if can_delete %}
+            <a href="{% url 'employee_delete' employee.pk %}" class="btn btn-delete">🗑 Xóa nhân viên</a>
+            {% endif %}
+            <a href="{% url 'employee_list' %}" class="btn btn-back">← Quay lại danh sách</a>
+        </div>
+
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main">
+
+        <!-- Card trạng thái đặc biệt — hiện khi không phải đang làm / thử việc -->
+        {% if employee.status == 'nghi_viec' %}
+        <div class="card card-terminated">
+            <div class="card-header">
+                <div class="card-icon">🚫</div>
+                <span class="card-title">Thông tin nghỉ việc</span>
+            </div>
+            <div class="bar"></div>
+            <div class="term-body">
+                <div class="term-field">
+                    <div class="term-field-label">Ngày nghỉ việc chính thức</div>
+                    <div class="term-field-value">
+                        {% if employee.termination_date %}
+                            <span class="term-date-badge">{{ employee.termination_date|date:"d/m/Y" }}</span>
+                        {% else %}
+                            <span class="empty">Chưa cập nhật</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="term-field" style="flex:2;">
+                    <div class="term-field-label">Lý do nghỉ việc</div>
+                    <div class="term-field-value {% if not employee.termination_reason %}empty{% endif %}">
+                        {{ employee.termination_reason|default:"Không có thông tin" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% elif employee.status == 'thuc_tap_sinh' %}
+        <div class="card" style="border-left:4px solid #7B1FA2;">
+            <div class="card-header">
+                <div class="card-icon" style="background:#F3E5F5;">🎓</div>
+                <span class="card-title" style="color:#7B1FA2;">Thời gian thực tập</span>
+            </div>
+            <div style="padding:16px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                {% if employee.status_start_date %}
+                <div style="background:#F3E5F5; border:1px solid #CE93D8; border-radius:10px; padding:10px 18px; text-align:center;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Từ ngày</div>
+                    <div style="font-size:16px; font-weight:700; color:#7B1FA2;">{{ employee.status_start_date|date:"d/m/Y" }}</div>
+                </div>
+                <div style="font-size:22px; color:#ccc;">→</div>
+                <div style="background:#F3E5F5; border:1px solid #CE93D8; border-radius:10px; padding:10px 18px; text-align:center;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Đến ngày</div>
+                    <div style="font-size:16px; font-weight:700; color:#7B1FA2;">
+                        {% if employee.status_end_date %}{{ employee.status_end_date|date:"d/m/Y" }}{% else %}—{% endif %}
+                    </div>
+                </div>
+                {% if employee.status_end_date %}
+                    {% if employee.days_until_status_end < 0 %}
+                    <div style="background:#FFEBEE; border:1px solid #FFCDD2; border-radius:10px; padding:10px 18px; text-align:center;">
+                        <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Tình trạng</div>
+                        <div style="font-size:14px; font-weight:700; color:#C62828;">Quá hạn {{ employee.days_until_status_end|cut:"-" }} ngày</div>
+                    </div>
+                    {% else %}
+                    <div style="background:#F3E5F5; border:1px solid #CE93D8; border-radius:10px; padding:10px 18px; text-align:center;">
+                        <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Còn lại</div>
+                        <div style="font-size:16px; font-weight:700; color:#7B1FA2;">{{ employee.days_until_status_end }} ngày</div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                {% else %}
+                <div style="color:#aaa; font-style:italic; font-size:14px; padding:10px 0;">Chưa cập nhật thời gian thực tập.</div>
+                {% endif %}
+            </div>
+            <div style="height:4px;"></div>
+        </div>
+        {% elif employee.status == 'thu_viec' %}
+        <div class="card" style="border-left:4px solid #1565C0;">
+            <div class="card-header">
+                <div class="card-icon" style="background:#E3F2FD;">📋</div>
+                <span class="card-title" style="color:#1565C0;">Thời gian thử việc</span>
+            </div>
+            <div style="padding:16px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                {% if employee.status_start_date %}
+                <div style="background:#E3F2FD; border:1px solid #90CAF9; border-radius:10px; padding:10px 18px; text-align:center;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Từ ngày</div>
+                    <div style="font-size:16px; font-weight:700; color:#1565C0;">{{ employee.status_start_date|date:"d/m/Y" }}</div>
+                </div>
+                <div style="font-size:22px; color:#ccc;">→</div>
+                <div style="background:#E3F2FD; border:1px solid #90CAF9; border-radius:10px; padding:10px 18px; text-align:center;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Đến ngày</div>
+                    <div style="font-size:16px; font-weight:700; color:#1565C0;">
+                        {% if employee.status_end_date %}{{ employee.status_end_date|date:"d/m/Y" }}{% else %}—{% endif %}
+                    </div>
+                </div>
+                {% if employee.status_end_date %}
+                    {% if employee.days_until_status_end < 0 %}
+                    <div style="background:#FFEBEE; border:1px solid #FFCDD2; border-radius:10px; padding:10px 18px; text-align:center;">
+                        <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Tình trạng</div>
+                        <div style="font-size:14px; font-weight:700; color:#C62828;">Quá hạn {{ employee.days_until_status_end|cut:"-" }} ngày</div>
+                    </div>
+                    {% else %}
+                    <div style="background:#E8F5E9; border:1px solid #A5D6A7; border-radius:10px; padding:10px 18px; text-align:center;">
+                        <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Còn lại</div>
+                        <div style="font-size:16px; font-weight:700; color:#2E7D32;">{{ employee.days_until_status_end }} ngày</div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                {% else %}
+                <div style="color:#aaa; font-style:italic; font-size:14px; padding:10px 0;">Chưa cập nhật thời gian thử việc.</div>
+                {% endif %}
+            </div>
+            <div style="height:4px;"></div>
+        </div>
+        {% elif employee.status_start_date or employee.status_note %}
+        <div class="card" style="border-left:4px solid #FF6F00;">
+            <div class="card-header">
+                <div class="card-icon" style="background:#FFF3E0;">📋</div>
+                <span class="card-title" style="color:#E65100;">Ghi chú trạng thái — {{ employee.get_status_display }}</span>
+            </div>
+            {% if employee.status_start_date or employee.status_end_date %}
+            <div style="padding:16px 20px 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div style="background:#FFF3E0; border:1px solid #FFE0B2; border-radius:10px; padding:10px 18px; text-align:center;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Từ ngày</div>
+                    <div style="font-size:16px; font-weight:700; color:#E65100;">{{ employee.status_start_date|default:"—" }}</div>
+                </div>
+                <div style="font-size:22px; color:#ccc;">→</div>
+                <div style="background:#FFF3E0; border:1px solid #FFE0B2; border-radius:10px; padding:10px 18px; text-align:center;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Đến ngày (dự kiến)</div>
+                    <div style="font-size:16px; font-weight:700; color:#E65100;">{{ employee.status_end_date|default:"—" }}</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if employee.status_note %}
+            <div style="padding:14px 20px; font-size:14px; color:#555; line-height:1.6;">
+                {{ employee.status_note }}
+            </div>
+            {% endif %}
+            <div style="height:4px;"></div>
+        </div>
+        {% endif %}
+
+        <!-- 3 cards hàng trên -->
+        <div class="cards-row">
+
+            <!-- Thông tin cá nhân -->
+            <div class="card card-personal">
+                <div class="card-header">
+                    <div class="card-icon">👤</div>
+                    <span class="card-title">Thông tin cá nhân</span>
+                </div>
+                <div class="bar"></div>
+                <div class="info-list">
+                    <div class="info-row">
+                        <span class="info-label">Mã nhân viên</span>
+                        <span class="info-value {% if not employee.employee_code %}empty{% endif %}">
+                            {{ employee.employee_code|default:"Chưa cập nhật" }}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Căn cước CD</span>
+                        <span class="info-value {% if not employee.id_card %}empty{% endif %}">
+                            {{ employee.id_card|default:"Chưa cập nhật" }}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Hôn nhân</span>
+                        <span class="info-value {% if not employee.marital_status %}empty{% endif %}">
+                            {% if employee.marital_status %}
+                            <span class="inline-tag tag-marital">{{ employee.get_marital_status_display }}</span>
+                            {% else %}Chưa cập nhật{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Bằng cấp</span>
+                        <span class="info-value {% if not employee.degree %}empty{% endif %}">
+                            {% if employee.degree %}
+                            <span class="inline-tag tag-degree">{{ employee.get_degree_display }}</span>
+                            {% else %}Chưa cập nhật{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông tin liên hệ -->
+            <div class="card card-contact">
+                <div class="card-header">
+                    <div class="card-icon">📞</div>
+                    <span class="card-title">Thông tin liên hệ</span>
+                </div>
+                <div class="bar"></div>
+                <div class="info-list">
+                    <div class="info-row">
+                        <span class="info-label">Điện thoại</span>
+                        <span class="info-value {% if not employee.phone %}empty{% endif %}">
+                            {{ employee.phone|default:"Chưa cập nhật" }}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ employee.email }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Địa chỉ</span>
+                        <span class="info-value {% if not employee.address %}empty{% endif %}">
+                            {{ employee.address|default:"Chưa cập nhật" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông tin công việc -->
+            <div class="card card-work">
+                <div class="card-header">
+                    <div class="card-icon">💼</div>
+                    <span class="card-title">Thông tin công việc</span>
+                </div>
+                <div class="bar"></div>
+                <div class="info-list">
+                    <div class="info-row">
+                        <span class="info-label">Bộ phận</span>
+                        <span class="info-value">
+                            <span class="inline-tag tag-dept-val">{{ employee.department }}</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Chức vụ</span>
+                        <span class="info-value">
+                            <span class="inline-tag tag-pos-val">{{ employee.position }}</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ngày vào làm</span>
+                        <span class="info-value">{{ employee.hire_date|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Trạng thái</span>
+                        <span class="info-value">{{ employee.get_status_display }}</span>
+                    </div>
+                    {% if employee.status == 'thuc_tap_sinh' %}
+                    <div class="info-row">
+                        <span class="info-label">Thực tập từ</span>
+                        <span class="info-value">
+                            {% if employee.status_start_date %}{{ employee.status_start_date|date:"d/m/Y" }}{% else %}<span class="empty">Chưa cập nhật</span>{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Thực tập đến</span>
+                        <span class="info-value" style="color:#7B1FA2; font-weight:700;">
+                            {% if employee.status_end_date %}{{ employee.status_end_date|date:"d/m/Y" }}{% else %}<span class="empty">Chưa cập nhật</span>{% endif %}
+                        </span>
+                    </div>
+                    {% elif employee.status == 'thu_viec' %}
+                    <div class="info-row">
+                        <span class="info-label">Thử việc từ</span>
+                        <span class="info-value">
+                            {% if employee.status_start_date %}{{ employee.status_start_date|date:"d/m/Y" }}{% else %}<span class="empty">Chưa cập nhật</span>{% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Thử việc đến</span>
+                        <span class="info-value" style="color:#1565C0; font-weight:700;">
+                            {% if employee.status_end_date %}{{ employee.status_end_date|date:"d/m/Y" }}{% else %}<span class="empty">Chưa cập nhật</span>{% endif %}
+                        </span>
+                    </div>
+                    {% elif employee.status == 'nghi_viec' %}
+                    <div class="info-row">
+                        <span class="info-label">Ngày nghỉ việc</span>
+                        <span class="info-value" style="color:#C62828; font-weight:700;">
+                            {% if employee.termination_date %}
+                                {{ employee.termination_date|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="empty">Chưa cập nhật</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Card lương — full width -->
+        <div class="card card-salary salary-card">
+            <div class="card-header">
+                <div class="card-icon">💰</div>
+                <span class="card-title">Thông tin lương</span>
+            </div>
+            <div class="salary-body">
+                <div>
+                    <div class="salary-main">
+                        <span class="salary-num">{{ employee.salary|intcomma }}</span>
+                        <span class="salary-unit">₫</span>
+                    </div>
+                    <div class="salary-label">Lương tháng</div>
+                </div>
+                <div class="hire-box">
+                    <div class="hire-date">{{ employee.hire_date|date:"d/m/Y" }}</div>
+                    <div class="hire-label">Ngày vào làm</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Timeline lịch sử trạng thái -->
+<div class="timeline-card">
+    <div class="timeline-header">
+        <span class="tl-icon">📋</span>
+        <h3>Lịch sử trạng thái</h3>
+        <span class="tl-count">{{ status_logs|length }} thay đổi</span>
+    </div>
+    <div class="timeline-body">
+        {% if status_logs %}
+            {% for log in status_logs %}
+            <div class="tl-item">
+                <div class="tl-line-col">
+                    <div class="tl-dot {% if log.old_status == '' %}first{% endif %}">
+                        {% if log.old_status == '' %}🆕{% else %}🔄{% endif %}
+                    </div>
+                    {% if not forloop.last %}<div class="tl-connector"></div>{% endif %}
+                </div>
+                <div class="tl-content">
+                    <div class="tl-badges">
+                        {% if log.old_status %}
+                            <span class="tl-status-old">{{ log.get_old_status_display }}</span>
+                            <span class="tl-arrow">→</span>
+                        {% endif %}
+                        <span class="tl-status-new {% if log.old_status == '' %}created{% endif %}">
+                            {{ log.get_new_status_display }}
+                        </span>
+                    </div>
+                    <div class="tl-meta">
+                        <strong>{{ log.changed_by.username|default:"Hệ thống" }}</strong>
+                        &nbsp;·&nbsp; {{ log.changed_at|date:"H:i d/m/Y" }}
+                    </div>
+                    {% if log.note %}
+                    <div class="tl-note">{{ log.note }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="tl-empty">Chưa có lịch sử thay đổi trạng thái.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

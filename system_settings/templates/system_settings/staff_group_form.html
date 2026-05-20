@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+        .topbar { background: #1565C0; color: white; padding: 16px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+        .btn { padding: 7px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-back { background: rgba(255,255,255,0.2); color: white; }
+        .btn-save { background: #1565C0; color: white; padding: 10px 28px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-save:hover { background: #0D47A1; }
+        .btn-cancel { background: #e0e0e0; color: #555; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; }
+
+        .container { padding: 28px 30px; max-width: 900px; margin: 0 auto; }
+
+        .card { background: white; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 20px; overflow: hidden; }
+        .card-header { padding: 14px 20px; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px; }
+        .card-header.blue  { background: #E3F2FD; color: #1565C0; border-color: #BBDEFB; }
+        .card-header.green { background: #E8F5E9; color: #2E7D32; border-color: #C8E6C9; }
+        .card-header.purple{ background: #F3E5F5; color: #6A1B9A; border-color: #CE93D8; }
+        .card-header.orange{ background: #FFF3E0; color: #E65100; border-color: #FFCC80; }
+        .card-body { padding: 20px; }
+
+        .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+        .form-group input[type=text] { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .form-group input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.1); }
+
+        .error-box { background: #FFEBEE; color: #c62828; border: 1px solid #FFCDD2; border-radius: 6px; padding: 10px 16px; font-size: 13px; margin-bottom: 16px; }
+
+        .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        .member-chip {
+            display: flex; align-items: center; gap: 10px;
+            border: 1px solid #e0e0e0; border-radius: 10px;
+            padding: 10px 14px; cursor: pointer;
+            background: #fafafa; font-size: 13px;
+            transition: all 0.15s; user-select: none;
+        }
+        .member-chip:has(input:checked) { background: #E3F2FD; border-color: #1565C0; color: #1565C0; font-weight: 600; }
+        .member-chip input { display: none; }
+        .member-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #1565C0; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; flex-shrink: 0;
+        }
+        .member-chip:has(input:checked) .member-avatar { background: #0D47A1; }
+
+        .chip-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .feat-chip {
+            display: flex; align-items: center; gap: 8px;
+            border: 1px solid #e0e0e0; border-radius: 10px;
+            padding: 10px 18px; cursor: pointer;
+            background: #fafafa; font-size: 13px;
+            transition: all 0.15s; user-select: none;
+        }
+        .feat-chip input { display: none; }
+        .feat-chip .chip-icon { font-size: 18px; }
+        .feat-chip .soon { font-size: 10px; background: #FFF3E0; color: #E65100; border-radius: 8px; padding: 1px 6px; margin-left: 2px; }
+
+        .feat-chip.chip-blue:has(input:checked)  { background: #E3F2FD; border-color: #1565C0; color: #1565C0; font-weight: 600; }
+        .feat-chip.chip-green:has(input:checked) { background: #E8F5E9; border-color: #4CAF50; color: #2E7D32; font-weight: 600; }
+
+        .perm-table-wrap { border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .perm-table { width: 100%; border-collapse: collapse; }
+        .perm-table thead { background: #F5F5F5; }
+        .perm-table th { color: #555; font-size: 12px; font-weight: 700; padding: 10px 14px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+        .perm-table th:first-child { text-align: left; width: 35%; }
+        .perm-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f5f5f5; text-align: center; vertical-align: middle; }
+        .perm-table td:first-child { text-align: left; font-weight: 600; }
+        .perm-table tr:last-child td { border-bottom: none; }
+        .perm-table tr:hover td { background: #fafafa; }
+        .perm-table tr.row-active td { background: #EBF5FB; }
+        .perm-table input[type=checkbox] { width: 17px; height: 17px; cursor: pointer; accent-color: #1565C0; }
+        .perm-table input:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .dept-mini-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .dept-mini { background: #E3F2FD; color: #1565C0; border-radius: 12px; padding: 1px 8px; font-size: 11px; }
+
+        .btn-full-row { padding: 4px 12px; border-radius: 16px; border: 1px solid #6A1B9A; background: white; color: #6A1B9A; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-full-row:hover { background: #6A1B9A; color: white; }
+
+        .actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>{{ title }}</h1>
+    <a href="{% url 'system_settings:user_list' %}" class="btn btn-back">← Quay lại</a>
+</div>
+
+<div class="container">
+    <form method="post">
+        {% csrf_token %}
+
+        {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+        <!-- Thông tin nhóm -->
+        <div class="card">
+            <div class="card-header purple">📋 Thông tin nhóm</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tên nhóm *</label>
+                        <input type="text" name="name" value="{{ sg.name|default:'' }}" placeholder="VD: Nhóm Kế Toán, Nhóm HR Manager...">
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <input type="text" name="description" value="{{ sg.description|default:'' }}" placeholder="Mô tả ngắn về nhóm...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thành viên -->
+        <div class="card">
+            <div class="card-header blue">👥 Thành viên</div>
+            <div class="card-body">
+                {% if all_users %}
+                <div class="member-grid">
+                    {% for u in all_users %}
+                    <label class="member-chip">
+                        <input type="checkbox" name="members" value="{{ u.pk }}"
+                            {% if sg and u in sg.members.all %}checked{% endif %}>
+                        <div class="member-avatar">{{ u.username|first|upper }}</div>
+                        <span>{{ u.username }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color:#aaa; font-style:italic;">Chưa có user nào.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ứng dụng -->
+        <div class="card">
+            <div class="card-header blue">🗂 Ứng dụng được phép truy cập</div>
+            <div class="card-body">
+                <div class="chip-grid">
+                    <label class="feat-chip chip-blue">
+                        <input type="checkbox" name="app_employees" {% if sg.app_employees %}checked{% endif %}>
+                        <span class="chip-icon">👥</span><span>Quản lý nhân viên</span>
+                    </label>
+                    <label class="feat-chip chip-blue">
+                        <input type="checkbox" name="app_contracts" {% if sg.app_contracts %}checked{% endif %}>
+                        <span class="chip-icon">📄</span><span>Quản lý hợp đồng</span>
+                    </label>
+                    <label class="feat-chip chip-blue">
+                        <input type="checkbox" name="app_attendance" {% if sg.app_attendance %}checked{% endif %}>
+                        <span class="chip-icon">⏱</span><span>Chấm công</span>
+                        {% if not app_status.app_attendance_active %}<span class="soon">Sắp ra mắt</span>{% endif %}
+                    </label>
+                    <label class="feat-chip chip-blue">
+                        <input type="checkbox" name="app_payroll" {% if sg.app_payroll %}checked{% endif %}>
+                        <span class="chip-icon">💰</span><span>Tính lương</span>
+                        {% if not app_status.app_payroll_active %}<span class="soon">Sắp ra mắt</span>{% endif %}
+                    </label>
+                    <label class="feat-chip chip-blue">
+                        <input type="checkbox" name="app_talent" {% if sg.app_talent %}checked{% endif %}>
+                        <span class="chip-icon">🎯</span><span>Tuyển dụng & ĐT</span>
+                        {% if not app_status.app_talent_active %}<span class="soon">Sắp ra mắt</span>{% endif %}
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chức năng -->
+        <div class="card">
+            <div class="card-header green">🔧 Chức năng được phép sử dụng</div>
+            <div class="card-body">
+                <div class="chip-grid">
+                    <label class="feat-chip chip-green">
+                        <input type="checkbox" name="feat_dashboard" {% if sg.can_view_dashboard %}checked{% endif %}>
+                        <span class="chip-icon">📊</span><span>Xem Dashboard</span>
+                    </label>
+                    <label class="feat-chip chip-green">
+                        <input type="checkbox" name="feat_export" {% if sg.can_export %}checked{% endif %}>
+                        <span class="chip-icon">⬇</span><span>Xuất Excel / CSV</span>
+                    </label>
+                    <label class="feat-chip chip-green">
+                        <input type="checkbox" name="feat_import" {% if sg.can_import %}checked{% endif %}>
+                        <span class="chip-icon">⬆</span><span>Nhập Excel</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phân quyền bộ phận -->
+        <div class="card">
+            <div class="card-header orange">🏢 Phân quyền theo nhóm bộ phận</div>
+            <div class="card-body">
+                {% if emp_group_data %}
+                <div class="perm-table-wrap">
+                    <table class="perm-table">
+                        <thead>
+                            <tr>
+                                <th>Nhóm bộ phận</th>
+                                <th>Truy cập</th>
+                                <th>➕ Thêm</th>
+                                <th>✏ Sửa</th>
+                                <th>🗑 Xóa</th>
+                                <th>Toàn quyền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for egd in emp_group_data %}
+                            <tr id="eg-row-{{ egd.group.pk }}" class="{% if egd.has_access %}row-active{% endif %}">
+                                <td>
+                                    <div>{{ egd.group.name }}</div>
+                                    {% if egd.group.departments.all %}
+                                    <div class="dept-mini-list">
+                                        {% for d in egd.group.departments.all %}<span class="dept-mini">{{ d.name }}</span>{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <input type="checkbox" name="dg_{{ egd.group.pk }}"
+                                           class="cb-access-eg" data-gpk="{{ egd.group.pk }}"
+                                           {% if egd.has_access %}checked{% endif %}
+                                           onchange="onEgAccessChange(this)">
+                                </td>
+                                <td><input type="checkbox" name="dadd_{{ egd.group.pk }}" id="dadd-{{ egd.group.pk }}"
+                                           {% if egd.can_add %}checked{% endif %}
+                                           {% if not egd.has_access %}disabled{% endif %}></td>
+                                <td><input type="checkbox" name="dedit_{{ egd.group.pk }}" id="dedit-{{ egd.group.pk }}"
+                                           {% if egd.can_edit %}checked{% endif %}
+                                           {% if not egd.has_access %}disabled{% endif %}></td>
+                                <td><input type="checkbox" name="ddel_{{ egd.group.pk }}" id="ddel-{{ egd.group.pk }}"
+                                           {% if egd.can_delete %}checked{% endif %}
+                                           {% if not egd.has_access %}disabled{% endif %}></td>
+                                <td><button type="button" class="btn-full-row" onclick="setEgFull({{ egd.group.pk }})">⚡ Toàn quyền</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="color:#aaa; font-style:italic;">Chưa có nhóm bộ phận nào. <a href="{% url 'system_settings:group_create' %}" style="color:#1565C0;">Tạo nhóm bộ phận</a></p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn-save">💾 Lưu nhóm</button>
+            <a href="{% url 'system_settings:user_list' %}" class="btn-cancel">Hủy</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function onEgAccessChange(cb) {
+        const gpk = cb.dataset.gpk;
+        const isChecked = cb.checked;
+        const row = document.getElementById('eg-row-' + gpk);
+        if (row) row.classList.toggle('row-active', isChecked);
+        ['dadd', 'dedit', 'ddel'].forEach(function(prefix) {
+            const sub = document.getElementById(prefix + '-' + gpk);
+            if (sub) { sub.disabled = !isChecked; if (!isChecked) sub.checked = false; }
+        });
+    }
+
+    function setEgFull(gpk) {
+        const access = document.querySelector('.cb-access-eg[data-gpk="' + gpk + '"]');
+        if (access) { access.checked = true; onEgAccessChange(access); }
+        ['dadd', 'dedit', 'ddel'].forEach(function(prefix) {
+            const sub = document.getElementById(prefix + '-' + gpk);
+            if (sub) { sub.disabled = false; sub.checked = true; }
+        });
+    }
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

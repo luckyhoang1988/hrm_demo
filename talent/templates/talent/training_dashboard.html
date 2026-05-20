@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Đào tạo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 10px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-green { background: #4CAF50; color: white; }
+        .container { padding: 24px 30px; }
+        .alert-card { background: #ffebee; border: 1px solid #ef9a9a; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: #c62828; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 14px; margin-bottom: 24px; }
+        .kpi-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 18px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .kpi-num { font-size: 30px; font-weight: 800; color: #1565C0; }
+        .kpi-label { font-size: 12px; color: #888; margin-top: 4px; }
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .chart-box { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .chart-title { font-size: 14px; font-weight: 700; color: #444; margin-bottom: 14px; }
+        .table-box { background: white; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; margin-bottom: 20px; }
+        .table-title { padding: 14px 18px; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1565C0; color: white; padding: 10px 16px; text-align: left; font-size: 13px; }
+        td { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-soon    { background: #fff3e0; color: #e65100; }
+        .pill-planned { background: #e3f2fd; color: #1565C0; }
+        /* Progress bar cho dept completion */
+        .prog-wrap { background: #f0f0f0; border-radius: 10px; height: 14px; width: 100%; min-width: 80px; overflow: hidden; }
+        .prog-fill  { height: 14px; border-radius: 10px; background: #4CAF50; }
+        @media (max-width:800px) { .charts-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>📈 Dashboard Đào tạo</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:talent_home' %}" class="btn btn-white">← Tổng quan</a>
+        {% if features.can_export %}
+        <a href="{% url 'talent:training_export' %}" class="btn btn-green">⬇ Xuất Excel</a>
+        {% endif %}
+    </div>
+</div>
+<div class="container">
+    {% if expiring_certs %}
+    <div class="alert-card">
+        ⚠️ Có {{ expiring_certs|length }} chứng chỉ sắp hết hạn trong 30 ngày tới.
+        <a href="{% url 'talent:certificate_list' %}" style="color:#c62828; margin-left:8px;">Xem ngay →</a>
+    </div>
+    {% endif %}
+
+    <!-- KPI -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-num">{{ total_courses }}</div>
+            <div class="kpi-label">Khóa học hoạt động</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num">{{ total_sessions }}</div>
+            <div class="kpi-label">Tổng buổi học</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num">{{ total_enrollments }}</div>
+            <div class="kpi-label">Tổng đăng ký</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num" style="color:#2e7d32;">{{ total_certs }}</div>
+            <div class="kpi-label">Chứng chỉ cấp</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-num" style="color:#f57f17;">{{ mandatory_count }}</div>
+            <div class="kpi-label">Khóa bắt buộc</div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="charts-row">
+        <div class="chart-box">
+            <div class="chart-title">Tỷ lệ kết quả đào tạo</div>
+            <canvas id="resultChart" height="220"></canvas>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">Bắt buộc vs Tự nguyện</div>
+            <canvas id="mandatoryChart" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="charts-row">
+        <div class="chart-box">
+            <div class="chart-title">Điểm TB theo khóa học (Top 10)</div>
+            {% if avg_course_labels_json %}
+            <canvas id="avgScoreChart" height="220"></canvas>
+            {% else %}
+            <div style="padding:40px; text-align:center; color:#bbb; font-size:13px;">Chưa có dữ liệu điểm</div>
+            {% endif %}
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">Trạng thái buổi học</div>
+            <canvas id="statusChart" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- Tỷ lệ hoàn thành theo phòng ban -->
+    {% if dept_completion %}
+    <div class="table-box">
+        <div class="table-title">🏢 Tỷ lệ hoàn thành đào tạo theo phòng ban</div>
+        <table>
+            <thead><tr><th>Phòng ban</th><th style="text-align:right; width:80px;">Tổng</th><th style="text-align:right; width:80px;">Đạt</th><th style="width:200px;">Tiến độ</th><th style="text-align:right; width:80px;">Tỷ lệ</th></tr></thead>
+            <tbody>
+                {% for d in dept_completion %}
+                <tr>
+                    <td><strong>{{ d.dept }}</strong></td>
+                    <td style="text-align:right;">{{ d.total }}</td>
+                    <td style="text-align:right; color:#2e7d32; font-weight:600;">{{ d.passed }}</td>
+                    <td>
+                        <div class="prog-wrap">
+                            <div class="prog-fill" style="width:{{ d.rate }}%; background:{% if d.rate >= 80 %}#4CAF50{% elif d.rate >= 50 %}#FFA726{% else %}#EF5350{% endif %};"></div>
+                        </div>
+                    </td>
+                    <td style="text-align:right; font-weight:700; color:{% if d.rate >= 80 %}#2e7d32{% elif d.rate >= 50 %}#e65100{% else %}#c62828{% endif %};">{{ d.rate }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Chứng chỉ sắp hết hạn -->
+    {% if expiring_certs %}
+    <div class="table-box">
+        <div class="table-title">🏆 Chứng chỉ sắp hết hạn (trong 30 ngày)</div>
+        <table>
+            <thead><tr><th>Số hiệu CC</th><th>Nhân viên</th><th>Khóa học</th><th>Hết hạn</th><th>Còn</th></tr></thead>
+            <tbody>
+                {% for cert in expiring_certs %}
+                <tr>
+                    <td><a href="{% url 'talent:certificate_detail' cert.pk %}" style="color:#1565C0; text-decoration:none; font-family:monospace;">{{ cert.certificate_number }}</a></td>
+                    <td>{{ cert.employee.full_name }}</td>
+                    <td>{{ cert.course.name }}</td>
+                    <td>{{ cert.expiry_date|date:"d/m/Y" }}</td>
+                    <td><span class="pill pill-soon">{{ cert.days_until_expiry }} ngày</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Buổi học sắp tới -->
+    {% if upcoming_sessions %}
+    <div class="table-box">
+        <div class="table-title">🗓 Buổi học sắp tới</div>
+        <table>
+            <thead><tr><th>Mã lớp</th><th>Khóa học</th><th>Giảng viên</th><th>Ngày bắt đầu</th><th>Đăng ký</th></tr></thead>
+            <tbody>
+                {% for s in upcoming_sessions %}
+                <tr>
+                    <td><a href="{% url 'talent:session_detail' s.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ s.session_code }}</a></td>
+                    <td>{{ s.course.name }}</td>
+                    <td>{{ s.trainer_name }}</td>
+                    <td>{{ s.start_date|date:"d/m/Y" }}</td>
+                    <td>{{ s.enrolled_count }}{% if s.max_participants %}/{{ s.max_participants }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const resultLabels = [{% for key, data in result_counts.items %}"{{ data.label }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const resultValues = [{% for key, data in result_counts.items %}{{ data.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('resultChart'), {
+    type: 'doughnut',
+    data: {
+        labels: resultLabels,
+        datasets: [{ data: resultValues, backgroundColor: ['#9E9E9E','#4CAF50','#f44336'], borderWidth: 2 }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+});
+
+const statusLabels = [{% for key, data in session_status_counts.items %}"{{ data.label }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const statusValues = [{% for key, data in session_status_counts.items %}{{ data.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('statusChart'), {
+    type: 'bar',
+    data: {
+        labels: statusLabels,
+        datasets: [{ label: 'Số buổi', data: statusValues, backgroundColor: ['#90CAF9','#A5D6A7','#CE93D8','#EF9A9A'], borderRadius: 6 }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+
+new Chart(document.getElementById('mandatoryChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Bắt buộc', 'Tự nguyện'],
+        datasets: [{ data: [{{ mandatory_count }}, {{ optional_count }}], backgroundColor: ['#EF9A9A','#90CAF9'], borderWidth: 2 }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+});
+
+const avgLabels = {{ avg_course_labels_json|safe }};
+const avgValues = {{ avg_course_values_json|safe }};
+if (avgLabels.length > 0 && document.getElementById('avgScoreChart')) {
+    new Chart(document.getElementById('avgScoreChart'), {
+        type: 'bar',
+        data: {
+            labels: avgLabels,
+            datasets: [{
+                label: 'Điểm TB',
+                data: avgValues,
+                backgroundColor: '#66BB6A',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, max: 100 } }
+        }
+    });
+}
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

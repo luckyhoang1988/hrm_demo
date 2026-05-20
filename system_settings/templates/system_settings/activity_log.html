@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Nhật ký hoạt động</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+        .topbar {
+            background: #1565C0; color: white;
+            padding: 13px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .topbar h1 { font-size: 17px; font-weight: 600; }
+        .topbar a { color: white; text-decoration: none; font-size: 13px;
+                    background: rgba(255,255,255,0.15); padding: 6px 14px;
+                    border-radius: 6px; }
+        .topbar a:hover { background: rgba(255,255,255,0.25); }
+
+        .container { padding: 18px 28px; }
+
+        .filter-card {
+            background: white; border: 1px solid #e0e0e0; border-radius: 8px;
+            padding: 14px 18px; margin-bottom: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .fg { display: flex; flex-direction: column; gap: 4px; }
+        .fg label { font-size: 12px; font-weight: 600; color: #666; }
+        .fg select, .fg input {
+            padding: 7px 10px; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 13px; height: 34px; outline: none;
+        }
+        .fg select:focus, .fg input:focus { border-color: #1565C0; }
+        .fg input[type=text] { width: 200px; }
+        .fg input[type=date] { width: 140px; }
+        .btn-filter {
+            padding: 7px 18px; background: #1565C0; color: white;
+            border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; height: 34px; font-weight: 500;
+        }
+        .btn-clear {
+            padding: 7px 14px; background: #e0e0e0; color: #555;
+            border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; height: 34px; text-decoration: none; display: inline-flex; align-items: center;
+        }
+
+        .result-info {
+            font-size: 13px; color: #666; margin-bottom: 10px;
+        }
+        .result-info strong { color: #1565C0; }
+
+        .table-card {
+            background: white; border: 1px solid #e0e0e0; border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            background: #1565C0; color: white;
+            padding: 10px 12px; text-align: left; font-weight: 600; font-size: 12px;
+        }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9f9f9; }
+
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 11px; font-weight: 600; white-space: nowrap;
+        }
+        .badge-create        { background: #E8F5E9; color: #2E7D32; }
+        .badge-edit          { background: #E3F2FD; color: #1565C0; }
+        .badge-delete        { background: #FFEBEE; color: #C62828; }
+        .badge-status_change { background: #FFF3E0; color: #E65100; }
+        .badge-login         { background: #F3E5F5; color: #6A1B9A; }
+        .badge-logout        { background: #ECEFF1; color: #546E7A; }
+        .badge-import        { background: #E0F7FA; color: #00695C; }
+        .badge-export        { background: #E8EAF6; color: #283593; }
+
+        .type-badge {
+            display: inline-block; padding: 1px 7px; border-radius: 4px;
+            font-size: 11px; background: #f0f0f0; color: #666;
+        }
+
+        .ip-text { font-family: monospace; font-size: 12px; color: #888; }
+        .time-text { font-size: 12px; color: #888; white-space: nowrap; }
+
+        .pg-row { display: flex; gap: 6px; justify-content: center; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+        .pg-row a, .pg-row span {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 6px;
+            border: 1px solid #e0e0e0; font-size: 13px; text-decoration: none; color: #333;
+        }
+        .pg-row a:hover { background: #E3F2FD; border-color: #90CAF9; color: #1565C0; }
+        .pg-row .cur { background: #1565C0; color: white; border-color: #1565C0; font-weight: 700; }
+        .pg-row .dis { color: #ccc; pointer-events: none; }
+        .pg-info { text-align: center; font-size: 12px; color: #888; margin-top: 6px; }
+
+        .no-data { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+        .user-deleted { color: #aaa; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>📋 Nhật ký hoạt động</h1>
+        <a href="{% url 'system_settings:user_list' %}">← Quản lý tài khoản</a>
+    </div>
+
+    <div class="container">
+        <!-- Bộ lọc -->
+        <div class="filter-card">
+            <form method="get">
+                <div class="filter-row">
+                    <div class="fg">
+                        <label>Người dùng</label>
+                        <select name="user">
+                            <option value="">— Tất cả —</option>
+                            {% for u in all_users %}
+                            <option value="{{ u.username }}" {% if user_filter == u.username %}selected{% endif %}>{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label>Hành động</label>
+                        <select name="action">
+                            <option value="">— Tất cả —</option>
+                            {% for code, label in action_choices %}
+                            <option value="{{ code }}" {% if action_filter == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label>Đối tượng</label>
+                        <select name="target_type">
+                            <option value="">— Tất cả —</option>
+                            {% for code, label in target_choices %}
+                            <option value="{{ code }}" {% if target_filter == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label>Từ ngày</label>
+                        <input type="date" name="date_from" value="{{ date_from }}">
+                    </div>
+                    <div class="fg">
+                        <label>Đến ngày</label>
+                        <input type="date" name="date_to" value="{{ date_to }}">
+                    </div>
+                    <div class="fg">
+                        <label>Tìm kiếm</label>
+                        <input type="text" name="search" value="{{ search }}" placeholder="Tên, ghi chú...">
+                    </div>
+                    <button type="submit" class="btn-filter">Lọc</button>
+                    <a href="{% url 'system_settings:activity_log' %}" class="btn-clear">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Kết quả -->
+        <div class="result-info">
+            Tìm thấy <strong>{{ total }}</strong> bản ghi
+        </div>
+
+        <div class="table-card">
+            {% if page_obj %}
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:145px">Thời gian</th>
+                        <th style="width:120px">Người dùng</th>
+                        <th style="width:110px">Hành động</th>
+                        <th style="width:110px">Đối tượng</th>
+                        <th>Tên</th>
+                        <th>Chi tiết</th>
+                        <th style="width:110px">IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                    <tr>
+                        <td class="time-text">{{ log.created_at|date:"d/m/Y H:i:s" }}</td>
+                        <td>
+                            {% if log.user %}
+                                <strong>{{ log.user.username }}</strong>
+                                {% if log.user.is_superuser %}<br><span style="font-size:11px;color:#E91E63">superuser</span>{% endif %}
+                            {% else %}
+                                <span class="user-deleted">Đã xóa</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ log.action }}">{{ log.get_action_display }}</span>
+                        </td>
+                        <td>
+                            <span class="type-badge">{{ log.get_target_type_display }}</span>
+                        </td>
+                        <td>{{ log.target_name }}</td>
+                        <td style="color:#555">{{ log.detail }}</td>
+                        <td class="ip-text">{{ log.ip|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="no-data">Chưa có bản ghi nào.</div>
+            {% endif %}
+        </div>
+
+        <!-- Phân trang -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        {% with pf="&user="|add:user_filter|add:"&action="|add:action_filter|add:"&target_type="|add:target_filter|add:"&date_from="|add:date_from|add:"&date_to="|add:date_to|add:"&search="|add:search %}
+        <div class="pg-row">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{{ pf }}">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{{ pf }}">&lsaquo;</a>
+            {% else %}
+                <span class="dis">&laquo;</span>
+                <span class="dis">&lsaquo;</span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="cur">{{ num }}</span>
+                {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+                    <a href="?page={{ num }}{{ pf }}">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="?page={{ num }}{{ pf }}">{{ num }}</a>
+                {% elif num == page_obj.number|add:"-4" or num == page_obj.number|add:"4" %}
+                    <span class="dis">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{{ pf }}">&rsaquo;</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{{ pf }}">&raquo;</a>
+            {% else %}
+                <span class="dis">&rsaquo;</span>
+                <span class="dis">&raquo;</span>
+            {% endif %}
+        </div>
+        <div class="pg-info">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</div>
+        {% endwith %}
+        {% endif %}
+    </div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

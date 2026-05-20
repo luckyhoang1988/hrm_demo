@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Theo dõi tiến trình ứng viên</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-green { background: #4CAF50; color: white; }
+
+        .filter-bar { background: white; padding: 10px 30px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 12px; }
+        .filter-bar label { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; }
+        .filter-bar select { padding: 6px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; height: 32px; }
+        .filter-bar select:focus { border-color: #1565C0; }
+
+        .board-container { padding: 20px; overflow-x: auto; }
+        .board { display: flex; gap: 14px; min-width: max-content; align-items: flex-start; }
+
+        .kanban-col { width: 200px; flex-shrink: 0; }
+        .col-header {
+            padding: 10px 12px;
+            border-radius: 8px 8px 0 0;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .col-count { background: rgba(255,255,255,0.35); border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 800; }
+        .col-body { background: #e9ecef; border-radius: 0 0 8px 8px; padding: 8px; min-height: 120px; display: flex; flex-direction: column; gap: 8px; }
+
+        .col-header-new        { background: #1565C0; color: white; }
+        .col-header-screening  { background: #f57f17; color: white; }
+        .col-header-interview  { background: #2e7d32; color: white; }
+        .col-header-offer      { background: #6a1b9a; color: white; }
+        .col-header-hired      { background: #1b5e20; color: white; }
+        .col-header-rejected   { background: #c62828; color: white; }
+
+        .kanban-card {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+            cursor: pointer;
+            border-left: 3px solid #1565C0;
+            transition: box-shadow 0.15s, transform 0.1s;
+        }
+        .kanban-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.18); transform: translateY(-1px); }
+        .border-new        { border-left-color: #1565C0; }
+        .border-screening  { border-left-color: #f57f17; }
+        .border-interview  { border-left-color: #2e7d32; }
+        .border-offer      { border-left-color: #6a1b9a; }
+        .border-hired      { border-left-color: #1b5e20; }
+        .border-rejected   { border-left-color: #c62828; }
+
+        .card-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            font-size: 13px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 7px; color: white;
+        }
+        .avatar-new        { background: #1565C0; }
+        .avatar-screening  { background: #f57f17; }
+        .avatar-interview  { background: #2e7d32; }
+        .avatar-offer      { background: #6a1b9a; }
+        .avatar-hired      { background: #1b5e20; }
+        .avatar-rejected   { background: #c62828; }
+
+        .card-name { font-weight: 700; font-size: 12px; margin-bottom: 3px; color: #1a1a1a; }
+        .card-job  { color: #888; font-size: 11px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-meta { color: #bbb; font-size: 10px; }
+        .card-actions { margin-top: 7px; display: flex; gap: 5px; }
+        .card-btn {
+            flex: 1; text-align: center; padding: 3px 5px;
+            border-radius: 5px; font-size: 10px; font-weight: 600;
+            text-decoration: none;
+            background: #f5f5f5; color: #555; border: 1px solid #e0e0e0;
+        }
+        .card-btn:hover { background: #e3f2fd; color: #1565C0; border-color: #90caf9; }
+        .card-btn-move { background: #e3f2fd; color: #1565C0; border: 1px solid #90caf9; }
+
+        .empty-col { color: #bbb; font-size: 12px; text-align: center; padding: 20px 8px; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🗂 Theo dõi tiến trình ứng viên</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:applicant_list' %}" class="btn btn-white">📋 Danh sách</a>
+        <a href="{% url 'talent:talent_home' %}" class="btn btn-white">← Tuyển dụng & ĐT</a>
+        <a href="{% url 'talent:applicant_create' %}" class="btn btn-green">+ Thêm ứng viên</a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <form method="get" style="display:flex; align-items:center; gap:12px;">
+        <label>Vị trí:</label>
+        <select name="job" onchange="this.form.submit()">
+            <option value="">Tất cả vị trí đang tuyển</option>
+            {% for j in jobs %}
+            <option value="{{ j.pk }}" {% if job_f == j.pk|stringformat:"s" %}selected{% endif %}>{{ j.title }}</option>
+            {% endfor %}
+        </select>
+        {% if job_f %}<a href="{% url 'talent:applicant_kanban' %}" style="color:#c62828; font-size:12px; text-decoration:none;">✕ Xóa</a>{% endif %}
+    </form>
+    <span style="font-size:12px; color:#888; margin-left:auto;">Hiển thị {{ total_shown }} ứng viên</span>
+</div>
+
+<div class="board-container">
+    <div class="board">
+        {% for stage_key, stage_label, cards in kanban_columns %}
+        <div class="kanban-col">
+            <div class="col-header col-header-{{ stage_key }}">
+                <span>{{ stage_label }}</span>
+                <span class="col-count">{{ cards|length }}</span>
+            </div>
+            <div class="col-body">
+                {% if cards %}
+                {% for a in cards %}
+                <div class="kanban-card border-{{ a.stage }}" onclick="window.location='{% url 'talent:applicant_detail' a.pk %}'">
+                    <div class="card-avatar avatar-{{ a.stage }}">{{ a.full_name|first|upper }}</div>
+                    <div class="card-name">{{ a.full_name }}</div>
+                    <div class="card-job">{{ a.job_position.title }}</div>
+                    <div class="card-meta">{{ a.applied_at|date:"d/m/Y" }}</div>
+                    <div class="card-actions">
+                        <a href="{% url 'talent:applicant_detail' a.pk %}" class="card-btn" onclick="event.stopPropagation()">Chi tiết</a>
+                        <a href="{% url 'talent:applicant_change_stage' a.pk %}" class="card-btn card-btn-move" onclick="event.stopPropagation()">Đổi GĐ</a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-col">Không có ứng viên</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

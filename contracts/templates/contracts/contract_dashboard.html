@@ -1,0 +1,293 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Hợp đồng — HRM</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+.topbar {
+    background: #1565C0; color: white;
+    padding: 0 30px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.topbar-brand { font-size: 17px; font-weight: 700; }
+.breadcrumb { font-size: 13px; opacity: 0.8; }
+.breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.btn-logout {
+    padding: 5px 13px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: white;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer; font-family: inherit;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+.container { padding: 22px 28px; max-width: 1300px; margin: 0 auto; }
+.page-title { font-size: 19px; font-weight: 700; margin-bottom: 20px; color: #1a1a1a; }
+
+/* KPI CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.kpi-card {
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 18px 20px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    border-left: 4px solid #1565C0;
+}
+.kpi-card.green  { border-left-color: #4CAF50; }
+.kpi-card.orange { border-left-color: #FF9800; }
+.kpi-card.red    { border-left-color: #c62828; }
+.kpi-card.purple { border-left-color: #7B1FA2; }
+.kpi-card.grey   { border-left-color: #607D8B; }
+.kpi-label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 8px; }
+.kpi-value { font-size: 28px; font-weight: 800; color: #1a1a1a; }
+
+/* ALERT */
+.alert-expiring {
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: #f57f17;
+}
+
+/* CHARTS + TABLES */
+.section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 22px; }
+.card {
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 20px 22px; box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+}
+.card h3 { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 16px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+.chart-wrap { height: 240px; display: flex; align-items: center; justify-content: center; }
+
+/* TABLES */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; padding: 7px 10px; border-bottom: 2px solid #eee; text-align: left; }
+td { padding: 8px 10px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fbff; }
+
+.badge {
+    display: inline-block; padding: 2px 9px; border-radius: 10px;
+    font-size: 11px; font-weight: 700; color: white;
+}
+
+.full-card { margin-bottom: 22px; }
+.empty-msg { color: #bbb; font-style: italic; font-size: 13px; padding: 16px 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="topbar-brand">📊 Dashboard Hợp đồng</div>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">🏠 Trang chủ</a> ›
+            <a href="{% url 'contracts:contract_list' %}">Hợp đồng</a> › Dashboard
+        </div>
+    </div>
+    <div class="topbar-right">
+        <a href="{% url 'contracts:contract_list' %}" class="btn-logout">📄 Danh sách</a>
+        {% if features.can_export %}
+        <form method="get" action="{% url 'contracts:contract_dashboard_export_excel' %}" style="margin:0; display:flex; align-items:center; gap:6px;">
+            <select name="year" style="padding:4px 8px; border-radius:5px; border:1px solid rgba(255,255,255,0.4); background:rgba(255,255,255,0.15); color:white; font-size:13px; cursor:pointer;">
+                <option value="" style="color:#333;">-- Tất cả năm --</option>
+                {% for y in export_years %}
+                <option value="{{ y }}" style="color:#333;">{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-logout" style="background:rgba(76,175,80,0.3); border-color:rgba(76,175,80,0.6);">
+                ⬇ Xuất báo cáo Excel
+            </button>
+        </form>
+        {% endif %}
+        <span style="font-size:13px; opacity:0.85;">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="page-title">Dashboard Hợp đồng Lao động</div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Tổng hợp đồng</div>
+            <div class="kpi-value">{{ total }}</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-label">Còn hiệu lực</div>
+            <div class="kpi-value">{{ status_counts.hieu_luc|default:0 }}</div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-label">Sắp hết hạn</div>
+            <div class="kpi-value">{{ status_counts.sap_het_han|default:0 }}</div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-label">Hết hạn</div>
+            <div class="kpi-value">{{ status_counts.het_han|default:0 }}</div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-label">Đã gia hạn</div>
+            <div class="kpi-value">{{ status_counts.gia_han|default:0 }}</div>
+        </div>
+        <div class="kpi-card grey">
+            <div class="kpi-label">Đã chấm dứt</div>
+            <div class="kpi-value">{{ status_counts.cham_dut|default:0 }}</div>
+        </div>
+    </div>
+
+    {% if expiring_list %}
+    <div class="alert-expiring">
+        ⚠ Có <strong>{{ expiring_list|length }}</strong> hợp đồng sắp hết hạn trong 30 ngày tới.
+        <a href="{% url 'contracts:contract_list' %}?expiring=1" style="color:#e65100; margin-left:6px; text-decoration:underline;">Xem chi tiết</a>
+    </div>
+    {% endif %}
+
+    <!-- CHART + TYPE TABLE -->
+    <div class="section-grid">
+        <div class="card">
+            <h3>Phân bố theo trạng thái</h3>
+            <div class="chart-wrap">
+                {% if total > 0 %}
+                <canvas id="statusChart" width="220" height="220"></canvas>
+                {% else %}
+                <p style="color:#bbb; font-style:italic;">Chưa có dữ liệu hợp đồng.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <h3>Phân bố theo loại hợp đồng</h3>
+            <table>
+                <thead>
+                    <tr><th>Loại hợp đồng</th><th style="text-align:right;">Số lượng</th></tr>
+                </thead>
+                <tbody>
+                    {% for val, label in TYPE_CHOICES %}
+                    <tr>
+                        <td>{{ label }}</td>
+                        <td style="text-align:right; font-weight:700;">{{ type_counts|default_if_none:0 }}
+                            {% with cnt=type_counts %}
+                            {% if val == 'thu_viec' %}{{ cnt.thu_viec|default:0 }}
+                            {% elif val == 'xd_1_nam' %}{{ cnt.xd_1_nam|default:0 }}
+                            {% elif val == 'xd_3_nam' %}{{ cnt.xd_3_nam|default:0 }}
+                            {% elif val == 'khong_xd' %}{{ cnt.khong_xd|default:0 }}
+                            {% elif val == 'thuc_tap' %}{{ cnt.thuc_tap|default:0 }}
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- EXPIRING + DEPT STATS -->
+    <div class="section-grid">
+        <div class="card full-card">
+            <h3>Hợp đồng sắp hết hạn (30 ngày)</h3>
+            {% if expiring_list %}
+            <table>
+                <thead><tr><th>Số HĐ</th><th>Nhân viên</th><th>Ngày kết thúc</th><th>Còn (ngày)</th></tr></thead>
+                <tbody>
+                    {% for c in expiring_list %}
+                    <tr>
+                        <td><a href="{% url 'contracts:contract_detail' c.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ c.contract_number }}</a></td>
+                        <td>{{ c.employee.full_name }}</td>
+                        <td>{{ c.end_date|date:"d/m/Y" }}</td>
+                        <td style="color:#FF9800; font-weight:700;">{{ c.days_until_expiry }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-msg">Không có hợp đồng nào sắp hết hạn.</p>
+            {% endif %}
+        </div>
+        <div class="card full-card">
+            <h3>Hợp đồng đã hết hạn chưa xử lý</h3>
+            {% if overdue_list %}
+            <table>
+                <thead><tr><th>Số HĐ</th><th>Nhân viên</th><th>Ngày kết thúc</th></tr></thead>
+                <tbody>
+                    {% for c in overdue_list %}
+                    <tr>
+                        <td><a href="{% url 'contracts:contract_detail' c.pk %}" style="color:#c62828; font-weight:600; text-decoration:none;">{{ c.contract_number }}</a></td>
+                        <td>{{ c.employee.full_name }}</td>
+                        <td style="color:#c62828;">{{ c.end_date|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-msg">Không có hợp đồng hết hạn chưa xử lý.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- DEPT STATS -->
+    <div class="card">
+        <h3>Thống kê theo phòng ban</h3>
+        {% if dept_stats %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Phòng ban</th>
+                    <th style="text-align:right;">Tổng</th>
+                    <th style="text-align:right; color:#4CAF50;">Còn hiệu lực</th>
+                    <th style="text-align:right; color:#FF9800;">Sắp HH</th>
+                    <th style="text-align:right; color:#c62828;">Hết hạn</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in dept_stats %}
+                <tr>
+                    <td><strong>{{ d.department__name }}</strong></td>
+                    <td style="text-align:right;">{{ d.total }}</td>
+                    <td style="text-align:right; color:#4CAF50; font-weight:700;">{{ d.hieu_luc }}</td>
+                    <td style="text-align:right; color:#FF9800; font-weight:700;">{{ d.sap_het_han }}</td>
+                    <td style="text-align:right; color:#c62828; font-weight:700;">{{ d.het_han }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-msg">Chưa có dữ liệu hợp đồng.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if total > 0 %}
+<script>
+const labels = {{ chart_labels|safe }};
+const values = {{ chart_values|safe }};
+const colors = {{ chart_colors|safe }};
+const nonZeroIdx = values.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0);
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: nonZeroIdx.map(i => labels[i]),
+        datasets: [{
+            data: nonZeroIdx.map(i => values[i]),
+            backgroundColor: nonZeroIdx.map(i => colors[i]),
+            borderWidth: 2,
+            borderColor: '#fff',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'right', labels: { font: { size: 12 }, padding: 12 } }
+        }
+    }
+});
+</script>
+{% endif %}
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

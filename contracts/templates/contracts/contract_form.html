@@ -1,0 +1,495 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>{{ title }} — HRM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+.topbar {
+    background: #1565C0; color: white;
+    padding: 0 30px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.topbar-brand { font-size: 17px; font-weight: 700; }
+.breadcrumb { font-size: 13px; opacity: 0.8; }
+.breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.btn-logout {
+    padding: 5px 13px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: white;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer; font-family: inherit;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+.container { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
+.page-title { font-size: 19px; font-weight: 700; margin-bottom: 20px; color: #1a1a1a; }
+
+.layout { display: flex; gap: 24px; align-items: flex-start; }
+
+/* FORM PANEL */
+.form-panel {
+    flex: 1;
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 26px 28px; box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.section-title {
+    font-size: 12px; font-weight: 700; color: #1565C0; text-transform: uppercase;
+    letter-spacing: 0.5px; border-bottom: 1px solid #e3f2fd; padding-bottom: 8px;
+    margin-bottom: 18px;
+}
+.form-row { display: flex; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; margin-bottom: 14px; }
+.form-group label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: inherit; width: 100%;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { outline: none; border-color: #1565C0; box-shadow: 0 0 0 2px rgba(21,101,192,0.1); }
+.form-group textarea { resize: vertical; min-height: 72px; }
+.error-list { margin: 3px 0 0; padding: 0; list-style: none; }
+.error-list li { font-size: 12px; color: #c62828; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #eee; }
+.btn-save {
+    padding: 9px 22px; background: #1565C0; color: white;
+    border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+}
+.btn-save:hover { background: #0d47a1; }
+.btn-back {
+    padding: 9px 22px; background: #e0e0e0; color: #444;
+    border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center;
+}
+.btn-back:hover { background: #ccc; }
+
+/* INFO CARD */
+.info-card {
+    width: 300px; flex-shrink: 0;
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.info-card-header {
+    background: #1565C0; color: white; padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+}
+.info-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.25); display: flex;
+    align-items: center; justify-content: center; font-size: 20px;
+}
+.info-card-header h3 { font-size: 14px; font-weight: 700; }
+.info-card-header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+.info-card-body { padding: 14px 16px; }
+.info-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #888; }
+.info-value { font-weight: 600; color: #333; text-align: right; }
+.info-empty { padding: 20px; text-align: center; color: #bbb; font-size: 13px; }
+
+#end-date-group { transition: opacity 0.2s; }
+
+/* Employee search */
+.emp-search-wrap { position: relative; }
+.emp-search-input {
+    padding: 8px 12px 8px 34px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: inherit; width: 100%;
+}
+.emp-search-input:focus { outline: none; border-color: #1565C0; box-shadow: 0 0 0 2px rgba(21,101,192,0.1); }
+.emp-search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; pointer-events: none; color: #999;
+}
+.emp-dropdown {
+    position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+    background: white; border: 1px solid #bbdefb; border-radius: 6px;
+    max-height: 260px; overflow-y: auto; z-index: 999;
+    display: none; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+.emp-dropdown.open { display: block; }
+.emp-dropdown-item {
+    padding: 9px 12px; cursor: pointer; border-bottom: 1px solid #f5f5f5;
+}
+.emp-dropdown-item:last-child { border-bottom: none; }
+.emp-dropdown-item:hover, .emp-dropdown-item.active { background: #e3f2fd; }
+.item-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.item-meta { font-size: 11px; color: #888; margin-top: 2px; }
+.emp-no-result { padding: 11px 12px; font-size: 13px; color: #aaa; font-style: italic; }
+.emp-selected-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; background: #e3f2fd; border: 1px solid #bbdefb;
+    border-radius: 6px; font-size: 13px; margin-top: 4px;
+}
+.emp-selected-badge span { flex: 1; font-weight: 600; color: #1565C0; }
+.emp-clear-btn {
+    background: none; border: none; color: #c62828; cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 0 2px;
+}
+.emp-clear-btn:hover { color: #b71c1c; }
+
+.file-upload-area {
+    border: 2px dashed #bbdefb; border-radius: 8px; padding: 16px;
+    background: #f8fbff; text-align: center; cursor: pointer; transition: border-color 0.2s;
+}
+.file-upload-area:hover { border-color: #1565C0; }
+.file-upload-area input[type="file"] { display: none; }
+.file-upload-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; background: #1565C0; color: white;
+    border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.file-upload-label:hover { background: #0d47a1; }
+.file-name-display { margin-top: 8px; font-size: 12px; color: #555; }
+.current-file-box {
+    display: flex; align-items: center; gap: 10px;
+    background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 6px;
+    padding: 8px 12px; margin-bottom: 10px; font-size: 13px;
+}
+.current-file-box a { color: #1565C0; font-weight: 600; text-decoration: none; }
+.current-file-box a:hover { text-decoration: underline; }
+.clear-file-label { display: inline-flex; align-items: center; gap: 5px; color: #c62828; cursor: pointer; font-size: 12px; font-weight: 600; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="topbar-brand">📄 Hợp đồng Lao động</div>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">🏠 Trang chủ</a> ›
+            <a href="{% url 'contracts:contract_list' %}">Danh sách</a> ›
+            {{ title }}
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span style="font-size:13px; opacity:0.85;">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="page-title">{{ title }}</div>
+
+    <div class="layout">
+        <!-- FORM -->
+        <div class="form-panel">
+            <form method="post" id="contract-form" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="section-title">Thông tin hợp đồng</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số hợp đồng *</label>
+                        <input type="text" name="contract_number" value="{{ form.contract_number.value|default:'' }}" placeholder="VD: HD-2024-001">
+                        {% if form.contract_number.errors %}<ul class="error-list">{% for e in form.contract_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label>Nhân viên *</label>
+                        <input type="hidden" name="employee" id="employee-hidden" value="{{ form.employee.value|default:'' }}">
+                        <div class="emp-search-wrap" id="emp-search-wrap">
+                            <span class="emp-search-icon">🔍</span>
+                            <input type="text" id="emp-search-input" class="emp-search-input"
+                                   placeholder="Gõ tên hoặc mã nhân viên để tìm..."
+                                   autocomplete="off">
+                            <div class="emp-dropdown" id="emp-dropdown"></div>
+                        </div>
+                        <div id="emp-selected-badge" style="display:none;" class="emp-selected-badge">
+                            <span id="emp-selected-text"></span>
+                            <button type="button" class="emp-clear-btn" onclick="clearEmployee()" title="Xóa chọn">×</button>
+                        </div>
+                        {% if form.employee.errors %}<ul class="error-list">{% for e in form.employee.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phòng ban *</label>
+                        <select name="department" id="department-select">
+                            <option value="">-- Chọn phòng ban --</option>
+                            {% for dept in form.department.field.queryset %}
+                            <option value="{{ dept.name }}" {% if form.department.value == dept.name %}selected{% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.department.errors %}<ul class="error-list">{% for e in form.department.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label>Loại hợp đồng *</label>
+                        <select name="contract_type" id="type-select" onchange="onTypeChange(this)">
+                            <option value="">-- Chọn loại --</option>
+                            {% for val, label in form.contract_type.field.choices %}
+                            {% if val %}
+                            <option value="{{ val }}" {% if form.contract_type.value == val %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.contract_type.errors %}<ul class="error-list">{% for e in form.contract_type.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ngày bắt đầu *</label>
+                        <input type="date" name="start_date" value="{{ form.start_date.value|default:'' }}">
+                        {% if form.start_date.errors %}<ul class="error-list">{% for e in form.start_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                    <div class="form-group" id="end-date-group">
+                        <label>Ngày kết thúc</label>
+                        <input type="date" name="end_date" value="{{ form.end_date.value|default:'' }}">
+                        {% if form.end_date.errors %}<ul class="error-list">{% for e in form.end_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ngày ký hợp đồng</label>
+                        <input type="date" name="signed_date" value="{{ form.signed_date.value|default:'' }}">
+                        {% if form.signed_date.errors %}<ul class="error-list">{% for e in form.signed_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label>Thời hạn báo trước (ngày)</label>
+                        <input type="number" name="notice_period_days" value="{{ form.notice_period_days.value|default:'30' }}" min="0" max="365" placeholder="30">
+                        {% if form.notice_period_days.errors %}<ul class="error-list">{% for e in form.notice_period_days.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top:8px;">Chi tiết vị trí &amp; lương</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Chức vụ</label>
+                        <input type="text" name="position" id="position-input" value="{{ form.position.value|default:'' }}" placeholder="VD: Kế toán viên">
+                    </div>
+                    <div class="form-group">
+                        <label>Lương theo HĐ (VNĐ)</label>
+                        <input type="number" name="salary" id="salary-input" value="{{ form.salary.value|default:'' }}" step="1000" placeholder="VD: 8000000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <textarea name="note" rows="3" placeholder="Ghi chú thêm về hợp đồng...">{{ form.note.value|default:'' }}</textarea>
+                </div>
+
+                <div class="section-title" style="margin-top:8px;">File hợp đồng</div>
+
+                <div class="form-group">
+                    <label>Đính kèm file (PDF, DOC, DOCX — tối đa 10MB)</label>
+
+                    {% if contract and contract.contract_file %}
+                    <div class="current-file-box">
+                        <span>📎</span>
+                        <a href="{{ contract.contract_file.url }}" target="_blank">{{ contract.contract_file_name }}</a>
+                        <label class="clear-file-label">
+                            <input type="checkbox" name="clear_contract_file"> Xóa file này
+                        </label>
+                    </div>
+                    <div style="font-size:12px; color:#888; margin-bottom:8px;">Tải file mới bên dưới để thay thế file hiện tại</div>
+                    {% endif %}
+
+                    <div class="file-upload-area" onclick="document.getElementById('file-input').click()">
+                        <label class="file-upload-label" for="file-input">📂 Chọn file</label>
+                        <input type="file" id="file-input" name="contract_file" accept=".pdf,.doc,.docx" onchange="onFileChange(this)">
+                        <div class="file-name-display" id="file-name-display">Chưa chọn file nào</div>
+                    </div>
+                    {% if form.contract_file.errors %}
+                    <ul class="error-list">{% for e in form.contract_file.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div style="color:#c62828; font-size:13px; margin-bottom:10px;">
+                    {% for e in form.non_field_errors %}{{ e }}<br>{% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-save">💾 Lưu hợp đồng</button>
+                    <a href="{% if contract %}{% url 'contracts:contract_detail' contract.pk %}{% else %}{% url 'contracts:contract_list' %}{% endif %}" class="btn-back">Hủy</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- INFO CARD -->
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-avatar">👤</div>
+                <div>
+                    <h3 id="card-name">Chọn nhân viên</h3>
+                    <p id="card-code" style="font-size:11px; opacity:0.8;">để xem thông tin</p>
+                </div>
+            </div>
+            <div class="info-card-body" id="card-body">
+                <div class="info-empty">Chọn nhân viên để xem thông tin tự động điền</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const EMPLOYEE_DATA = {{ employee_data_json|safe }};
+const empList = Object.entries(EMPLOYEE_DATA).map(([id, d]) => ({id, ...d}));
+
+// ---- Employee search ----
+function onEmpSearch(input) {
+    const q = input.value.trim().toLowerCase();
+    const dropdown = document.getElementById('emp-dropdown');
+    if (!q) { dropdown.classList.remove('open'); return; }
+
+    const matches = empList.filter(e =>
+        e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)
+    ).slice(0, 25);
+
+    if (!matches.length) {
+        dropdown.innerHTML = '<div class="emp-no-result">Không tìm thấy nhân viên nào</div>';
+    } else {
+        dropdown.innerHTML = matches.map(e => `
+            <div class="emp-dropdown-item"
+                 data-id="${e.id}"
+                 data-name="${e.name.replace(/"/g, '&quot;')}"
+                 data-code="${e.code}"
+                 onmousedown="selectEmployee(this)">
+                <div class="item-name">${highlight(e.name, q)}${e.code ? ` <span style="font-weight:400;color:#777;">(${e.code})</span>` : ''}</div>
+                <div class="item-meta">${e.dept || 'Chưa có phòng ban'}</div>
+            </div>
+        `).join('');
+    }
+    dropdown.classList.add('open');
+}
+
+function highlight(text, q) {
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx === -1) return text;
+    return text.slice(0, idx) +
+           '<mark style="background:#fff176;padding:0;">' + text.slice(idx, idx + q.length) + '</mark>' +
+           text.slice(idx + q.length);
+}
+
+function selectEmployee(el) {
+    const empId   = el.dataset.id;
+    const empName = el.dataset.name;
+    const empCode = el.dataset.code;
+    document.getElementById('employee-hidden').value = empId;
+    document.getElementById('emp-search-input').value = '';
+    document.getElementById('emp-search-input').style.display = 'none';
+    document.getElementById('emp-search-icon') && (document.querySelector('.emp-search-icon').style.display = 'none');
+    document.getElementById('emp-dropdown').classList.remove('open');
+
+    const badge = document.getElementById('emp-selected-badge');
+    const text  = document.getElementById('emp-selected-text');
+    text.textContent = empName + (empCode ? ` (${empCode})` : '');
+    badge.style.display = 'flex';
+
+    onEmployeeChange(empId);
+}
+
+function clearEmployee() {
+    document.getElementById('employee-hidden').value = '';
+    document.getElementById('emp-search-input').value = '';
+    document.getElementById('emp-search-input').style.display = '';
+    document.querySelector('.emp-search-icon').style.display = '';
+    document.getElementById('emp-selected-badge').style.display = 'none';
+    document.getElementById('emp-search-input').focus();
+    resetInfoCard();
+}
+
+// Close dropdown on click outside
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('emp-search-wrap').contains(e.target)) {
+        document.getElementById('emp-dropdown').classList.remove('open');
+    }
+});
+
+// ---- Info card ----
+function onEmployeeChange(empId) {
+    const d = EMPLOYEE_DATA[empId];
+    if (!d) { resetInfoCard(); return; }
+
+    document.getElementById('card-name').textContent = d.name;
+    document.getElementById('card-code').textContent = d.dept || 'Chưa có phòng ban';
+    document.getElementById('card-body').innerHTML = `
+        <div class="info-row"><span class="info-label">Phòng ban</span><span class="info-value">${d.dept || '—'}</span></div>
+        <div class="info-row"><span class="info-label">Chức vụ</span><span class="info-value">${d.position || '—'}</span></div>
+        <div class="info-row"><span class="info-label">Lương hiện tại</span><span class="info-value">${d.salary ? Number(d.salary).toLocaleString('vi-VN') + ' ₫' : '—'}</span></div>
+    `;
+
+    const deptSel  = document.getElementById('department-select');
+    const posInput = document.getElementById('position-input');
+    const salInput = document.getElementById('salary-input');
+    if (d.dept) {
+        for (let i = 0; i < deptSel.options.length; i++) {
+            if (deptSel.options[i].value === d.dept) { deptSel.selectedIndex = i; break; }
+        }
+    }
+    if (d.position && !posInput.value) posInput.value = d.position;
+    if (d.salary   && !salInput.value) salInput.value = d.salary;
+}
+
+function resetInfoCard() {
+    document.getElementById('card-name').textContent = 'Chọn nhân viên';
+    document.getElementById('card-code').textContent = 'để xem thông tin';
+    document.getElementById('card-body').innerHTML = '<div class="info-empty">Chọn nhân viên để xem thông tin tự động điền</div>';
+}
+
+function onTypeChange(sel) {
+    const endGroup = document.getElementById('end-date-group');
+    endGroup.style.opacity = sel.value === 'khong_xd' ? '0.4' : '1';
+    endGroup.querySelector('input').required = sel.value !== 'khong_xd';
+}
+
+function onFileChange(input) {
+    const display = document.getElementById('file-name-display');
+    display.textContent = input.files.length ? input.files[0].name : 'Chưa chọn file nào';
+}
+
+// Init on page load — restore selected employee if editing
+document.addEventListener('DOMContentLoaded', function() {
+    const hiddenInput = document.getElementById('employee-hidden');
+    const empId = hiddenInput.value;
+    if (empId && EMPLOYEE_DATA[empId]) {
+        const d = EMPLOYEE_DATA[empId];
+        selectEmployee({
+            dataset: { id: empId, name: d.name, code: d.code }
+        });
+    }
+
+    const searchInput = document.getElementById('emp-search-input');
+    searchInput.addEventListener('input', function() { onEmpSearch(this); });
+    searchInput.addEventListener('keydown', function(e) {
+        const items = document.querySelectorAll('.emp-dropdown-item');
+        const active = document.querySelector('.emp-dropdown-item.active');
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const next = active ? active.nextElementSibling : items[0];
+            if (next) { active && active.classList.remove('active'); next.classList.add('active'); next.scrollIntoView({block:'nearest'}); }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prev = active ? active.previousElementSibling : items[items.length - 1];
+            if (prev) { active && active.classList.remove('active'); prev.classList.add('active'); prev.scrollIntoView({block:'nearest'}); }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (active) selectEmployee(active);
+        } else if (e.key === 'Escape') {
+            document.getElementById('emp-dropdown').classList.remove('open');
+        }
+    });
+
+    const typeSel = document.getElementById('type-select');
+    if (typeSel.value) onTypeChange(typeSel);
+});
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

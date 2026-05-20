@@ -1,0 +1,905 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    {% load humanize %}
+    <meta charset="UTF-8">
+    <title>Danh sách nhân viên</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        /* Thanh tiêu đề trên cùng */
+        .topbar {
+            background: #1565C0;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+
+        /* Khung nội dung chính */
+        .container { padding: 24px 30px; }
+
+        /* Khung bộ lọc */
+        .filter-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .filter-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-row + .filter-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .filter-box input[type=text],
+        .filter-box input[type=date],
+        .filter-box select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border 0.2s;
+            background: #fafafa;
+            height: 36px;
+            box-sizing: border-box;
+        }
+        .filter-box input[type=text]:focus,
+        .filter-box input[type=date]:focus,
+        .filter-box select:focus { border-color: #1565C0; background: white; }
+        .filter-date-range {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-date-range span { color: #bbb; font-size: 14px; }
+
+        /* Dropdown bộ phận có search */
+        .dept-dropdown { position: relative; width: 200px; }
+        .dept-trigger {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fafafa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            text-align: left;
+            color: #333;
+            transition: border 0.2s;
+            height: 36px;
+            box-sizing: border-box;
+        }
+        .dept-trigger:hover, .dept-trigger.open { border-color: #1565C0; }
+        .dept-arrow { font-size: 11px; color: #888; flex-shrink: 0; transition: transform 0.2s; }
+        .dept-trigger.open .dept-arrow { transform: rotate(180deg); }
+
+        .dept-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 220px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            z-index: 200;
+            overflow: hidden;
+        }
+        .dept-panel.open { display: block; }
+
+        .dept-search {
+            width: 100%;
+            padding: 9px 12px;
+            border: none;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            outline: none;
+            background: #f8f9fa;
+        }
+        .dept-search:focus { background: white; }
+
+        .dept-options { max-height: 220px; overflow-y: auto; }
+        .dept-option {
+            padding: 9px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.1s;
+        }
+        .dept-option:hover { background: #E3F2FD; color: #1565C0; }
+        .dept-option.dept-selected { background: #E3F2FD; color: #1565C0; font-weight: 600; }
+        .dept-option.hidden { display: none; }
+
+        /* Badge tổng số nhân viên */
+        .badge-total {
+            margin-left: auto;
+            background: #E3F2FD;
+            border: 1px solid #90CAF9;
+            color: #1565C0;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .badge-total strong { font-size: 16px; }
+
+        /* Khung bảng danh sách */
+        .table-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th {
+            color: white;
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { background: #1976D2; }
+        th.sortable a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .sort-icon { font-size: 11px; opacity: 0.5; }
+        .sort-icon.active { opacity: 1; }
+        td {
+            padding: 11px 14px;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        tbody tr:hover { background: #F5F9FF; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr.row-terminated { background: #FAFAFA; }
+        tbody tr.row-terminated td { color: #999; }
+        tbody tr.row-terminated:hover { background: #FFF5F5; }
+        tbody tr.row-terminated a[style*="1565C0"] { color: #999 !important; }
+
+        /* Status pill */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .pill-dang_lam         { background: #E8F5E9; color: #2E7D32; }
+        .pill-thu_viec         { background: #E3F2FD; color: #1565C0; }
+        .pill-thuc_tap_sinh    { background: #F3E5F5; color: #7B1FA2; }
+        .pill-nghi_phep        { background: #E0F2F1; color: #00695C; }
+        .pill-nghi_sinh        { background: #FCE4EC; color: #C2185B; }
+        .pill-nghi_khong_luong { background: #FFF3E0; color: #E65100; }
+        .pill-nghi_om          { background: #F3E5F5; color: #6A1B9A; }
+        .pill-nghi_viec        { background: #FFEBEE; color: #C62828; }
+        .pill-expiring-soon    { background: #FFEBEE !important; color: #B71C1C !important; border: 1px solid #EF9A9A; }
+
+        .status-days-badge {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .days-warning  { background: #FFCDD2; color: #B71C1C; }
+        .days-overdue  { background: #B71C1C; color: #fff; }
+        .termination-badge { background: #FFF3E0; color: #E65100; border: 1px solid #FFCC80; display:inline-block; margin-left:4px; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:700; white-space:nowrap; }
+
+        /* Nút */
+        .btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-add    { background: #4CAF50; color: white; }
+        .btn-filter { background: #1565C0; color: white; }
+        .btn-clear  { background: #e0e0e0; color: #555; }
+        .btn-edit   { background: #E3F2FD; color: #1565C0; padding: 5px 10px; }
+        .btn-delete { background: #FFEBEE; color: #c62828; padding: 5px 10px; }
+        .btn-csv    { background: #E8F5E9; color: #2E7D32; }
+        .btn-excel  { background: #E8F5E9; color: #1B5E20; }
+
+        /* Dòng thông báo khi đang lọc */
+        .filter-info {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+        .filter-info strong { color: #1565C0; }
+
+        /* Dòng trống */
+        .empty-row td {
+            text-align: center;
+            color: #aaa;
+            padding: 40px;
+            font-size: 15px;
+        }
+
+        /* Phân trang */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 20px 0 4px;
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            border: 1px solid #e0e0e0;
+            background: white;
+            color: #555;
+            transition: all 0.15s;
+        }
+        .pagination a:hover { background: #E3F2FD; border-color: #90CAF9; color: #1565C0; }
+        .pagination .current {
+            background: #1565C0;
+            color: white;
+            border-color: #1565C0;
+            font-weight: 700;
+        }
+        .pagination .disabled { color: #ccc; pointer-events: none; background: #fafafa; }
+        .page-info {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-top: 6px;
+            padding-bottom: 8px;
+        }
+
+        /* Flash messages */
+        .messages { list-style: none; margin-bottom: 12px; }
+        .messages li {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .messages .success { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+        .messages .warning { background: #FFF8E1; color: #F57F17; border: 1px solid #FFE082; }
+        .messages .error   { background: #FFEBEE; color: #C62828; border: 1px solid #EF9A9A; }
+
+        /* Checkbox cột đầu */
+        th.col-check, td.col-check { width: 40px; text-align: center; padding: 8px 6px; }
+        input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #1565C0; }
+
+        /* Avatar nhỏ trong danh sách */
+        .list-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #E3F2FD;
+            flex-shrink: 0;
+        }
+        .list-avatar-placeholder {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: #E3F2FD;
+            color: #1565C0;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Thanh bulk action */
+        .bulk-bar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: #1565C0;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            flex-wrap: wrap;
+        }
+        .bulk-bar.visible { display: flex; }
+        .bulk-bar select {
+            padding: 6px 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+        .btn-bulk-delete  { background: #EF5350; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-bulk-delete:hover { background: #C62828; }
+        .btn-bulk-status  { background: white; color: #1565C0; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-bulk-status:hover { background: #E3F2FD; }
+        .btn-bulk-cancel  { background: transparent; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-bulk-cancel:hover { background: rgba(255,255,255,0.1); }
+        .bulk-selected-count { font-weight: 700; font-size: 14px; }
+        #bulk-date-fields, #bulk-terminate-fields { display: none; }
+        #bulk-date-fields.show, #bulk-terminate-fields.show { display: inline-flex !important; }
+        .bulk-date-label { font-size: 11px; color: rgba(255,255,255,0.7); white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+    <!-- Thanh tiêu đề -->
+    <div class="topbar">
+        <h1>Quản lý Nhân viên</h1>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a href="{% url 'home' %}" class="btn" style="background:rgba(255,255,255,0.2); color:white;">🏠 Trang chủ</a>
+            {% if can_view_dashboard %}<a href="{% url 'dashboard' %}" class="btn" style="background:rgba(255,255,255,0.2); color:white;">📊 Dashboard</a>{% endif %}
+            <!-- Dropdown menu user -->
+            <div style="position:relative;" id="user-menu-wrap">
+                <button onclick="toggleUserMenu()" style="background:rgba(255,255,255,0.15); color:white; border:none; border-radius:6px; padding:7px 14px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:6px;">
+                    👤 {{ request.user.username }} ▾
+                </button>
+                <div id="user-menu" style="display:none; position:absolute; right:0; top:calc(100% + 6px); background:white; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.15); min-width:180px; overflow:hidden; z-index:100;">
+                    <a href="{% url 'change_password' %}" style="display:block; padding:11px 16px; font-size:13px; color:#333; text-decoration:none; border-bottom:1px solid #f0f0f0;">🔒 Đổi mật khẩu</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" style="width:100%; text-align:left; padding:11px 16px; font-size:13px; color:#c62828; background:none; border:none; cursor:pointer;">🚪 Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- Nút hành động -->
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+            {% if can_add %}<a href="{% url 'employee_create' %}" class="btn btn-add">+ Thêm nhân viên</a>{% endif %}
+            {% if can_export %}
+            <a href="{% url 'export_csv' %}?name={{ name }}&department={{ department }}&employee_code={{ employee_code }}&status={{ status_filter }}" class="btn btn-csv">⬇ Xuất CSV</a>
+            <a href="{% url 'export_excel' %}?name={{ name }}&department={{ department }}&employee_code={{ employee_code }}&status={{ status_filter }}" class="btn btn-excel">⬇ Xuất Excel</a>
+            {% endif %}
+            {% if can_import %}
+            <a href="{% url 'import_excel' %}" class="btn" style="background:#E8F5E9; color:#2E7D32;">⬆ Nhập Excel</a>
+            {% endif %}
+        </div>
+
+        <!-- Khung bộ lọc -->
+        <form method="get" class="filter-box">
+
+            <!-- Hàng 1: Tìm kiếm chính -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Mã NV</label>
+                    <input type="text" name="employee_code" value="{{ employee_code }}" placeholder="Nhập mã NV..." style="width:130px;">
+                </div>
+                <div class="filter-group">
+                    <label>Họ tên</label>
+                    <input type="text" name="name" value="{{ name }}" placeholder="Nhập tên nhân viên..." style="width:200px;">
+                </div>
+                <div class="filter-group">
+                    <label>Bộ phận</label>
+                    <div class="dept-dropdown" id="deptDropdown" style="width:185px;">
+                        <input type="hidden" name="department" id="deptValue" value="{{ department }}">
+                        <button type="button" class="dept-trigger" id="deptTrigger" onclick="toggleDeptDropdown()">
+                            <span id="deptLabel">{{ department|default:"-- Tất cả --" }}</span>
+                            <span class="dept-arrow">▾</span>
+                        </button>
+                        <div class="dept-panel" id="deptPanel">
+                            <input type="text" class="dept-search" id="deptSearch"
+                                   placeholder="Tìm bộ phận..." oninput="filterDepts(this.value)"
+                                   autocomplete="off">
+                            <div class="dept-options" id="deptOptions">
+                                <div class="dept-option {% if not department %}dept-selected{% endif %}"
+                                     onclick="selectDept('', '-- Tất cả --')">-- Tất cả --</div>
+                                {% for dept in departments %}
+                                <div class="dept-option {% if dept.name == department %}dept-selected{% endif %}"
+                                     onclick="selectDept('{{ dept.name }}', '{{ dept.name }}')">{{ dept.name }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Trạng thái</label>
+                    <select name="status" style="width:185px;">
+                        <option value="active"           {% if status_filter == 'active' %}selected{% endif %}>Đang làm việc (tất cả)</option>
+                        <option value="dang_lam"         {% if status_filter == 'dang_lam' %}selected{% endif %}>— Đang làm việc</option>
+                        <option value="thu_viec"         {% if status_filter == 'thu_viec' %}selected{% endif %}>— Thử việc</option>
+                        <option value="thuc_tap_sinh"    {% if status_filter == 'thuc_tap_sinh' %}selected{% endif %}>— Thực tập sinh</option>
+                        <option value="nghi_phep"        {% if status_filter == 'nghi_phep' %}selected{% endif %}>— Nghỉ phép</option>
+                        <option value="nghi_sinh"        {% if status_filter == 'nghi_sinh' %}selected{% endif %}>— Nghỉ thai sản</option>
+                        <option value="nghi_khong_luong" {% if status_filter == 'nghi_khong_luong' %}selected{% endif %}>— Nghỉ không lương</option>
+                        <option value="nghi_om"          {% if status_filter == 'nghi_om' %}selected{% endif %}>— Nghỉ ốm dài ngày</option>
+                        <option value="nghi_viec"        {% if status_filter == 'nghi_viec' %}selected{% endif %}>— Nghỉ việc</option>
+                        <option value="all"              {% if status_filter == 'all' %}selected{% endif %}>Tất cả nhân viên</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Chức vụ</label>
+                    <input type="text" name="position" value="{{ position }}" placeholder="Tìm chức vụ..." style="width:155px;">
+                </div>
+            </div>
+
+            <!-- Hàng 2: Bộ lọc nâng cao + actions -->
+            <div class="filter-row" style="align-items:flex-end;">
+                <div class="filter-group">
+                    <label>Từ ngày</label>
+                    <input type="date" name="hire_date_from" value="{{ hire_date_from }}" style="width:145px;">
+                </div>
+                <div style="color:#bbb; font-size:16px; padding-bottom:8px;">→</div>
+                <div class="filter-group">
+                    <label>Đến ngày</label>
+                    <input type="date" name="hire_date_to" value="{{ hire_date_to }}" style="width:145px;">
+                </div>
+
+                <input type="hidden" name="expiring" id="expiring-input" value="{{ expiring }}">
+                <button type="button" id="btn-expiring"
+                        class="btn {% if expiring == 'true' %}btn-filter{% else %}btn-clear{% endif %}"
+                        onclick="toggleExpiring()" style="height:36px; margin-left:4px;">
+                    ⚠ Sắp hết hạn{% if expiring == 'true' %} ✓{% endif %}
+                </button>
+
+                <!-- Spacer -->
+                <div style="flex:1;"></div>
+
+                <!-- Actions + Badge -->
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="submit" class="btn btn-filter" style="height:36px;">🔍 Lọc</button>
+                    {% if name or department or employee_code or status_filter != 'active' or position or hire_date_from or hire_date_to or expiring %}
+                    <a href="{% url 'employee_list' %}" class="btn btn-clear" style="height:36px; display:inline-flex; align-items:center;">✕ Xóa</a>
+                    {% endif %}
+                    <div class="badge-total">
+                        {% if name or department or employee_code or position or hire_date_from or hire_date_to or expiring or status_filter != 'active' %}
+                            <strong>{{ total }}</strong> kết quả
+                        {% else %}
+                            Tổng: <strong>{{ total }}</strong> NV
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+        <!-- Flash messages -->
+        {% if messages %}
+        <ul class="messages">
+            {% for msg in messages %}
+            <li class="{{ msg.tags }}">{{ msg }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <!-- Thông báo đang lọc -->
+        {% if name or department or employee_code %}
+        <p class="filter-info">
+            Kết quả lọc theo:
+            {% if employee_code %}<strong>Mã NV</strong> "{{ employee_code }}"{% endif %}
+            {% if employee_code and name %} · {% endif %}
+            {% if name %}<strong>Tên</strong> "{{ name }}"{% endif %}
+            {% if department and employee_code or department and name %} · {% endif %}
+            {% if department %}<strong>Bộ phận</strong> "{{ department }}"{% endif %}
+        </p>
+        {% endif %}
+
+        <!-- Form bulk action -->
+        <form method="post" id="bulk-form">
+            {% csrf_token %}
+            <input type="hidden" name="bulk_action" id="bulk-action-input" value="">
+            <input type="hidden" name="bulk_status"  id="bulk-status-input"  value="">
+            <input type="hidden" name="qs" value="{{ base_filter_qs }}">
+
+            <!-- Thanh bulk action -->
+            <div class="bulk-bar" id="bulk-bar">
+                <span>Đã chọn <span class="bulk-selected-count" id="selected-count">0</span> nhân viên</span>
+                <select id="bulk-status-select" style="display:none;" onchange="onBulkStatusChange(this.value)">
+                    <option value="">-- Chọn trạng thái --</option>
+                    <option value="dang_lam">Đang làm việc</option>
+                    <option value="thu_viec">Thử việc</option>
+                    <option value="thuc_tap_sinh">Thực tập sinh</option>
+                    <option value="nghi_phep">Nghỉ phép</option>
+                    <option value="nghi_sinh">Nghỉ thai sản</option>
+                    <option value="nghi_khong_luong">Nghỉ không lương</option>
+                    <option value="nghi_om">Nghỉ ốm dài ngày</option>
+                    <option value="nghi_viec">Nghỉ việc</option>
+                </select>
+                <!-- Ngày bắt đầu/kết thúc — hiện khi chọn trạng thái có ngày -->
+                <span id="bulk-date-fields" style="display:none; align-items:center; gap:6px;">
+                    <input type="date" name="bulk_start_date" id="bulk_start_date"
+                           title="Từ ngày" onchange="validateBulkDates()"
+                           style="padding:6px 8px; border-radius:5px; border:none; font-size:12px; cursor:pointer;">
+                    <span style="color:rgba(255,255,255,0.7);">→</span>
+                    <input type="date" name="bulk_end_date" id="bulk_end_date"
+                           title="Đến ngày" onchange="validateBulkDates()"
+                           style="padding:6px 8px; border-radius:5px; border:none; font-size:12px; cursor:pointer;">
+                </span>
+                <!-- Ngày nghỉ việc — hiện khi chọn nghi_viec -->
+                <span id="bulk-terminate-fields" style="display:none; align-items:center; gap:6px;">
+                    <input type="date" name="bulk_termination_date" id="bulk_termination_date"
+                           title="Ngày nghỉ việc" onchange="validateBulkDates()"
+                           style="padding:6px 8px; border-radius:5px; border:none; font-size:12px; cursor:pointer;">
+                </span>
+                <button type="button" class="btn-bulk-status" id="btn-change-status" onclick="toggleStatusSelect()">⇄ Đổi trạng thái</button>
+                <button type="button" class="btn-bulk-status" id="btn-confirm-status" style="display:none; background:#4CAF50; color:white;" onclick="submitBulkStatus()">✓ Xác nhận</button>
+                {% if is_superuser or deletable_depts %}
+                <button type="button" class="btn-bulk-delete" onclick="submitBulkDelete()">🗑 Xóa</button>
+                {% endif %}
+                <button type="button" class="btn-bulk-cancel" onclick="clearSelection()">✕ Bỏ chọn</button>
+            </div>
+
+        <!-- Khung bảng -->
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-check"><input type="checkbox" id="select-all" title="Chọn tất cả" onchange="toggleSelectAll(this)"></th>
+                        {% with b="?"|add:base_filter_qs %}
+                        <th class="sortable">
+                            <a href="{{ b }}&sort=employee_code&order={% if sort == 'employee_code' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Mã NV
+                                <span class="sort-icon {% if sort == 'employee_code' %}active{% endif %}">
+                                    {% if sort == 'employee_code' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th class="sortable">
+                            <a href="{{ b }}&sort=full_name&order={% if sort == 'full_name' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Họ tên
+                                <span class="sort-icon {% if sort == 'full_name' %}active{% endif %}">
+                                    {% if sort == 'full_name' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th class="sortable">
+                            <a href="{{ b }}&sort=status&order={% if sort == 'status' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Trạng thái
+                                <span class="sort-icon {% if sort == 'status' %}active{% endif %}">
+                                    {% if sort == 'status' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ</th>
+                        <th>Căn cước CD</th>
+                        <th class="sortable">
+                            <a href="{{ b }}&sort=department&order={% if sort == 'department' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Bộ phận
+                                <span class="sort-icon {% if sort == 'department' %}active{% endif %}">
+                                    {% if sort == 'department' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th class="sortable">
+                            <a href="{{ b }}&sort=position&order={% if sort == 'position' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Chức vụ
+                                <span class="sort-icon {% if sort == 'position' %}active{% endif %}">
+                                    {% if sort == 'position' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        {% endwith %}
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr class="{% if employee.status == 'nghi_viec' %}row-terminated{% endif %}">
+                        <td class="col-check"><input type="checkbox" name="selected_ids" value="{{ employee.pk }}" class="row-check" onchange="updateBulkBar()"></td>
+                        <td style="color:#555; font-size:13px; font-weight:600;">{{ employee.employee_code|default:"—" }}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                {% if employee.photo %}
+                                    <img src="{{ employee.photo.url }}" class="list-avatar" alt="">
+                                {% else %}
+                                    <div class="list-avatar-placeholder">{{ employee.full_name|first|upper }}</div>
+                                {% endif %}
+                                <a href="{% url 'employee_detail' employee.pk %}" style="color:#1565C0; text-decoration:none; font-weight:600;">{{ employee.full_name }}</a>
+                            </div>
+                        </td>
+                        <td>
+                            {% if employee.status == 'nghi_viec' %}
+                                <span class="status-pill pill-nghi_viec">○ Nghỉ việc</span>
+                            {% elif employee.status_expiring_soon %}
+                                <span class="status-pill pill-expiring-soon">⚠ {{ employee.get_status_display }}</span>
+                                {% if employee.days_until_status_end < 0 %}
+                                    <span class="status-days-badge days-overdue">Quá hạn {{ employee.days_until_status_end|cut:"-" }} ngày</span>
+                                {% else %}
+                                    <span class="status-days-badge days-warning">Còn {{ employee.days_until_status_end }} ngày</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="status-pill pill-{{ employee.status }}">● {{ employee.get_status_display }}</span>
+                            {% endif %}
+                            {% if employee.scheduled_termination_date %}
+                                <span class="termination-badge">⏰ Nghỉ việc {{ employee.scheduled_termination_date|date:"d/m/Y" }} (còn {{ employee.days_until_termination }} ngày)</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:#666;">{{ employee.phone|default:"—" }}</td>
+                        <td style="color:#666; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ employee.address|default:"—" }}</td>
+                        <td style="color:#666;">{{ employee.id_card|default:"—" }}</td>
+                        <td>{{ employee.department }}</td>
+                        <td>{{ employee.position }}</td>
+                        <td style="white-space:nowrap;">
+                            {% if is_superuser or employee.department.name in editable_depts %}<a href="{% url 'employee_update' employee.pk %}" class="btn btn-edit">Sửa</a>{% endif %}
+                            {% if is_superuser or employee.department.name in deletable_depts %}<a href="{% url 'employee_delete' employee.pk %}" class="btn btn-delete">Xóa</a>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="10">Không tìm thấy nhân viên nào.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div><!-- /table-box -->
+
+        <!-- Phân trang -->
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        {% with pf=base_filter_qs %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?{{ pf }}&page=1">&laquo;</a>
+                <a href="?{{ pf }}&page={{ page_obj.previous_page_number }}">&lsaquo;</a>
+            {% else %}
+                <span class="disabled">&laquo;</span>
+                <span class="disabled">&lsaquo;</span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="current">{{ num }}</span>
+                {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+                    <a href="?{{ pf }}&page={{ num }}">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="?{{ pf }}&page={{ num }}">{{ num }}</a>
+                {% elif num == page_obj.number|add:"-4" or num == page_obj.number|add:"4" %}
+                    <span class="disabled">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?{{ pf }}&page={{ page_obj.next_page_number }}">&rsaquo;</a>
+                <a href="?{{ pf }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+            {% else %}
+                <span class="disabled">&rsaquo;</span>
+                <span class="disabled">&raquo;</span>
+            {% endif %}
+        </div>
+        {% endwith %}
+        <div class="page-info">
+            Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            &nbsp;·&nbsp; {{ total }} nhân viên
+        </div>
+        {% endif %}
+
+        </form><!-- /bulk-form -->
+
+    </div>
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ── Dropdown bộ phận ──────────────────────────────────────────
+        function toggleDeptDropdown() {
+            const panel   = document.getElementById('deptPanel');
+            const trigger = document.getElementById('deptTrigger');
+            const isOpen  = panel.classList.contains('open');
+            panel.classList.toggle('open');
+            trigger.classList.toggle('open');
+            if (!isOpen) {
+                document.getElementById('deptSearch').focus();
+            }
+        }
+
+        function selectDept(value, label) {
+            document.getElementById('deptValue').value = value;
+            document.getElementById('deptLabel').textContent = label;
+            document.getElementById('deptPanel').classList.remove('open');
+            document.getElementById('deptTrigger').classList.remove('open');
+        }
+
+        function filterDepts(keyword) {
+            const kw = keyword.toLowerCase();
+            document.querySelectorAll('#deptOptions .dept-option').forEach(function(el) {
+                el.classList.toggle('hidden', !el.textContent.toLowerCase().includes(kw));
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            // Đóng user menu
+            const wrap = document.getElementById('user-menu-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                document.getElementById('user-menu').style.display = 'none';
+            }
+            // Đóng dept dropdown
+            const dd = document.getElementById('deptDropdown');
+            if (dd && !dd.contains(e.target)) {
+                document.getElementById('deptPanel').classList.remove('open');
+                document.getElementById('deptTrigger').classList.remove('open');
+            }
+        });
+
+        // ── Auto-filter ──────────────────────────────────────────────
+        function debounce(fn, delay) {
+            let t;
+            return function() { clearTimeout(t); t = setTimeout(fn, delay); };
+        }
+        const autoSubmit = debounce(function() {
+            document.querySelector('.filter-box').submit();
+        }, 400);
+
+        // Text inputs → debounce 400ms (trừ dept search)
+        document.querySelectorAll('.filter-box input[type=text]').forEach(function(el) {
+            el.addEventListener('input', autoSubmit);
+        });
+        // Date inputs → submit ngay
+        document.querySelectorAll('.filter-box input[type=date]').forEach(function(el) {
+            el.addEventListener('change', function() {
+                document.querySelector('.filter-box').submit();
+            });
+        });
+        // Select trạng thái → submit ngay
+        document.querySelector('.filter-box select[name=status]').addEventListener('change', function() {
+            document.querySelector('.filter-box').submit();
+        });
+        // Toggle Sắp hết hạn
+        function toggleExpiring() {
+            const input = document.getElementById('expiring-input');
+            input.value = input.value === 'true' ? '' : 'true';
+            document.querySelector('.filter-box').submit();
+        }
+
+        // ── Bulk actions ──────────────────────────────────────────────
+        function getChecked() {
+            return document.querySelectorAll('.row-check:checked');
+        }
+
+        function updateBulkBar() {
+            const checked = getChecked();
+            const bar     = document.getElementById('bulk-bar');
+            document.getElementById('selected-count').textContent = checked.length;
+            bar.classList.toggle('visible', checked.length > 0);
+            // Đồng bộ select-all
+            const all = document.querySelectorAll('.row-check');
+            document.getElementById('select-all').indeterminate = checked.length > 0 && checked.length < all.length;
+            document.getElementById('select-all').checked = checked.length === all.length && all.length > 0;
+            // Reset trạng thái chọn status nếu bỏ hết
+            if (checked.length === 0) resetStatusSelect();
+        }
+
+        function toggleSelectAll(cb) {
+            document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+            updateBulkBar();
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.row-check, #select-all').forEach(c => c.checked = false);
+            document.getElementById('select-all').indeterminate = false;
+            updateBulkBar();
+        }
+
+        const BULK_DATE_STATUSES      = ['thu_viec', 'thuc_tap_sinh', 'nghi_phep', 'nghi_sinh', 'nghi_khong_luong', 'nghi_om'];
+        const BULK_TERMINATE_STATUSES = ['nghi_viec'];
+
+        function toggleStatusSelect() {
+            const sel  = document.getElementById('bulk-status-select');
+            const btn  = document.getElementById('btn-change-status');
+            const conf = document.getElementById('btn-confirm-status');
+            const show = sel.style.display === 'none';
+            sel.style.display  = show ? 'inline-block' : 'none';
+            conf.style.display = show ? 'inline-block' : 'none';
+            btn.textContent    = show ? '✕ Hủy' : '⇄ Đổi trạng thái';
+            if (!show) { onBulkStatusChange(''); }
+        }
+
+        function onBulkStatusChange(val) {
+            document.getElementById('bulk-date-fields').classList.toggle('show', BULK_DATE_STATUSES.includes(val));
+            document.getElementById('bulk-terminate-fields').classList.toggle('show', BULK_TERMINATE_STATUSES.includes(val));
+            // Gắn/gỡ required theo trạng thái
+            document.getElementById('bulk_start_date').required      = BULK_DATE_STATUSES.includes(val);
+            document.getElementById('bulk_end_date').required        = BULK_DATE_STATUSES.includes(val);
+            document.getElementById('bulk_termination_date').required = BULK_TERMINATE_STATUSES.includes(val);
+            validateBulkDates();
+        }
+
+        function validateBulkDates() {
+            const status = document.getElementById('bulk-status-select').value;
+            const conf   = document.getElementById('btn-confirm-status');
+            let ok = true;
+            if (BULK_DATE_STATUSES.includes(status)) {
+                const s = document.getElementById('bulk_start_date').value;
+                const e = document.getElementById('bulk_end_date').value;
+                ok = s && e && e > s;
+            } else if (BULK_TERMINATE_STATUSES.includes(status)) {
+                ok = !!document.getElementById('bulk_termination_date').value;
+            }
+            conf.disabled = !ok;
+            conf.style.opacity = ok ? '1' : '0.45';
+            conf.style.cursor  = ok ? 'pointer' : 'not-allowed';
+        }
+
+        function resetStatusSelect() {
+            document.getElementById('bulk-status-select').style.display  = 'none';
+            document.getElementById('btn-confirm-status').style.display  = 'none';
+            document.getElementById('btn-change-status').textContent     = '⇄ Đổi trạng thái';
+            document.getElementById('bulk-status-select').value          = '';
+            onBulkStatusChange('');
+        }
+
+        function submitBulkStatus() {
+            const status = document.getElementById('bulk-status-select').value;
+            if (!status) return;
+            const count = getChecked().length;
+            if (!confirm(`Đổi trạng thái ${count} nhân viên đã chọn?`)) return;
+            document.getElementById('bulk-action-input').value = 'change_status';
+            document.getElementById('bulk-status-input').value = status;
+            document.getElementById('bulk-form').submit();
+        }
+
+        function submitBulkDelete() {
+            const count = getChecked().length;
+            if (!confirm(`Xóa ${count} nhân viên đã chọn?\nHành động này không thể hoàn tác!`)) return;
+            document.getElementById('bulk-action-input').value = 'delete';
+            document.getElementById('bulk-form').submit();
+        }
+    </script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

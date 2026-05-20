@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo — HRM</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar {
+            background: #1565C0; color: white;
+            padding: 0 32px; height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .topbar-brand { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .btn-back {
+            padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            text-decoration: none; color: white;
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.3); }
+        .container { max-width: 800px; margin: 32px auto; padding: 0 24px 60px; }
+        .page-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
+        .card { background: white; border-radius: 10px; border: 1px solid #e8ecf0; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .notif-item {
+            display: flex; gap: 14px; padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            text-decoration: none; color: inherit;
+            transition: background 0.1s;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f5f8ff; }
+        .notif-item.unread { background: #e8f4fd; }
+        .notif-item.unread:hover { background: #d6ecfa; }
+        .notif-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+        .notif-dot.info    { background: #42a5f5; }
+        .notif-dot.success { background: #66bb6a; }
+        .notif-dot.warning { background: #ffa726; }
+        .notif-dot.danger  { background: #ef5350; }
+        .notif-content { flex: 1; }
+        .notif-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+        .notif-msg { font-size: 13px; color: #555; line-height: 1.5; }
+        .notif-time { font-size: 12px; color: #aaa; margin-top: 6px; }
+        .unread-dot { width: 8px; height: 8px; background: #1565C0; border-radius: 50%; flex-shrink: 0; align-self: center; }
+        .empty { padding: 60px; text-align: center; color: #bbb; font-size: 14px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .btn-mark-all {
+            padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            background: #1565C0; color: white; border: none; cursor: pointer;
+        }
+        .btn-mark-all:hover { background: #1976D2; }
+        .unread-count { font-size: 13px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="/" class="topbar-brand">🏢 HRM System</a>
+    <div class="topbar-right">
+        {% include 'core/includes/notification_bell.html' %}
+        <a href="/" class="btn-back">← Trang chủ</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="toolbar">
+        <h1 class="page-title">Thông báo</h1>
+        <div style="display:flex; gap: 12px; align-items: center;">
+            <span class="unread-count" id="unreadInfo">
+                {% with total=notifications|length %}
+                {{ total }} thông báo
+                {% endwith %}
+            </span>
+            <button class="btn-mark-all" onclick="markAllRead()">Đánh dấu tất cả đã đọc</button>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if notifications %}
+            {% for n in notifications %}
+            <a href="{% if n.link %}{{ n.link }}{% else %}#{% endif %}"
+               class="notif-item {% if not n.is_read %}unread{% endif %}"
+               id="notif-{{ n.pk }}">
+                <span class="notif-dot {{ n.type }}"></span>
+                <div class="notif-content">
+                    <div class="notif-title">{{ n.title }}</div>
+                    <div class="notif-msg">{{ n.message }}</div>
+                    <div class="notif-time">{{ n.created_at|date:"d/m/Y H:i" }}</div>
+                </div>
+                {% if not n.is_read %}<span class="unread-dot"></span>{% endif %}
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty">Bạn chưa có thông báo nào.</div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    const v = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
+    return v ? decodeURIComponent(v.split('=')[1]) : '';
+}
+function markAllRead() {
+    fetch('/core/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+    }).then(() => {
+        document.querySelectorAll('.notif-item.unread').forEach(el => {
+            el.classList.remove('unread');
+            const dot = el.querySelector('.unread-dot');
+            if (dot) dot.remove();
+        });
+        document.getElementById('unreadInfo').textContent = document.querySelectorAll('.notif-item').length + ' thông báo';
+    });
+}
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

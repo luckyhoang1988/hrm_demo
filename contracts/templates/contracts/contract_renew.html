@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Gia hạn HĐ {{ old_contract.contract_number }} — HRM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+.topbar {
+    background: #1565C0; color: white;
+    padding: 0 30px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.topbar-brand { font-size: 17px; font-weight: 700; }
+.breadcrumb { font-size: 13px; opacity: 0.8; }
+.breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.btn-logout {
+    padding: 5px 13px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: white;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer; font-family: inherit;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+.container { padding: 24px 28px; max-width: 900px; margin: 0 auto; }
+.page-title { font-size: 19px; font-weight: 700; margin-bottom: 20px; }
+
+/* OLD CONTRACT INFO */
+.old-card {
+    background: #f3e5f5; border: 1px solid #ce93d8; border-radius: 10px;
+    padding: 18px 22px; margin-bottom: 22px;
+}
+.old-card h3 { font-size: 13px; font-weight: 700; color: #6a1b9a; text-transform: uppercase; margin-bottom: 12px; }
+.old-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 20px; }
+.old-item .o-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+.old-item .o-value { font-size: 14px; font-weight: 600; color: #4a148c; }
+
+/* FORM */
+.form-card {
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 24px 26px; box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.section-title {
+    font-size: 12px; font-weight: 700; color: #1565C0; text-transform: uppercase;
+    border-bottom: 1px solid #e3f2fd; padding-bottom: 8px; margin-bottom: 18px;
+}
+.form-row { display: flex; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; margin-bottom: 14px; }
+.form-group label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; }
+.form-group input, .form-group select, .form-group textarea {
+    padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: inherit; width: 100%;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: #1565C0; box-shadow: 0 0 0 2px rgba(21,101,192,0.1);
+}
+.form-group textarea { resize: vertical; min-height: 72px; }
+.error-list { margin: 3px 0 0; padding: 0; list-style: none; }
+.error-list li { font-size: 12px; color: #c62828; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #eee; }
+.btn-save {
+    padding: 9px 22px; background: #2e7d32; color: white;
+    border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+}
+.btn-save:hover { background: #1b5e20; }
+.btn-back {
+    padding: 9px 22px; background: #e0e0e0; color: #444;
+    border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center;
+}
+.btn-back:hover { background: #ccc; }
+</style>
+</head>
+<body>
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="topbar-brand">📄 Hợp đồng Lao động</div>
+        <div class="breadcrumb">
+            <a href="{% url 'contracts:contract_list' %}">Danh sách</a> ›
+            <a href="{% url 'contracts:contract_detail' old_contract.pk %}">{{ old_contract.contract_number }}</a> › Gia hạn
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span style="font-size:13px; opacity:0.85;">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="page-title">🔄 Gia hạn hợp đồng</div>
+
+    <!-- HĐ CŨ -->
+    <div class="old-card">
+        <h3>Hợp đồng gốc (sẽ chuyển sang "Đã gia hạn")</h3>
+        <div class="old-grid">
+            <div class="old-item">
+                <div class="o-label">Số HĐ</div>
+                <div class="o-value">{{ old_contract.contract_number }}</div>
+            </div>
+            <div class="old-item">
+                <div class="o-label">Nhân viên</div>
+                <div class="o-value">{{ old_contract.employee.full_name }}</div>
+            </div>
+            <div class="old-item">
+                <div class="o-label">Phòng ban</div>
+                <div class="o-value">{{ old_contract.department.name }}</div>
+            </div>
+            <div class="old-item">
+                <div class="o-label">Loại HĐ</div>
+                <div class="o-value">{{ old_contract.get_contract_type_display }}</div>
+            </div>
+            <div class="old-item">
+                <div class="o-label">Ngày bắt đầu</div>
+                <div class="o-value">{{ old_contract.start_date|date:"d/m/Y" }}</div>
+            </div>
+            <div class="old-item">
+                <div class="o-label">Ngày kết thúc</div>
+                <div class="o-value">{% if old_contract.end_date %}{{ old_contract.end_date|date:"d/m/Y" }}{% else %}Không XĐ{% endif %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM HĐ MỚI -->
+    <div class="form-card">
+        <div class="section-title">Thông tin hợp đồng mới (gia hạn)</div>
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Số hợp đồng mới *</label>
+                    <input type="text" name="contract_number" value="{{ form.contract_number.value|default:'' }}" placeholder="VD: HD-2025-001">
+                    {% if form.contract_number.errors %}<ul class="error-list">{% for e in form.contract_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Loại hợp đồng *</label>
+                    <select name="contract_type" id="type-select" onchange="onTypeChange(this)">
+                        {% for val, label in form.contract_type.field.choices %}
+                        {% if val %}
+                        <option value="{{ val }}" {% if form.contract_type.value == val %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.contract_type.errors %}<ul class="error-list">{% for e in form.contract_type.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ngày bắt đầu *</label>
+                    <input type="date" name="start_date" value="{{ form.start_date.value|default:'' }}">
+                    {% if form.start_date.errors %}<ul class="error-list">{% for e in form.start_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div class="form-group" id="end-date-group">
+                    <label>Ngày kết thúc</label>
+                    <input type="date" name="end_date" value="{{ form.end_date.value|default:'' }}">
+                    {% if form.end_date.errors %}<ul class="error-list">{% for e in form.end_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Chức vụ</label>
+                    <input type="text" name="position" value="{{ form.position.value|default:'' }}" placeholder="Chức vụ trong hợp đồng">
+                </div>
+                <div class="form-group">
+                    <label>Lương theo HĐ (VNĐ)</label>
+                    <input type="number" name="salary" value="{{ form.salary.value|default:'' }}" step="1000">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea name="note" rows="3">{{ form.note.value|default:'' }}</textarea>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div style="color:#c62828; font-size:13px; margin-bottom:10px;">
+                {% for e in form.non_field_errors %}{{ e }}<br>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save">🔄 Xác nhận gia hạn</button>
+                <a href="{% url 'contracts:contract_detail' old_contract.pk %}" class="btn-back">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function onTypeChange(sel) {
+    const endGroup = document.getElementById('end-date-group');
+    endGroup.style.opacity = sel.value === 'khong_xd' ? '0.4' : '1';
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const sel = document.getElementById('type-select');
+    if (sel.value) onTypeChange(sel);
+});
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

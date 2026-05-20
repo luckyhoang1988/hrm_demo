@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Đơn xin nghỉ — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.toolbar h1{font-size:18px;font-weight:700}
+.btn{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;display:inline-block}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.tab-bar{display:flex;gap:0;margin-bottom:16px;background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden}
+.tab-link{padding:10px 20px;font-size:13px;font-weight:600;text-decoration:none;color:#888;border-bottom:3px solid transparent}
+.tab-link:hover{color:#1565C0;background:#f5f9ff}
+.tab-link.active{color:#1565C0;border-bottom-color:#1565C0;background:#f0f7ff}
+.pending-badge{background:#e65100;color:#fff;border-radius:20px;padding:2px 7px;font-size:11px;margin-left:6px}
+.filter-box{background:#fff;border-radius:10px;padding:13px 16px;margin-bottom:14px;border:1px solid #e0e0e0}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-size:11px;font-weight:600;color:#666;text-transform:uppercase}
+.filter-group select,.filter-group input{padding:6px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;min-width:130px}
+.btn-filter{padding:6px 14px;background:#1565C0;color:#fff;border:none;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600}
+.btn-reset{padding:6px 12px;background:#f5f5f5;color:#666;border:1.5px solid #ddd;border-radius:7px;font-size:13px;text-decoration:none}
+.table-wrap{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fa;padding:10px 12px;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:hover td{background:#fafbff}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill-draft{background:#f5f5f5;color:#777}
+.pill-pending{background:#fff3e0;color:#e65100}
+.pill-waiting_hr{background:#e8eaf6;color:#3949ab}
+.pill-approved{background:#e8f5e9;color:#2e7d32}
+.pill-rejected{background:#ffebee;color:#c62828}
+.pill-cancelled{background:#f5f5f5;color:#999}
+.btn-sm{padding:4px 10px;border-radius:6px;font-size:12px;text-decoration:none;font-weight:500}
+.btn-detail{background:#e3f2fd;color:#1565C0}
+.btn-detail:hover{background:#1565C0;color:#fff}
+.empty-state{text-align:center;padding:48px;color:#999}
+.pagination{display:flex;gap:6px;padding:14px 16px;justify-content:center;background:#fff;border-top:1px solid #f0f0f0}
+.pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;text-decoration:none;font-size:13px;border:1px solid #e0e0e0;color:#555}
+.pagination a:hover{background:#e3f2fd;color:#1565C0}
+.pagination .current{background:#1565C0;color:#fff;border-color:#1565C0}
+.pagination .disabled{color:#bbb}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:attendance_home' %}">⏱ Chấm công</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <h1>🏖 Đơn xin nghỉ phép</h1>
+    <a href="{% url 'attendance:leave_request_create' %}" class="btn btn-primary">+ Tạo đơn</a>
+  </div>
+
+  <div class="tab-bar">
+    <a href="?tab=mine{% if q_status %}&status={{ q_status }}{% endif %}" class="tab-link {% if tab == 'mine' %}active{% endif %}">📋 Đơn của tôi</a>
+    <a href="?tab=pending" class="tab-link {% if tab == 'pending' %}active{% endif %}">⏳ Chờ duyệt{% if pending_count > 0 %}<span class="pending-badge">{{ pending_count }}</span>{% endif %}</a>
+  </div>
+
+  <div class="filter-box">
+    <form method="get" action="">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Trạng thái</label>
+          <select name="status">
+            <option value="">Tất cả</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if q_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if tab == 'pending' %}
+        <div class="filter-group">
+          <label>Tìm nhân viên</label>
+          <input type="text" name="emp" value="{{ q_emp }}" placeholder="Tên hoặc mã NV...">
+        </div>
+        {% endif %}
+        <div class="filter-group">
+          <label>Loại nghỉ</label>
+          <select name="type">
+            <option value="">Tất cả</option>
+            {% for lt in leave_types %}
+            <option value="{{ lt.pk }}" {% if q_type == lt.pk|stringformat:"s" %}selected{% endif %}>{{ lt.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filter-group" style="flex-direction:row;gap:6px;align-items:flex-end">
+          <button type="submit" class="btn-filter">Lọc</button>
+          <a href="?tab={{ tab }}" class="btn-reset">Xóa lọc</a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div style="font-size:13px;color:#666;margin-bottom:10px">Tổng: <strong>{{ total_count }}</strong> đơn</div>
+
+  <div class="table-wrap">
+    {% if page_obj.object_list %}
+    <table>
+      <thead>
+        <tr>
+          {% if tab == 'pending' %}<th>Nhân viên</th>{% endif %}
+          <th>Loại nghỉ</th>
+          <th>Từ ngày</th>
+          <th>Đến ngày</th>
+          <th>Số ngày</th>
+          <th>Trạng thái</th>
+          <th>Ngày tạo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in page_obj.object_list %}
+        <tr>
+          {% if tab == 'pending' %}
+          <td>
+            <strong>{{ req.employee.full_name }}</strong><br>
+            <span style="color:#999;font-size:11px">{{ req.employee.department.name|default:"" }}</span>
+          </td>
+          {% endif %}
+          <td>{{ req.leave_type.name }}</td>
+          <td>{{ req.start_date|date:"d/m/Y" }}</td>
+          <td>{{ req.end_date|date:"d/m/Y" }}</td>
+          <td>{{ req.total_days }} ngày{% if req.half_day %} (nửa ngày){% endif %}</td>
+          <td><span class="status-pill pill-{{ req.status }}">{{ req.get_status_display }}</span></td>
+          <td>{{ req.created_at|date:"d/m/Y" }}</td>
+          <td><a href="{% url 'attendance:leave_request_detail' req.pk %}" class="btn-sm btn-detail">Chi tiết</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:48px">🏖</div>
+      <p style="margin-top:8px">Không có đơn nào{% if tab == 'pending' %} chờ duyệt{% endif %}.</p>
+    </div>
+    {% endif %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    {% with pf=base_filter_qs %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}<a href="?{{ pf }}&page=1">«</a><a href="?{{ pf }}&page={{ page_obj.previous_page_number }}">‹</a>
+      {% else %}<span class="disabled">«</span><span class="disabled">‹</span>{% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}<span class="current">{{ num }}</span>
+        {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}<a href="?{{ pf }}&page={{ num }}">{{ num }}</a>{% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}<a href="?{{ pf }}&page={{ page_obj.next_page_number }}">›</a><a href="?{{ pf }}&page={{ page_obj.paginator.num_pages }}">»</a>
+      {% else %}<span class="disabled">›</span><span class="disabled">»</span>{% endif %}
+    </div>
+    {% endwith %}
+    {% endif %}
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

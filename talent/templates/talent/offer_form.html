@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue { background: #1565C0; color: white; }
+        .container { padding: 32px 30px; max-width: 680px; margin: 0 auto; }
+        .form-box { background: white; border-radius: 12px; border: 1px solid #e0e0e0; padding: 32px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .form-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .form-subtitle { font-size: 13px; color: #888; margin-bottom: 24px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 7px;
+            font-size: 14px; outline: none; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #1565C0; }
+        .form-errors { background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #c62828; }
+        .actions { display: flex; gap: 10px; margin-top: 24px; }
+        .btn-cancel { background: #e0e0e0; color: #555; text-decoration: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; }
+        .btn-cancel:hover { background: #ccc; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>📩 {{ title }}</h1>
+    <a href="{% url 'talent:applicant_detail' applicant.pk %}" class="btn btn-white">← {{ applicant.full_name }}</a>
+</div>
+<div class="container">
+    <div class="form-box">
+        <div class="form-title">{{ title }}</div>
+        <div class="form-subtitle">Ứng viên: <strong>{{ applicant.full_name }}</strong> — {{ applicant.job_position.title }}</div>
+
+        {% if form.errors %}
+        <div class="form-errors">
+            {% for field in form %}{% for err in field.errors %}<div>{{ err }}</div>{% endfor %}{% endfor %}
+            {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Lương đề nghị <span style="color:red">*</span></label>
+                    <input type="number" name="offered_salary" value="{{ form.offered_salary.value|default:'' }}" min="0" step="100000" required>
+                </div>
+                <div class="form-group">
+                    <label>Thời gian thử việc (tháng)</label>
+                    <input type="number" name="probation_months" value="{{ form.probation_months.value|default:2 }}" min="0" max="12">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ngày bắt đầu dự kiến <span style="color:red">*</span></label>
+                    <input type="date" name="start_date" value="{{ form.start_date.value|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Hạn phản hồi</label>
+                    <input type="date" name="deadline_response" value="{{ form.deadline_response.value|default:'' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái offer</label>
+                <select name="status">
+                    {% for key, label in form.fields.status.choices %}
+                    <option value="{{ key }}" {% if form.status.value == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quyền lợi kèm theo</label>
+                <textarea name="benefits_note" rows="3">{{ form.benefits_note.value|default:'' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>File thư offer</label>
+                <input type="file" name="offer_letter_file" accept=".pdf,.doc,.docx">
+                {% if offer.offer_letter_file %}
+                <div style="margin-top:6px; font-size:12px; color:#1565C0;">File hiện tại: {{ offer.offer_letter_file.name }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group" id="rejectionGroup" style="display:none;">
+                <label>Lý do từ chối</label>
+                <textarea name="rejection_reason" rows="2">{{ form.rejection_reason.value|default:'' }}</textarea>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-blue">Lưu</button>
+                <a href="{% url 'talent:applicant_detail' applicant.pk %}" class="btn-cancel">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const statusSel = document.querySelector('select[name="status"]');
+    const rejGroup = document.getElementById('rejectionGroup');
+    function checkStatus() { rejGroup.style.display = statusSel.value === 'rejected' ? '' : 'none'; }
+    statusSel.addEventListener('change', checkStatus);
+    checkStatus();
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

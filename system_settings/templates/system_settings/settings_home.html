@@ -1,0 +1,248 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Cài đặt Hệ thống</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; min-height: 100vh; }
+
+        .topbar {
+            background: #1565C0;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+        .btn-back {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 7px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.28); }
+
+        .container {
+            padding: 36px 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1565C0;
+            margin-bottom: 8px;
+        }
+        .page-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 32px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .setting-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 28px 24px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .setting-card:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            font-size: 36px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1565C0;
+        }
+        .card-desc {
+            font-size: 13px;
+            color: #888;
+            line-height: 1.5;
+        }
+        .card-arrow {
+            font-size: 18px;
+            color: #ccc;
+            align-self: flex-end;
+        }
+        .setting-card:hover .card-arrow { color: #1565C0; }
+
+        .section-heading {
+            font-size: 12px; font-weight: 700; color: #999;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-top: 40px; margin-bottom: 14px;
+        }
+        .app-mgmt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+        }
+        .app-mgmt-card {
+            background: white;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .app-mgmt-card.is-active { border-color: #a5d6a7; background: #f1fff2; }
+        .app-mgmt-icon { font-size: 30px; flex-shrink: 0; }
+        .app-mgmt-info { flex: 1; min-width: 0; }
+        .app-mgmt-name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+        .app-mgmt-badge { font-size: 12px; margin-top: 4px; font-weight: 600; }
+        .badge-active { color: #2e7d32; }
+        .badge-soon   { color: #bbb; }
+        .btn-activate   { background: #1565C0; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-activate:hover { background: #0D47A1; }
+        .btn-deactivate { background: white; color: #c62828; border: 1px solid #ffcdd2; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-deactivate:hover { background: #ffebee; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>⚙️ Cài đặt Hệ thống</h1>
+    <a href="{% url 'home' %}" class="btn-back">← Trang chủ</a>
+</div>
+
+<div class="container">
+    <div class="page-title">Quản trị hệ thống</div>
+    <div class="page-subtitle">Quản lý tài khoản, phân quyền, phòng ban và nhật ký hoạt động</div>
+
+    <div class="cards-grid">
+
+        <a href="{% url 'system_settings:user_list' %}" class="setting-card">
+            <div class="card-icon">👤</div>
+            <div class="card-title">Tài khoản & Nhóm người dùng</div>
+            <div class="card-desc">Tạo, xóa tài khoản, phân quyền theo nhóm và bộ phận.</div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="{% url 'system_settings:department_manage' %}" class="setting-card">
+            <div class="card-icon">🏢</div>
+            <div class="card-title">Quản lý bộ phận</div>
+            <div class="card-desc">Thêm, sửa, xóa các phòng ban trong tổ chức.</div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="{% url 'system_settings:group_list' %}" class="setting-card">
+            <div class="card-icon">🗂</div>
+            <div class="card-title">Nhóm bộ phận</div>
+            <div class="card-desc">Tạo nhóm gộp nhiều bộ phận để phân quyền theo cụm.</div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="{% url 'system_settings:permission_manage' %}" class="setting-card">
+            <div class="card-icon">🔐</div>
+            <div class="card-title">Phân quyền</div>
+            <div class="card-desc">Gán nhóm bộ phận cho từng tài khoản người dùng.</div>
+            <div class="card-arrow">→</div>
+        </a>
+
+        <a href="{% url 'system_settings:activity_log' %}" class="setting-card">
+            <div class="card-icon">📋</div>
+            <div class="card-title">Nhật ký hoạt động</div>
+            <div class="card-desc">Xem lịch sử thao tác của tất cả người dùng trong hệ thống.</div>
+            <div class="card-arrow">→</div>
+        </a>
+
+    </div>
+
+    <div class="section-heading">Quản lý ứng dụng</div>
+    <div class="app-mgmt-grid">
+
+        <div class="app-mgmt-card {% if app_status.app_contracts_active %}is-active{% endif %}">
+            <div class="app-mgmt-icon">📄</div>
+            <div class="app-mgmt-info">
+                <div class="app-mgmt-name">Hợp đồng Lao động</div>
+                <div class="app-mgmt-badge {% if app_status.app_contracts_active %}badge-active{% else %}badge-soon{% endif %}">
+                    {% if app_status.app_contracts_active %}🟢 Đang hoạt động{% else %}⏳ Sắp ra mắt{% endif %}
+                </div>
+            </div>
+            <form method="post" action="{% url 'system_settings:toggle_app' 'contracts' %}">
+                {% csrf_token %}
+                <button type="submit" class="{% if app_status.app_contracts_active %}btn-deactivate{% else %}btn-activate{% endif %}">
+                    {% if app_status.app_contracts_active %}Tắt{% else %}Kích hoạt{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="app-mgmt-card {% if app_status.app_payroll_active %}is-active{% endif %}">
+            <div class="app-mgmt-icon">💰</div>
+            <div class="app-mgmt-info">
+                <div class="app-mgmt-name">Tính lương</div>
+                <div class="app-mgmt-badge {% if app_status.app_payroll_active %}badge-active{% else %}badge-soon{% endif %}">
+                    {% if app_status.app_payroll_active %}🟢 Đang hoạt động{% else %}⏳ Sắp ra mắt{% endif %}
+                </div>
+            </div>
+            <form method="post" action="{% url 'system_settings:toggle_app' 'payroll' %}">
+                {% csrf_token %}
+                <button type="submit" class="{% if app_status.app_payroll_active %}btn-deactivate{% else %}btn-activate{% endif %}">
+                    {% if app_status.app_payroll_active %}Tắt{% else %}Kích hoạt{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="app-mgmt-card {% if app_status.app_attendance_active %}is-active{% endif %}">
+            <div class="app-mgmt-icon">📅</div>
+            <div class="app-mgmt-info">
+                <div class="app-mgmt-name">Chấm công & Nghỉ phép</div>
+                <div class="app-mgmt-badge {% if app_status.app_attendance_active %}badge-active{% else %}badge-soon{% endif %}">
+                    {% if app_status.app_attendance_active %}🟢 Đang hoạt động{% else %}⏳ Sắp ra mắt{% endif %}
+                </div>
+            </div>
+            <form method="post" action="{% url 'system_settings:toggle_app' 'attendance' %}">
+                {% csrf_token %}
+                <button type="submit" class="{% if app_status.app_attendance_active %}btn-deactivate{% else %}btn-activate{% endif %}">
+                    {% if app_status.app_attendance_active %}Tắt{% else %}Kích hoạt{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="app-mgmt-card {% if app_status.app_talent_active %}is-active{% endif %}">
+            <div class="app-mgmt-icon">🎯</div>
+            <div class="app-mgmt-info">
+                <div class="app-mgmt-name">Tuyển dụng & Đào tạo</div>
+                <div class="app-mgmt-badge {% if app_status.app_talent_active %}badge-active{% else %}badge-soon{% endif %}">
+                    {% if app_status.app_talent_active %}🟢 Đang hoạt động{% else %}⏳ Sắp ra mắt{% endif %}
+                </div>
+            </div>
+            <form method="post" action="{% url 'system_settings:toggle_app' 'talent' %}">
+                {% csrf_token %}
+                <button type="submit" class="{% if app_status.app_talent_active %}btn-deactivate{% else %}btn-activate{% endif %}">
+                    {% if app_status.app_talent_active %}Tắt{% else %}Kích hoạt{% endif %}
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,473 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Hợp đồng Lao động — HRM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+/* TOPBAR */
+.topbar {
+    background: #1565C0; color: white;
+    padding: 0 30px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.topbar-brand { font-size: 17px; font-weight: 700; }
+.breadcrumb { font-size: 13px; opacity: 0.8; }
+.breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.btn-logout {
+    padding: 5px 13px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: white;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer; font-family: inherit;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+/* CONTAINER */
+.container { padding: 22px 28px; max-width: 1400px; margin: 0 auto; }
+
+/* TOOLBAR */
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.toolbar h1 { font-size: 19px; font-weight: 700; color: #1a1a1a; }
+.toolbar-actions { display: flex; gap: 10px; }
+
+/* ALERT */
+.alert-expiring {
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    padding: 10px 16px; margin-bottom: 14px; font-size: 13px; color: #f57f17;
+    display: flex; align-items: center; gap: 8px;
+}
+
+/* FILTER BOX */
+.filter-box {
+    background: white; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase; }
+.filter-group input,
+.filter-group select {
+    height: 34px; padding: 0 10px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; background: #fafafa; font-family: inherit;
+}
+.filter-group input:focus,
+.filter-group select:focus { outline: none; border-color: #1565C0; background: white; }
+.filter-group input[type="text"] { width: 200px; }
+.filter-group select { width: 160px; }
+.filter-group input[type="date"] { width: 145px; }
+.btn-filter, .btn-reset {
+    height: 34px; padding: 0 16px; border-radius: 6px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-filter { background: #1565C0; color: white; }
+.btn-filter:hover { background: #0d47a1; }
+.btn-reset { background: #e0e0e0; color: #444; }
+.btn-reset:hover { background: #ccc; }
+
+/* RESULT BAR */
+.result-bar { font-size: 13px; color: #777; margin-bottom: 10px; }
+.result-bar strong { color: #333; }
+
+/* TABLE */
+.table-wrap { background: white; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: #f5f7fa; }
+th { padding: 10px 12px; text-align: left; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fbff; }
+
+.sort-link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px; }
+.sort-link:hover { color: #1565C0; }
+.sort-icon { font-size: 10px; opacity: 0.5; }
+.sort-active { color: #1565C0; }
+.sort-active .sort-icon { opacity: 1; }
+
+/* STATUS BADGE */
+.badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; color: white; white-space: nowrap;
+}
+
+/* ACTIONS */
+.action-links { display: flex; gap: 6px; flex-wrap: nowrap; }
+.btn-action {
+    padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: 600;
+    text-decoration: none; border: 1px solid transparent; white-space: nowrap;
+}
+.btn-view   { background: #e3f2fd; color: #1565C0; border-color: #bbdefb; }
+.btn-edit   { background: #fff8e1; color: #f57f17; border-color: #ffe082; }
+.btn-renew  { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.btn-end    { background: #fce4ec; color: #c62828; border-color: #f48fb1; }
+
+/* BUTTONS */
+.btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px; background: #1565C0; color: white;
+    border-radius: 7px; font-size: 13px; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer; font-family: inherit;
+}
+.btn-primary:hover { background: #0d47a1; }
+.btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px; background: #2e7d32; color: white;
+    border-radius: 7px; font-size: 13px; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer; font-family: inherit;
+}
+.btn-export:hover { background: #1b5e20; }
+
+/* CHECKBOX */
+.col-check { width: 40px; text-align: center; }
+input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #1565C0; }
+tr.selected td { background: #e3f2fd !important; }
+
+/* BULK BAR */
+.bulk-bar {
+    display: none; align-items: center; gap: 14px;
+    background: #1565C0; color: white;
+    padding: 10px 18px; border-radius: 8px; margin-bottom: 12px;
+    font-size: 13px; font-weight: 600;
+}
+.bulk-bar.visible { display: flex; }
+.bulk-count { flex: 1; }
+.btn-bulk-delete {
+    padding: 6px 16px; background: #c62828; color: white;
+    border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+}
+.btn-bulk-delete:hover { background: #b71c1c; }
+.btn-bulk-cancel {
+    padding: 6px 14px; background: rgba(255,255,255,0.2); color: white;
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+}
+.btn-bulk-cancel:hover { background: rgba(255,255,255,0.3); }
+
+/* EMPTY */
+.empty-row td { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+
+/* PAGINATION */
+.pagination { display: flex; align-items: center; gap: 6px; padding: 14px 0 4px; flex-wrap: wrap; }
+.pagination a, .pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 6px; font-size: 13px;
+    text-decoration: none; border: 1px solid #e0e0e0;
+}
+.pagination a { color: #1565C0; background: white; }
+.pagination a:hover { background: #e3f2fd; }
+.pagination .current { background: #1565C0; color: white; border-color: #1565C0; }
+.pagination .disabled { color: #ccc; background: #fafafa; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="topbar-brand">📄 Hợp đồng Lao động</div>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">🏠 Trang chủ</a> › Danh sách hợp đồng
+        </div>
+    </div>
+    <div class="topbar-right">
+        {% if features.can_view_dashboard %}
+        <a href="{% url 'contracts:contract_dashboard' %}" class="btn-logout">📊 Dashboard</a>
+        {% endif %}
+        <span style="font-size:13px; opacity:0.85;">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="toolbar">
+        <h1>Danh sách Hợp đồng <span style="font-size:14px; font-weight:400; color:#999;">({{ total_count }} hợp đồng)</span></h1>
+        <div class="toolbar-actions">
+            {% if features.can_export %}
+            <a href="{% url 'contracts:contract_export_excel' %}?{{ base_filter_qs }}" class="btn-export">⬇ Export Excel</a>
+            {% endif %}
+            <a href="{% url 'contracts:contract_create' %}" class="btn-primary">+ Thêm hợp đồng</a>
+        </div>
+    </div>
+
+    {% if expiring_count > 0 %}
+    <div class="alert-expiring">
+        ⚠ Có <strong>{{ expiring_count }}</strong> hợp đồng sắp hết hạn trong 30 ngày tới.
+        <a href="?expiring=1" style="color:#e65100; margin-left:6px; text-decoration:underline;">Xem ngay</a>
+    </div>
+    {% endif %}
+
+    <!-- FILTER -->
+    <div class="filter-box">
+        <form method="get" action="">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Tìm kiếm</label>
+                    <input type="text" name="employee" value="{{ q_employee }}" placeholder="Tên NV / Mã NV / Số HĐ">
+                </div>
+                <div class="filter-group">
+                    <label>Phòng ban</label>
+                    <select name="department">
+                        <option value="">Tất cả phòng ban</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.name }}" {% if q_department == dept.name %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Loại hợp đồng</label>
+                    <select name="contract_type">
+                        <option value="">Tất cả loại</option>
+                        {% for val, label in type_choices %}
+                        <option value="{{ val }}" {% if q_type == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Trạng thái</label>
+                    <select name="status">
+                        <option value="">Tất cả trạng thái</option>
+                        {% for val, label in status_choices %}
+                        <option value="{{ val }}" {% if q_status == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Từ ngày</label>
+                    <input type="date" name="date_from" value="{{ q_date_from }}">
+                </div>
+                <div class="filter-group">
+                    <label>Đến ngày</label>
+                    <input type="date" name="date_to" value="{{ q_date_to }}">
+                </div>
+                <div class="filter-group" style="justify-content: flex-end;">
+                    <label>&nbsp;</label>
+                    <div style="display:flex; gap:6px;">
+                        <button type="submit" class="btn-filter">Lọc</button>
+                        <a href="{% url 'contracts:contract_list' %}" class="btn-reset" style="display:inline-flex;align-items:center;text-decoration:none;">Xóa lọc</a>
+                    </div>
+                </div>
+            </div>
+            {% if q_expiring == '1' %}
+            <div style="margin-top:8px; font-size:12px; color:#f57f17; font-weight:600;">
+                ⚠ Đang lọc: hợp đồng sắp hết hạn
+                <a href="{% url 'contracts:contract_list' %}" style="color:#777; margin-left:8px;">[Xóa]</a>
+            </div>
+            <input type="hidden" name="expiring" value="1">
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- BULK FORM (bọc bảng + pagination) -->
+    <form method="post" action="?{{ base_filter_qs }}&sort={{ sort }}&order={{ order }}" id="bulk-form">
+        {% csrf_token %}
+        <input type="hidden" name="bulk_action" id="bulk-action-input" value="">
+
+        <!-- BULK BAR -->
+        <div class="bulk-bar" id="bulk-bar">
+            <span class="bulk-count" id="bulk-count">0 hợp đồng đã chọn</span>
+            <button type="button" class="btn-bulk-delete" onclick="submitBulkDelete()">🗑 Xóa các hợp đồng đã chọn</button>
+            <button type="button" class="btn-bulk-cancel" onclick="clearSelection()">Bỏ chọn</button>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-check">
+                            <input type="checkbox" id="check-all" title="Chọn tất cả trang này" onchange="toggleAll(this)">
+                        </th>
+                        {% with b="?"|add:base_filter_qs %}
+                        <th>
+                            <a href="{{ b }}&sort=contract_number&order={% if sort == 'contract_number' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'contract_number' %}sort-active{% endif %}">
+                                Số HĐ <span class="sort-icon">{% if sort == 'contract_number' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ b }}&sort=employee&order={% if sort == 'employee' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'employee' %}sort-active{% endif %}">
+                                Nhân viên <span class="sort-icon">{% if sort == 'employee' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ b }}&sort=department&order={% if sort == 'department' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'department' %}sort-active{% endif %}">
+                                Phòng ban <span class="sort-icon">{% if sort == 'department' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ b }}&sort=contract_type&order={% if sort == 'contract_type' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'contract_type' %}sort-active{% endif %}">
+                                Loại HĐ <span class="sort-icon">{% if sort == 'contract_type' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ b }}&sort=status&order={% if sort == 'status' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'status' %}sort-active{% endif %}">
+                                Trạng thái <span class="sort-icon">{% if sort == 'status' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ b }}&sort=start_date&order={% if sort == 'start_date' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'start_date' %}sort-active{% endif %}">
+                                Bắt đầu <span class="sort-icon">{% if sort == 'start_date' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ b }}&sort=end_date&order={% if sort == 'end_date' and order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link {% if sort == 'end_date' %}sort-active{% endif %}">
+                                Kết thúc <span class="sort-icon">{% if sort == 'end_date' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% else %}⇅{% endif %}</span>
+                            </a>
+                        </th>
+                        {% endwith %}
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in page_obj %}
+                    <tr id="row-{{ c.pk }}">
+                        <td class="col-check">
+                            <input type="checkbox" name="selected_ids[]" value="{{ c.pk }}" class="row-check" onchange="onRowCheck()">
+                        </td>
+                        <td><strong>{{ c.contract_number }}</strong></td>
+                        <td>
+                            <a href="{% url 'employee_detail' c.employee.pk %}" style="color:#1565C0; text-decoration:none;">
+                                {{ c.employee.full_name }}
+                            </a>
+                            {% if c.employee.employee_code %}
+                            <div style="font-size:11px; color:#999;">{{ c.employee.employee_code }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ c.department.name }}</td>
+                        <td style="font-size:12px;">{{ c.get_contract_type_display }}</td>
+                        <td>
+                            {% if c.status == 'hieu_luc' %}
+                                <span class="badge" style="background:#4CAF50;">{{ c.get_status_display }}</span>
+                            {% elif c.status == 'sap_het_han' %}
+                                <span class="badge" style="background:#FF9800;">{{ c.get_status_display }}</span>
+                                {% if c.days_until_expiry is not None %}
+                                <div style="font-size:11px; color:#e65100; margin-top:2px;">Còn {{ c.days_until_expiry }} ngày</div>
+                                {% endif %}
+                            {% elif c.status == 'het_han' %}
+                                <span class="badge" style="background:#c62828;">{{ c.get_status_display }}</span>
+                            {% elif c.status == 'gia_han' %}
+                                <span class="badge" style="background:#7B1FA2;">{{ c.get_status_display }}</span>
+                            {% elif c.status == 'cham_dut' %}
+                                <span class="badge" style="background:#607D8B;">{{ c.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ c.start_date|date:"d/m/Y" }}</td>
+                        <td>{% if c.end_date %}{{ c.end_date|date:"d/m/Y" }}{% else %}<span style="color:#999; font-style:italic;">Không XĐ</span>{% endif %}</td>
+                        <td>
+                            <div class="action-links">
+                                <a href="{% url 'contracts:contract_detail' c.pk %}" class="btn-action btn-view">Xem</a>
+                                <a href="{% url 'contracts:contract_update' c.pk %}" class="btn-action btn-edit">Sửa</a>
+                                {% if c.status not in 'gia_han,cham_dut' %}
+                                <a href="{% url 'contracts:contract_renew' c.pk %}" class="btn-action btn-renew">Gia hạn</a>
+                                {% endif %}
+                                {% if c.status != 'cham_dut' %}
+                                <a href="{% url 'contracts:contract_terminate' c.pk %}" class="btn-action btn-end">Chấm dứt</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="9">📄 Không có hợp đồng nào phù hợp.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        {% with pf=base_filter_qs %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ pf }}&sort={{ sort }}&order={{ order }}&page=1">«</a>
+            <a href="?{{ pf }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.previous_page_number }}">‹</a>
+            {% else %}
+            <span class="disabled">«</span>
+            <span class="disabled">‹</span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <span class="current">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+            <a href="?{{ pf }}&sort={{ sort }}&order={{ order }}&page={{ num }}">{{ num }}</a>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <a href="?{{ pf }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.next_page_number }}">›</a>
+            <a href="?{{ pf }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.paginator.num_pages }}">»</a>
+            {% else %}
+            <span class="disabled">›</span>
+            <span class="disabled">»</span>
+            {% endif %}
+        </div>
+        {% endwith %}
+        {% endif %}
+
+    </form>
+
+</div>
+
+<script>
+function getChecked() {
+    return document.querySelectorAll('.row-check:checked');
+}
+
+function updateBulkBar() {
+    const checked = getChecked();
+    const bar = document.getElementById('bulk-bar');
+    const countEl = document.getElementById('bulk-count');
+    if (checked.length > 0) {
+        bar.classList.add('visible');
+        countEl.textContent = checked.length + ' hợp đồng đã chọn';
+    } else {
+        bar.classList.remove('visible');
+    }
+    // Cập nhật trạng thái check-all
+    const all = document.querySelectorAll('.row-check');
+    document.getElementById('check-all').indeterminate = checked.length > 0 && checked.length < all.length;
+    document.getElementById('check-all').checked = all.length > 0 && checked.length === all.length;
+    // Highlight hàng được chọn
+    document.querySelectorAll('.row-check').forEach(function(cb) {
+        cb.closest('tr').classList.toggle('selected', cb.checked);
+    });
+}
+
+function onRowCheck() {
+    updateBulkBar();
+}
+
+function toggleAll(masterCb) {
+    document.querySelectorAll('.row-check').forEach(function(cb) {
+        cb.checked = masterCb.checked;
+    });
+    updateBulkBar();
+}
+
+function clearSelection() {
+    document.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = false; });
+    document.getElementById('check-all').checked = false;
+    updateBulkBar();
+}
+
+function submitBulkDelete() {
+    const checked = getChecked();
+    if (checked.length === 0) return;
+    if (!confirm('Bạn có chắc muốn xóa ' + checked.length + ' hợp đồng đã chọn?\n\nHành động này không thể hoàn tác.')) return;
+    document.getElementById('bulk-action-input').value = 'delete';
+    document.getElementById('bulk-form').submit();
+}
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

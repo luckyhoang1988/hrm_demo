@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Xóa cấu hình bảo hiểm — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:500px;margin:40px auto;padding:24px}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden}
+.card-header{background:#ffebee;padding:14px 20px;font-weight:700;font-size:15px;border-bottom:1px solid #ffcdd2;color:#c62828}
+.card-body{padding:24px}
+.warn{background:#fff8e1;border-radius:8px;padding:12px 16px;font-size:13px;color:#e65100;margin-bottom:16px}
+.actions{display:flex;gap:10px;margin-top:20px}
+.btn{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none}
+.btn-danger{background:#c62828;color:#fff}
+.btn-outline{background:#fff;color:#555;border:1.5px solid #ddd}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'payroll:insurance_config_list' %}">🔧 Cấu hình BH</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+<div class="container">
+  <div class="card">
+    <div class="card-header">🗑 Xác nhận xóa cấu hình</div>
+    <div class="card-body">
+      <p style="font-size:14px;margin-bottom:14px">Bạn chắc chắn muốn xóa cấu hình bảo hiểm năm <strong>{{ cfg.year }}</strong>?</p>
+      <div class="warn">Thao tác này cũng xóa tất cả bậc thuế TNCN (PITBracket) của năm {{ cfg.year }}. Không thể hoàn tác.</div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="actions">
+          <button type="submit" class="btn btn-danger">Xóa</button>
+          <a href="{% url 'payroll:insurance_config_list' %}" class="btn btn-outline">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

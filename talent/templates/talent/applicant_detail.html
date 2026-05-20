@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ applicant.full_name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white  { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue   { background: #1565C0; color: white; }
+        .btn-green  { background: #4CAF50; color: white; }
+        .btn-purple { background: #6A1B9A; color: white; }
+        .btn-red    { background: #c62828; color: white; }
+        .container { display: flex; gap: 24px; padding: 24px 30px; }
+        .main { flex: 1; }
+        .sidebar { width: 240px; flex-shrink: 0; }
+        .card { background: white; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 18px; overflow: hidden; }
+        .card-header { padding: 12px 18px; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; background: #f8f9fa; color: #1565C0; display: flex; justify-content: space-between; align-items: center; }
+        .card-body { padding: 18px; }
+        .stat-item { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-label { color: #888; }
+        .stat-val { font-weight: 600; max-width: 60%; text-align: right; }
+
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-new        { background: #e3f2fd; color: #1565C0; }
+        .pill-screening  { background: #fff8e1; color: #f57f17; }
+        .pill-interview  { background: #e8f5e9; color: #2e7d32; }
+        .pill-offer      { background: #f3e5f5; color: #6a1b9a; }
+        .pill-hired      { background: #e8f5e9; color: #1b5e20; }
+        .pill-rejected   { background: #ffebee; color: #c62828; }
+
+        .timeline { }
+        .timeline-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-dot { width: 36px; height: 36px; border-radius: 50%; background: #1565C0; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .timeline-content { flex: 1; }
+        .timeline-title { font-size: 13px; font-weight: 600; }
+        .timeline-meta { font-size: 12px; color: #999; margin-top: 3px; }
+
+        .pill-interview-scheduled  { background: #e3f2fd; color: #1565C0; }
+        .pill-interview-completed  { background: #e8f5e9; color: #2e7d32; }
+        .pill-interview-cancelled  { background: #ffebee; color: #c62828; }
+        .pill-interview-no_show    { background: #fff8e1; color: #f57f17; }
+
+        .pill-offer-draft    { background: #f5f5f5; color: #888; }
+        .pill-offer-sent     { background: #e3f2fd; color: #1565C0; }
+        .pill-offer-accepted { background: #e8f5e9; color: #2e7d32; }
+        .pill-offer-rejected { background: #ffebee; color: #c62828; }
+        .pill-offer-expired  { background: #fff8e1; color: #f57f17; }
+
+        .prose { font-size: 13px; line-height: 1.7; color: #555; white-space: pre-wrap; }
+        .action-btn { display: flex; gap: 8px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>👤 {{ applicant.full_name }}</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:job_detail' applicant.job_position.pk %}" class="btn btn-white">← Vị trí</a>
+        <a href="{% url 'talent:applicant_change_stage' applicant.pk %}" class="btn btn-blue">Đổi giai đoạn</a>
+        <a href="{% url 'talent:interview_create' applicant.pk %}" class="btn btn-green">+ Lịch PV</a>
+        {% if not applicant.has_offer %}
+        <a href="{% url 'talent:offer_create' applicant.pk %}" class="btn btn-purple">+ Offer</a>
+        {% endif %}
+        {% if applicant.stage == 'hired' and not applicant.converted_employee %}
+        <a href="{% url 'talent:applicant_convert' applicant.pk %}" class="btn btn-green">Tạo NV</a>
+        {% endif %}
+        <a href="{% url 'talent:applicant_update' applicant.pk %}" class="btn btn-blue">Sửa</a>
+        <a href="{% url 'talent:applicant_delete' applicant.pk %}" class="btn btn-red">Xóa</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="main">
+        <!-- Phỏng vấn -->
+        <div class="card">
+            <div class="card-header">
+                🎤 Lịch phỏng vấn
+                <a href="{% url 'talent:interview_create' applicant.pk %}" style="font-size:13px; color:#4CAF50; font-weight:600; text-decoration:none;">+ Thêm</a>
+            </div>
+            <div class="card-body">
+                {% if interviews %}
+                <div class="timeline">
+                    {% for iv in interviews %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot">{{ iv.round_number }}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">
+                                Vòng {{ iv.round_number }} — {{ iv.get_interview_type_display }}
+                                <span class="pill pill-interview-{{ iv.status }}" style="margin-left:6px;">{{ iv.get_status_display }}</span>
+                                {% if iv.score %}<span style="margin-left:8px; font-size:13px; color:#f57f17;">⭐ {{ iv.score }}/5</span>{% endif %}
+                            </div>
+                            <div class="timeline-meta">
+                                {{ iv.scheduled_date|date:"d/m/Y" }}{% if iv.scheduled_time %} lúc {{ iv.scheduled_time|time:"H:i" }}{% endif %}
+                                · {{ iv.duration_minutes }} phút
+                                {% if iv.location %}· {{ iv.location }}{% endif %}
+                            </div>
+                            {% if iv.notes %}
+                            <div style="font-size:12px; color:#666; margin-top:5px;">{{ iv.notes }}</div>
+                            {% endif %}
+                            <div style="margin-top:6px;">
+                                <a href="{% url 'talent:interview_update' iv.pk %}" style="font-size:12px; color:#1565C0; text-decoration:none; margin-right:10px;">Sửa</a>
+                                <a href="{% url 'talent:interview_delete' iv.pk %}" style="font-size:12px; color:#c62828; text-decoration:none;">Xóa</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color:#bbb; text-align:center; padding:20px 0;">Chưa có lịch phỏng vấn nào.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Offer -->
+        {% if applicant.has_offer %}
+        {% with offer=applicant.joboffer %}
+        <div class="card">
+            <div class="card-header">
+                📋 Offer
+                <a href="{% url 'talent:offer_update' offer.pk %}" style="font-size:13px; color:#1565C0; text-decoration:none;">Sửa</a>
+            </div>
+            <div class="card-body">
+                <div class="stat-item"><span class="stat-label">Trạng thái</span><span><span class="pill pill-offer-{{ offer.status }}">{{ offer.get_status_display }}</span></span></div>
+                <div class="stat-item"><span class="stat-label">Lương đề nghị</span><span class="stat-val">{{ offer.offered_salary|floatformat:0 }}</span></div>
+                <div class="stat-item"><span class="stat-label">Ngày bắt đầu dự kiến</span><span class="stat-val">{{ offer.start_date|date:"d/m/Y" }}</span></div>
+                <div class="stat-item"><span class="stat-label">Thời gian thử việc</span><span class="stat-val">{{ offer.probation_months }} tháng</span></div>
+                {% if offer.deadline_response %}
+                <div class="stat-item"><span class="stat-label">Hạn trả lời</span><span class="stat-val">{{ offer.deadline_response|date:"d/m/Y" }}</span></div>
+                {% endif %}
+                {% if offer.benefits_note %}
+                <div class="stat-item"><span class="stat-label">Quyền lợi bổ sung</span><span class="stat-val" style="white-space:pre-line;">{{ offer.benefits_note }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+        {% endif %}
+
+        {% if applicant.cover_letter %}
+        <div class="card">
+            <div class="card-header">📝 Thư ngỏ</div>
+            <div class="card-body"><div class="prose">{{ applicant.cover_letter }}</div></div>
+        </div>
+        {% endif %}
+
+        {% if applicant.notes %}
+        <div class="card">
+            <div class="card-header">📌 Ghi chú</div>
+            <div class="card-body"><div class="prose">{{ applicant.notes }}</div></div>
+        </div>
+        {% endif %}
+
+        {% if applicant.converted_employee %}
+        <div class="card" style="border-color: #a5d6a7; background: #f1fff2;">
+            <div class="card-body" style="padding:16px;">
+                ✅ Đã chuyển thành nhân viên: <a href="{% url 'employee_detail' applicant.converted_employee.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ applicant.converted_employee.full_name }}</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="sidebar">
+        <div class="card">
+            <div class="card-header">Thông tin ứng viên</div>
+            <div class="card-body">
+                <div class="stat-item"><span class="stat-label">Giai đoạn</span><span><span class="pill pill-{{ applicant.stage }}">{{ applicant.get_stage_display }}</span></span></div>
+                <div class="stat-item"><span class="stat-label">Vị trí ứng tuyển</span><span class="stat-val"><a href="{% url 'talent:job_detail' applicant.job_position.pk %}" style="color:#1565C0; text-decoration:none;">{{ applicant.job_position.title }}</a></span></div>
+                <div class="stat-item"><span class="stat-label">Phòng ban</span><span class="stat-val">{{ applicant.job_position.department.name }}</span></div>
+                <div class="stat-item"><span class="stat-label">Email</span><span class="stat-val" style="font-size:12px;">{{ applicant.email }}</span></div>
+                {% if applicant.phone %}<div class="stat-item"><span class="stat-label">SĐT</span><span class="stat-val">{{ applicant.phone }}</span></div>{% endif %}
+                <div class="stat-item"><span class="stat-label">Nguồn</span><span class="stat-val">{{ applicant.get_source_display }}</span></div>
+                {% if applicant.referrer %}<div class="stat-item"><span class="stat-label">Giới thiệu</span><span class="stat-val">{{ applicant.referrer.full_name }}</span></div>{% endif %}
+                <div class="stat-item"><span class="stat-label">Ngày nộp</span><span class="stat-val">{{ applicant.applied_at|date:"d/m/Y" }}</span></div>
+                {% if applicant.linkedin_url %}<div class="stat-item"><span class="stat-label">LinkedIn</span><span class="stat-val"><a href="{{ applicant.linkedin_url }}" target="_blank" style="color:#1565C0;">Xem →</a></span></div>{% endif %}
+                {% if applicant.cv_file %}<div class="stat-item"><span class="stat-label">CV</span><span class="stat-val"><a href="{{ applicant.cv_file.url }}" target="_blank" style="color:#1565C0;">Tải về ↓</a></span></div>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

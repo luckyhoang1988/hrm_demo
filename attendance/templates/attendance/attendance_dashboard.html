@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Chấm công — HRM</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.toolbar h1{font-size:18px;font-weight:700}
+.filter-inline{display:flex;gap:8px;align-items:center}
+.filter-inline select{padding:6px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px}
+.filter-inline button{padding:6px 14px;background:#1565C0;color:#fff;border:none;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600}
+.btn{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px;border:none;cursor:pointer}
+.btn-success{background:#2e7d32;color:#fff}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.kpi-card{background:#fff;border-radius:10px;padding:16px 18px;border:1px solid #e8ecf0}
+.kpi-icon{font-size:22px;margin-bottom:6px}
+.kpi-label{font-size:11px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.kpi-value{font-size:22px;font-weight:800;color:#1a1a2e;margin-top:2px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.chart-card{background:#fff;border-radius:10px;padding:20px;border:1px solid #e8ecf0}
+.chart-card h3{font-size:14px;font-weight:700;color:#555;margin-bottom:14px}
+.chart-wrap{height:220px;position:relative}
+.tab-bar{background:#fff;border-bottom:2px solid #e0e0e0;padding:0 20px;display:flex;gap:0}
+.tab-link{padding:9px 18px;font-size:13px;font-weight:600;color:#888;text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-2px;display:inline-flex;align-items:center;gap:6px;transition:color .15s,border-color .15s}
+.tab-link:hover{color:#1565C0}
+.tab-link.active{color:#1565C0;border-bottom-color:#1565C0}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:attendance_home' %}">⏱ Chấm công</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <a href="?tab=overview&month={{ q_month }}&year={{ q_year }}" class="tab-link {% if active_tab != 'analytics' %}active{% endif %}">📊 Tổng quan</a>
+  <a href="?tab=analytics&month={{ q_month }}&year={{ q_year }}" class="tab-link {% if active_tab == 'analytics' %}active{% endif %}">📈 Phân tích nâng cao</a>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <h1>📊 Dashboard Chấm công</h1>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <form method="get" class="filter-inline">
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+        <select name="month">
+          {% for m in months %}<option value="{{ m }}" {% if q_month == m %}selected{% endif %}>Tháng {{ m }}</option>{% endfor %}
+        </select>
+        <select name="year">
+          {% for y in years %}<option value="{{ y }}" {% if q_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+        <button type="submit">Lọc</button>
+      </form>
+      <a href="{% url 'attendance:attendance_dashboard_export' %}?month={{ q_month }}&year={{ q_year }}" class="btn btn-success">📤 Xuất Excel</a>
+    </div>
+  </div>
+
+  {% if active_tab != 'analytics' %}
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-label">Bản ghi</div>
+      <div class="kpi-value">{{ total_records }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="color:#c62828">❌</div>
+      <div class="kpi-label">Vắng không phép</div>
+      <div class="kpi-value" style="color:#c62828">{{ total_absent }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="color:#e65100">⏰</div>
+      <div class="kpi-label">Đi muộn/về sớm</div>
+      <div class="kpi-value" style="color:#e65100">{{ total_late }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="color:#1565C0">🕐</div>
+      <div class="kpi-label">Tổng giờ OT</div>
+      <div class="kpi-value" style="color:#1565C0">{{ total_ot_hours|floatformat:1 }}h</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="color:#6a1b9a">🏖</div>
+      <div class="kpi-label">Đơn nghỉ được duyệt</div>
+      <div class="kpi-value" style="color:#6a1b9a">{{ total_leaves }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="color:#e65100">⏳</div>
+      <div class="kpi-label">Đơn chờ duyệt</div>
+      <div class="kpi-value" style="color:#e65100">{{ pending_leaves }}</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3>Phân bố trạng thái chấm công</h3>
+      <div class="chart-wrap">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Liên kết nhanh</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:10px">
+        <a href="{% url 'attendance:attendance_list' %}?month={{ q_month }}&year={{ q_year }}" style="padding:10px 14px;background:#e3f2fd;color:#1565C0;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📋 Xem danh sách chấm công tháng {{ q_month }}/{{ q_year }}</a>
+        <a href="{% url 'attendance:leave_request_list' %}?tab=pending" style="padding:10px 14px;background:#fff3e0;color:#e65100;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">⏳ {{ pending_leaves }} đơn nghỉ đang chờ duyệt</a>
+        <a href="{% url 'attendance:leave_balance_list' %}?year={{ q_year }}" style="padding:10px 14px;background:#e8f5e9;color:#2e7d32;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">💰 Số dư ngày phép năm {{ q_year }}</a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'attendance:attendance_import' %}" style="padding:10px 14px;background:#f3e5f5;color:#6a1b9a;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 Import dữ liệu chấm công</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- TAB 2: PHÂN TÍCH NÂNG CAO -->
+  <div class="charts-row" style="margin-bottom:18px">
+    <div class="chart-card">
+      <h3>Xu hướng chấm công 6 tháng gần nhất</h3>
+      <div class="chart-wrap"><canvas id="an_trendChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>OT theo phòng ban (tháng {{ q_month }}/{{ q_year }})</h3>
+      <div class="chart-wrap">
+        {% if ot_by_dept %}
+        <canvas id="an_otDeptChart"></canvas>
+        {% else %}
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:13px">Không có dữ liệu OT</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3>Nghỉ phép theo loại (tháng {{ q_month }}/{{ q_year }})</h3>
+      <div class="chart-wrap">
+        {% if leave_by_type %}
+        <canvas id="an_leaveTypeChart"></canvas>
+        {% else %}
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:13px">Không có đơn nghỉ được duyệt</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Phân bố trạng thái chấm công (tháng {{ q_month }}/{{ q_year }})</h3>
+      <div class="chart-wrap"><canvas id="an_statusDoughnut"></canvas></div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+{% if active_tab != 'analytics' %}
+const statusStats = {{ status_stats|safe }};
+const statusMap   = {{ status_map|safe }};
+const COLORS = {
+  'present':'#4CAF50','absent':'#c62828','half_day':'#1565C0',
+  'late':'#FF9800','on_leave':'#9C27B0','holiday':'#E91E63'
+};
+const labels = statusStats.map(s => statusMap[s.status] || s.status);
+const data   = statusStats.map(s => s.cnt);
+const colors = statusStats.map(s => COLORS[s.status] || '#999');
+if (statusStats.length > 0) {
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 12 } } } }
+    }
+  });
+}
+{% else %}
+(function() {
+  const palette = ['#1565C0','#42A5F5','#4CAF50','#FF9800','#EF5350','#AB47BC','#26A69A','#FF7043'];
+
+  // Chart 1: Xu hướng 6 tháng (line)
+  const mLabels  = {{ monthly_labels|safe }};
+  const mPresent = {{ monthly_present|safe }};
+  const mAbsent  = {{ monthly_absent_t|safe }};
+  const mLate    = {{ monthly_late_t|safe }};
+  new Chart(document.getElementById('an_trendChart'), {
+    type: 'line',
+    data: {
+      labels: mLabels,
+      datasets: [
+        { label: 'Có mặt/Nửa ngày', data: mPresent, borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.1)', borderWidth: 2, fill: true, tension: 0.3 },
+        { label: 'Vắng không phép',  data: mAbsent,  borderColor: '#c62828', backgroundColor: 'rgba(198,40,40,0.07)', borderWidth: 2, fill: true, tension: 0.3 },
+        { label: 'Đi muộn/về sớm',  data: mLate,    borderColor: '#FF9800', backgroundColor: 'rgba(255,152,0,0.08)', borderWidth: 2, fill: true, tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      animation: { duration: 400 }
+    }
+  });
+
+  // Chart 2: OT theo phòng ban (horizontal bar)
+  {% if ot_by_dept %}
+  const otLabels = [{% for d in ot_by_dept %}'{{ d.employee__department__name|default:"(chưa rõ)" }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+  const otValues = [{% for d in ot_by_dept %}{{ d.ot|default:0|floatformat:1 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  new Chart(document.getElementById('an_otDeptChart'), {
+    type: 'bar',
+    data: { labels: otLabels, datasets: [{ label: 'Giờ OT', data: otValues, backgroundColor: palette, borderRadius: 4 }] },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { callback: v => v + 'h' } } },
+      animation: { duration: 400 }
+    }
+  });
+  {% endif %}
+
+  // Chart 3: Nghỉ phép theo loại (doughnut)
+  {% if leave_by_type %}
+  const ltLabels = [{% for l in leave_by_type %}'{{ l.leave_type__name|default:"(chưa rõ)" }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+  const ltCounts = [{% for l in leave_by_type %}{{ l.cnt }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  new Chart(document.getElementById('an_leaveTypeChart'), {
+    type: 'doughnut',
+    data: { labels: ltLabels, datasets: [{ data: ltCounts, backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 12 } } } },
+      animation: { duration: 400 }
+    }
+  });
+  {% endif %}
+
+  // Chart 4: Trạng thái chấm công (doughnut)
+  const ssStats = {{ status_stats|safe }};
+  const ssMap   = {{ status_map|safe }};
+  const COLORS2 = { 'present':'#4CAF50','absent':'#c62828','half_day':'#1565C0','late':'#FF9800','on_leave':'#9C27B0','holiday':'#E91E63' };
+  const ssLabels = ssStats.map(s => ssMap[s.status] || s.status);
+  const ssData   = ssStats.map(s => s.cnt);
+  const ssColors = ssStats.map(s => COLORS2[s.status] || '#999');
+  if (ssStats.length > 0) {
+    new Chart(document.getElementById('an_statusDoughnut'), {
+      type: 'doughnut',
+      data: { labels: ssLabels, datasets: [{ data: ssData, backgroundColor: ssColors, borderWidth: 2, borderColor: '#fff' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { font: { size: 12 } } } },
+        animation: { duration: 400 }
+      }
+    });
+  }
+})();
+{% endif %}
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,1009 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    {% load humanize %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; min-height: 100vh; }
+
+        /* ── TOPBAR ─────────────────────────────────── */
+        .topbar {
+            background: #1565C0; color: white;
+            padding: 0 20px; height: 46px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .topbar h1 { font-size: 15px; font-weight: 700; }
+        .btn {
+            padding: 7px 16px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.15); color: white;
+            transition: background 0.15s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* ── TAB BAR ────────────────────────────────── */
+        .tab-bar {
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+        }
+        .tab-link {
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #888;
+            text-decoration: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .tab-link:hover { color: #1565C0; }
+        .tab-link.active { color: #1565C0; border-bottom-color: #1565C0; }
+
+        /* ── CONTAINER ───────────────────────────────── */
+        .container { padding: 14px 20px; }
+
+        /* ══════════════════════════════════════════════
+           TAB 1: TỔNG QUAN
+        ══════════════════════════════════════════════ */
+
+        /* Thẻ thống kê tổng quan */
+        .overview-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .ov-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e8ecf0;
+            padding: 10px 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .ov-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; flex-shrink: 0;
+        }
+        .ov-label { font-size: 11px; color: #999; margin-bottom: 2px; }
+        .ov-value { font-size: 17px; font-weight: 800; color: #222; }
+
+        /* Khung biểu đồ */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 14px;
+        }
+        .chart-card h3 {
+            font-size: 13px; font-weight: 700; color: #444;
+            margin-bottom: 10px; padding-bottom: 7px;
+            border-bottom: 2px solid #E3F2FD;
+        }
+        .dept-table { width: 100%; border-collapse: collapse; }
+        .dept-table th { font-size: 11px; color: #aaa; font-weight: 700; padding: 6px 6px; text-align: left; border-bottom: 1px solid #eee; text-transform: uppercase; }
+        .dept-table td { font-size: 12px; padding: 7px 6px; border-bottom: 1px solid #f5f5f5; }
+        .dept-table tr:last-child td { border-bottom: none; }
+        .bar-bg   { background: #E3F2FD; border-radius: 4px; height: 7px; }
+        .bar-fill { background: #1565C0; border-radius: 4px; height: 7px; }
+
+        /* ══════════════════════════════════════════════
+           TAB 2: TRẠNG THÁI
+        ══════════════════════════════════════════════ */
+
+        /* Summary row: donut + stat cards */
+        .status-summary {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        /* Donut card */
+        .donut-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 12px;
+            width: 190px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .donut-title {
+            font-size: 10px; font-weight: 700; color: #aaa;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 8px; align-self: flex-start;
+        }
+        .donut-wrap { position: relative; width: 130px; height: 130px; }
+        .donut-center {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none;
+        }
+        .donut-num  { font-size: 20px; font-weight: 800; color: #222; line-height: 1; }
+        .donut-text { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+        /* Status stat cards grid */
+        .status-cards {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 7px;
+        }
+        .sc-card {
+            background: white;
+            border-radius: 9px;
+            border: 1px solid #e8ecf0;
+            border-left: 3px solid var(--c);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 9px 12px;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .sc-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .sc-card.active { background: var(--sb); box-shadow: 0 0 0 2px var(--c); }
+        .sc-card.inactive { opacity: 0.4; }
+        .sc-card input { display: none; }
+        .sc-num  { font-size: 20px; font-weight: 800; color: var(--c); line-height: 1; }
+        .sc-name { font-size: 11px; font-weight: 600; color: #666; margin: 2px 0 6px; }
+        .sc-bar-bg   { height: 4px; background: #f0f0f0; border-radius: 2px; }
+        .sc-bar-fill { height: 4px; background: var(--c); border-radius: 2px; }
+        .sc-pct { font-size: 11px; color: #bbb; margin-top: 4px; }
+
+        /* Text search bar */
+        .text-search-bar {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .text-search-bar input[type=text],
+        .text-search-bar select {
+            height: 32px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 12px;
+            color: #333;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .text-search-bar input[type=text]:focus,
+        .text-search-bar select:focus { border-color: #1565C0; }
+        .text-search-bar input[name=name]          { width: 190px; }
+        .text-search-bar input[name=employee_code] { width: 120px; }
+        .text-search-bar select[name=department]   { width: 160px; }
+        .search-btn {
+            height: 32px; padding: 0 14px;
+            background: #1565C0; color: white;
+            border: none; border-radius: 6px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .search-btn:hover { background: #1976D2; }
+        .clear-btn {
+            height: 32px; padding: 0 12px;
+            background: white; color: #777;
+            border: 1px solid #ddd; border-radius: 6px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center;
+            transition: background 0.15s;
+        }
+        .clear-btn:hover { background: #f5f5f5; color: #333; }
+        .search-placeholder {
+            background: white;
+            border-radius: 12px;
+            border: 1px dashed #ddd;
+            padding: 56px 24px;
+            text-align: center;
+            color: #bbb;
+            font-size: 15px;
+        }
+        .search-placeholder strong { display: block; font-size: 17px; color: #aaa; margin-bottom: 8px; }
+
+        /* Status quick-filter pills */
+        .status-pills-row {
+            display: flex; align-items: center; gap: 6px;
+            flex-wrap: wrap; width: 100%;
+            padding-top: 8px;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 8px;
+        }
+        .s-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 13px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            border: 1.5px solid #e0e0e0;
+            background: white; color: #666;
+            text-decoration: none;
+            transition: all 0.15s; cursor: pointer;
+            white-space: nowrap;
+        }
+        .s-pill:hover  { border-color: var(--c); color: var(--c); background: var(--sb); }
+        .s-pill.active { border-color: var(--c); color: var(--c); background: var(--sb); box-shadow: 0 0 0 1px var(--c); }
+        .s-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+        .s-pill-n {
+            background: var(--c); color: white;
+            border-radius: 10px; padding: 1px 6px; font-size: 10px; font-weight: 700;
+        }
+        .s-pill:not(.active) .s-pill-n { opacity: 0.45; }
+
+        /* Filter section */
+        .filter-bar {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: 1.5px solid #e0e0e0; background: white; color: #777;
+            transition: all 0.15s; user-select: none;
+        }
+        .chip:hover { border-color: var(--c); color: var(--c); }
+        .chip.on { background: var(--sb); border-color: var(--c); color: var(--c); }
+        .chip input { display: none; }
+        .chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+        .chip-n {
+            background: var(--c); color: white;
+            border-radius: 10px; padding: 1px 7px; font-size: 10px;
+        }
+        .chip:not(.on) .chip-n { opacity: 0.45; }
+        .quick-btns { display: flex; gap: 6px; flex-shrink: 0; }
+        .qbtn {
+            font-size: 12px; color: #555; cursor: pointer;
+            padding: 4px 10px; border-radius: 6px;
+            border: 1px solid #ddd; background: white; font-weight: 600;
+            transition: background 0.1s;
+        }
+        .qbtn:hover { background: #f0f0f0; }
+
+        /* Result info */
+        .result-info {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px; padding: 0 2px;
+        }
+        .result-info span { font-size: 12px; color: #666; }
+        .result-info strong { color: #1565C0; font-size: 13px; }
+        .export-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 7px;
+            background: #1B5E20; color: white;
+            font-size: 12px; font-weight: 700; text-decoration: none;
+            box-shadow: 0 2px 6px rgba(27,94,32,0.3);
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .export-btn:hover { background: #2E7D32; box-shadow: 0 4px 12px rgba(27,94,32,0.4); }
+
+        /* Table */
+        .table-box {
+            background: white; border-radius: 12px;
+            border: 1px solid #e8ecf0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 8px 11px; font-size: 11px; font-weight: 700; text-align: left; white-space: nowrap; }
+        td { padding: 7px 11px; font-size: 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #F5F9FF; }
+        tbody tr.row-term { background: #FEFAFA; }
+        tbody tr.row-term:hover { background: #FFF5F5; }
+        tbody tr.row-term td { color: #aaa; }
+        .s-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; white-space: nowrap;
+        }
+        .date-mono { font-size: 12px; font-family: monospace; color: #555; }
+        .dur-tag {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 11px; font-weight: 600;
+            background: #E8F5E9; color: #2E7D32;
+        }
+        .dur-tag.term { background: #FFEBEE; color: #C62828; }
+        .note-cell { font-size: 12px; color: #777; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .empty-row td { text-align: center; color: #bbb; padding: 48px; font-size: 14px; }
+
+        /* ── ALERT SECTION ───────────────────────────── */
+        .alert-section {
+            background: #FFFBF0;
+            border-bottom: 1px solid #FFE082;
+            padding: 7px 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .alert-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px; border-radius: 8px;
+            border-left: 3px solid; flex: 1;
+            min-width: 180px; max-width: 300px;
+        }
+        .alert-warning { background: #FFF8E1; border-left-color: #F59E0B; }
+        .alert-danger  { background: #FFEBEE; border-left-color: #EF4444; }
+        .alert-overdue { background: #FFF3E0; border-left-color: #D97706; }
+        .alert-icon { font-size: 18px; flex-shrink: 0; }
+        .alert-body { flex: 1; }
+        .alert-num   { font-size: 17px; font-weight: 800; color: #222; line-height: 1; }
+        .alert-label { font-size: 11px; font-weight: 700; color: #444; margin: 1px 0; }
+        .alert-sub   { font-size: 10px; color: #999; }
+        .alert-link {
+            font-size: 12px; font-weight: 700; color: #1565C0;
+            text-decoration: none; padding: 5px 12px; border-radius: 6px;
+            background: rgba(21,101,192,0.08); white-space: nowrap; flex-shrink: 0;
+        }
+        .alert-link:hover { background: rgba(21,101,192,0.15); }
+
+        /* ── DEPT FILTER (Tab 1) ─────────────────────── */
+        .dept-filter-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px; background: white;
+            border: 1px solid #e8ecf0; border-radius: 8px;
+            padding: 7px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .dept-filter-row label { font-size: 11px; font-weight: 700; color: #888; }
+        .dept-filter-row select {
+            height: 30px; border: 1px solid #ddd; border-radius: 6px;
+            padding: 0 8px; font-size: 12px; color: #333; outline: none;
+            min-width: 160px; cursor: pointer;
+        }
+        .dept-filter-row select:focus { border-color: #1565C0; }
+        .dept-clear-btn {
+            font-size: 12px; color: #888; text-decoration: none;
+            padding: 5px 10px; border-radius: 5px;
+            border: 1px solid #ddd; background: white;
+        }
+        .dept-clear-btn:hover { background: #f5f5f5; color: #333; }
+
+        /* ── PAGINATION (Tab 2) ──────────────────────── */
+        .pagination-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; margin-top: 14px; padding: 6px;
+        }
+        .pg-btn {
+            padding: 7px 18px; border-radius: 7px;
+            background: #1565C0; color: white;
+            font-size: 13px; font-weight: 700;
+            text-decoration: none; transition: background 0.15s;
+        }
+        .pg-btn:hover { background: #1976D2; }
+        .pg-info { font-size: 13px; color: #666; }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <h1>📊 Dashboard</h1>
+    <div style="display:flex; gap:10px;">
+        <a href="{% url 'employee_list' %}" class="btn">← Danh sách nhân viên</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn">🚪 Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+    <a href="{% url 'dashboard' %}?tab=overview"
+       class="tab-link {% if active_tab == 'overview' %}active{% endif %}">
+        📊 Tổng quan
+    </a>
+    <a href="{% url 'dashboard' %}?tab=status"
+       class="tab-link {% if active_tab == 'status' %}active{% endif %}">
+        👥 Trạng thái nhân viên
+    </a>
+    <a href="{% url 'dashboard' %}?tab=analytics"
+       class="tab-link {% if active_tab == 'analytics' %}active{% endif %}">
+        📈 Phân tích nâng cao
+    </a>
+</div>
+
+{% if alert_expiring or alert_scheduled or alert_overdue %}
+<div class="alert-section">
+    {% if alert_expiring %}
+    <div class="alert-card alert-warning">
+        <div class="alert-icon">⏰</div>
+        <div class="alert-body">
+            <div class="alert-num">{{ alert_expiring }}</div>
+            <div class="alert-label">NV sắp hết hạn trạng thái</div>
+            <div class="alert-sub">Trong vòng 15 ngày tới</div>
+        </div>
+        <a href="{% url 'employee_list' %}?expiring=true" class="alert-link">Xem &rsaquo;</a>
+    </div>
+    {% endif %}
+    {% if alert_scheduled %}
+    <div class="alert-card alert-danger">
+        <div class="alert-icon">📅</div>
+        <div class="alert-body">
+            <div class="alert-num">{{ alert_scheduled }}</div>
+            <div class="alert-label">NV sắp nghỉ việc theo lịch</div>
+            <div class="alert-sub">Trong vòng 15 ngày tới</div>
+        </div>
+        <a href="{% url 'dashboard' %}?tab=status&status=dang_lam&status=thu_viec&status=thuc_tap_sinh" class="alert-link">Xem &rsaquo;</a>
+    </div>
+    {% endif %}
+    {% if alert_overdue %}
+    <div class="alert-card alert-overdue">
+        <div class="alert-icon">🔴</div>
+        <div class="alert-body">
+            <div class="alert-num">{{ alert_overdue }}</div>
+            <div class="alert-label">NV quá hạn trạng thái</div>
+            <div class="alert-sub">Cần xem xét và cập nhật</div>
+        </div>
+        <a href="{% url 'dashboard' %}?tab=status" class="alert-link">Xem &rsaquo;</a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════
+     TAB 1: TỔNG QUAN
+══════════════════════════════════════════════ -->
+{% if active_tab == 'overview' %}
+
+    <!-- Dept filter -->
+    <div class="dept-filter-row">
+        <label>🏢 Bộ phận:</label>
+        <form method="get" action="{% url 'dashboard' %}" style="display:inline-flex; align-items:center; gap:8px;">
+            <input type="hidden" name="tab" value="overview">
+            <select name="dept_overview" onchange="this.form.submit()">
+                <option value="">Tất cả bộ phận</option>
+                {% for dn in dept_names %}
+                <option value="{{ dn }}" {% if dn == dept_overview %}selected{% endif %}>{{ dn }}</option>
+                {% endfor %}
+            </select>
+            {% if dept_overview %}
+            <a href="{% url 'dashboard' %}?tab=overview" class="dept-clear-btn">✕ Xóa lọc</a>
+            {% endif %}
+        </form>
+        {% if dept_overview %}
+        <span style="font-size:12px; color:#1565C0; font-weight:600;">— Đang xem: {{ dept_overview }}</span>
+        {% endif %}
+    </div>
+
+    <div class="overview-stats">
+        <div class="ov-card">
+            <div class="ov-icon" style="background:#E3F2FD;">👥</div>
+            <div>
+                <div class="ov-label">{% if dept_overview %}NV bộ phận này{% else %}Tổng nhân viên{% endif %}</div>
+                <div class="ov-value">{{ total_overview }}</div>
+            </div>
+        </div>
+        <div class="ov-card">
+            <div class="ov-icon" style="background:#E8F5E9;">💰</div>
+            <div>
+                <div class="ov-label">Lương trung bình</div>
+                <div class="ov-value">{{ luong_tb|floatformat:0|intcomma }} ₫</div>
+            </div>
+        </div>
+        <div class="ov-card">
+            <div class="ov-icon" style="background:#FFF8E1;">📈</div>
+            <div>
+                <div class="ov-label">Lương cao nhất</div>
+                <div class="ov-value">{{ luong_max|floatformat:0|intcomma }} ₫</div>
+            </div>
+        </div>
+        <div class="ov-card">
+            <div class="ov-icon" style="background:#FFEBEE;">📉</div>
+            <div>
+                <div class="ov-label">Lương thấp nhất</div>
+                <div class="ov-value">{{ luong_min|floatformat:0|intcomma }} ₫</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Nhân viên theo bộ phận</h3>
+            <canvas id="deptPieChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Lương trung bình theo bộ phận</h3>
+            <canvas id="salaryBarChart" height="220"></canvas>
+        </div>
+        <div class="chart-card" style="grid-column: span 2;">
+            <h3>Chi tiết theo bộ phận</h3>
+            <table class="dept-table">
+                <thead>
+                    <tr>
+                        <th>Bộ phận</th>
+                        <th>Số nhân viên</th>
+                        <th style="width:220px;">Tỷ lệ</th>
+                        <th>Lương trung bình</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in dept_stats %}
+                    <tr>
+                        <td><strong>{{ d.department__name }}</strong></td>
+                        <td>{{ d.so_luong }} người</td>
+                        <td>
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width: calc({{ d.so_luong }} / {{ total_overview }} * 100%)"></div>
+                            </div>
+                        </td>
+                        <td>{{ d.luong_tb|floatformat:0|intcomma }} ₫</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Trend chart -->
+    <div class="chart-card" style="margin-top: 20px;">
+        <h3>Biến động nhân sự 6 tháng gần nhất</h3>
+        {% if trend_has_data %}
+        <canvas id="trendChart" height="100"></canvas>
+        {% else %}
+        <div style="text-align:center; color:#ccc; padding: 40px 24px; font-size:14px;">
+            Chưa có dữ liệu lịch sử thay đổi trạng thái.<br>
+            <span style="font-size:12px;">Dữ liệu sẽ xuất hiện sau khi có thay đổi trạng thái nhân viên.</span>
+        </div>
+        {% endif %}
+    </div>
+
+{% endif %}
+
+<!-- ══════════════════════════════════════════════
+     TAB 2: TRẠNG THÁI NHÂN VIÊN
+══════════════════════════════════════════════ -->
+{% if active_tab == 'status' %}
+
+    <!-- Summary: donut + stat cards -->
+    <div class="status-summary">
+
+        <!-- Donut chart -->
+        <div class="donut-card">
+            <div class="donut-title">Phân bổ trạng thái</div>
+            <div class="donut-wrap">
+                <canvas id="statusDonut"></canvas>
+                <div class="donut-center">
+                    <div class="donut-num">{{ total }}</div>
+                    <div class="donut-text">nhân viên</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat cards: 4 cols × 2 rows = 8 slots for 7 statuses -->
+        <form method="get" action="{% url 'dashboard' %}" id="filterForm">
+            <input type="hidden" name="tab" value="status">
+            <div class="status-cards">
+                {% for sd in status_data %}
+                <label class="sc-card {% if sd.selected %}active{% else %}inactive{% endif %}"
+                       style="--c:{{ sd.color }}; --sb:{{ sd.color }}18;">
+                    <input type="checkbox" name="status" value="{{ sd.code }}"
+                           {% if sd.selected %}checked{% endif %}
+                           onchange="submitFilter()">
+                    <div class="sc-num">{{ sd.count }}</div>
+                    <div class="sc-name">{{ sd.label }}</div>
+                    <div class="sc-bar-bg">
+                        <div class="sc-bar-fill" style="width:{{ sd.pct }}%;"></div>
+                    </div>
+                    <div class="sc-pct">{{ sd.pct }}%</div>
+                </label>
+                {% endfor %}
+            </div>
+        </form>
+
+    </div>
+
+    <!-- Text search bar + status quick-filter pills -->
+    <div class="text-search-bar">
+        <!-- Row 1: text inputs -->
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:100%;">
+            <span class="filter-label">Tìm kiếm:</span>
+            <input type="text" form="filterForm" name="name"
+                   value="{{ name_filter }}" placeholder="Họ tên nhân viên...">
+            <select form="filterForm" name="department">
+                <option value="">-- Tất cả bộ phận --</option>
+                {% for dn in dept_names %}
+                <option value="{{ dn }}" {% if dn == dept_filter %}selected{% endif %}>{{ dn }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" form="filterForm" name="employee_code"
+                   value="{{ code_filter }}" placeholder="Mã nhân viên...">
+            <button type="submit" form="filterForm" class="search-btn">🔍 Tìm kiếm</button>
+            {% if has_any_filter %}
+            <a href="{% url 'dashboard' %}?tab=status" class="clear-btn">✕ Xóa lọc</a>
+            {% endif %}
+        </div>
+        <!-- Row 2: status quick-filter pills -->
+        <div class="status-pills-row">
+            <span class="filter-label">Lọc nhanh:</span>
+            {% for sd in status_data %}
+            {% with is_single=selected|length %}
+            <a href="?tab=status&status={{ sd.code }}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if code_filter %}&employee_code={{ code_filter }}{% endif %}"
+               class="s-pill {% if is_single == 1 and sd.code == selected.0 %}active{% endif %}"
+               style="--c:{{ sd.color }}; --sb:{{ sd.color }}18;">
+                <span class="s-pill-dot"></span>
+                {{ sd.label }}
+                <span class="s-pill-n">{{ sd.count }}</span>
+            </a>
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Filter chips + quick actions -->
+    <div class="filter-bar">
+        <span class="filter-label">Lọc trạng thái:</span>
+        <div class="chips">
+            {% for sd in status_data %}
+            <label class="chip {% if sd.selected %}on{% endif %}"
+                   style="--c:{{ sd.color }}; --sb:{{ sd.color }}18;">
+                <input type="checkbox" form="filterForm" name="status" value="{{ sd.code }}"
+                       {% if sd.selected %}checked{% endif %}
+                       onchange="submitFilter()">
+                <span class="chip-dot"></span>
+                {{ sd.label }}
+                <span class="chip-n">{{ sd.count }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <div class="quick-btns">
+            <button type="button" class="qbtn" onclick="selectAll()">Tất cả</button>
+            <button type="button" class="qbtn" onclick="clearAll()">Bỏ chọn</button>
+        </div>
+    </div>
+
+    {% if has_any_filter %}
+    <!-- Result count + Export -->
+    <div class="result-info">
+        <span>Hiển thị <strong>{{ total_filtered }}</strong> nhân viên{% if total_filtered != total %} / {{ total }} tổng số{% endif %}</span>
+        <a href="{{ export_url }}" class="export-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Xuất Excel
+        </a>
+    </div>
+
+    <!-- Table -->
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã NV</th>
+                    <th>Họ tên</th>
+                    <th>Bộ phận</th>
+                    <th>Chức vụ</th>
+                    <th>Trạng thái</th>
+                    <th>Từ ngày</th>
+                    <th>Đến ngày</th>
+                    <th>Thời gian</th>
+                    <th>Ghi chú / Lý do</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ed in employees_data %}
+                {% with e=ed.emp %}
+                <tr class="{% if ed.is_terminated %}row-term{% endif %}">
+                    <td style="font-family:monospace; font-size:12px; color:#888;">{{ e.employee_code|default:"—" }}</td>
+                    <td>
+                        <a href="{% url 'employee_detail' e.pk %}"
+                           style="color:#1565C0; text-decoration:none; font-weight:700;">{{ e.full_name }}</a>
+                    </td>
+                    <td style="color:#555;">{{ e.department }}</td>
+                    <td style="color:#666;">{{ e.position }}</td>
+                    <td>
+                        {% if e.status == 'dang_lam' %}
+                            <span class="s-badge" style="background:#E8F5E9;color:#2E7D32;">● Đang làm</span>
+                        {% elif e.status == 'thu_viec' %}
+                            <span class="s-badge" style="background:#E3F2FD;color:#1565C0;">● Thử việc</span>
+                        {% elif e.status == 'nghi_phep' %}
+                            <span class="s-badge" style="background:#E0F2F1;color:#00695C;">● Nghỉ phép</span>
+                        {% elif e.status == 'nghi_sinh' %}
+                            <span class="s-badge" style="background:#FCE4EC;color:#C2185B;">● Nghỉ thai sản</span>
+                        {% elif e.status == 'nghi_khong_luong' %}
+                            <span class="s-badge" style="background:#FFF3E0;color:#E65100;">● Nghỉ KL</span>
+                        {% elif e.status == 'nghi_om' %}
+                            <span class="s-badge" style="background:#F3E5F5;color:#6A1B9A;">● Nghỉ ốm</span>
+                        {% elif e.status == 'thuc_tap_sinh' %}
+                            <span class="s-badge" style="background:#EDE7F6;color:#7B1FA2;">● Thực tập sinh</span>
+                        {% else %}
+                            <span class="s-badge" style="background:#FFEBEE;color:#C62828;">○ Nghỉ việc</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ed.display_from %}<span class="date-mono">{{ ed.display_from }}</span>{% else %}<span style="color:#ddd;">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if ed.display_to %}<span class="date-mono">{{ ed.display_to }}</span>{% else %}<span style="color:#ddd;">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if ed.duration %}
+                            <span class="dur-tag">{{ ed.duration }}</span>
+                        {% elif ed.is_terminated %}
+                            <span class="dur-tag term">Đã nghỉ</span>
+                        {% else %}
+                            <span style="color:#ddd;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ed.note %}<span class="note-cell" title="{{ ed.note }}">{{ ed.note }}</span>{% else %}<span style="color:#ddd;">—</span>{% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr class="empty-row"><td colspan="9">Không có nhân viên nào khớp với bộ lọc.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="pagination-row">
+        {% if page_obj.has_previous %}
+        <a href="?tab=status&page={{ page_obj.previous_page_number }}{% for s in selected %}&status={{ s }}{% endfor %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if code_filter %}&employee_code={{ code_filter }}{% endif %}" class="pg-btn">‹ Trước</a>
+        {% endif %}
+        <span class="pg-info">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} &nbsp;|&nbsp; {{ total_filtered }} nhân viên</span>
+        {% if page_obj.has_next %}
+        <a href="?tab=status&page={{ page_obj.next_page_number }}{% for s in selected %}&status={{ s }}{% endfor %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if dept_filter %}&department={{ dept_filter }}{% endif %}{% if code_filter %}&employee_code={{ code_filter }}{% endif %}" class="pg-btn">Sau ›</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center; padding:48px 0; color:#aaa;">
+        <div style="font-size:36px; margin-bottom:10px;">🔍</div>
+        <div style="font-size:15px;">Chọn trạng thái hoặc nhập từ khóa để xem danh sách nhân viên</div>
+    </div>
+    {% endif %}
+
+{% endif %}
+
+<!-- ══════════════════════════════════════════════
+     TAB 3: PHÂN TÍCH NÂNG CAO
+══════════════════════════════════════════════ -->
+{% if active_tab == 'analytics' %}
+
+    <div class="charts-grid" style="margin-bottom:14px;">
+        <div class="chart-card">
+            <h3>Cơ cấu nhân viên theo bộ phận</h3>
+            <canvas id="an_deptDonut" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Biến động nhân sự 6 tháng gần nhất</h3>
+            {% if trend_has_data %}
+            <canvas id="an_trendChart" height="220"></canvas>
+            {% else %}
+            <div style="display:flex;align-items:center;justify-content:center;height:220px;color:#bbb;font-size:13px;">Chưa có dữ liệu</div>
+            {% endif %}
+        </div>
+        <div class="chart-card">
+            <h3>Phân bổ trạng thái nhân viên</h3>
+            <canvas id="an_statusBar" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Phân bổ thâm niên (nhân viên đang làm)</h3>
+            <canvas id="an_tenureBar" height="220"></canvas>
+        </div>
+    </div>
+
+{% endif %}
+
+</div><!-- /container -->
+
+<script>
+{% if active_tab == 'overview' %}
+    const labels   = {{ dept_labels|safe }};
+    const counts   = {{ dept_counts|safe }};
+    const salaries = {{ dept_salaries|safe }};
+    const paltte   = ['#1565C0','#42A5F5','#4CAF50','#FF9800','#E53935','#AB47BC','#26A69A','#8D6E63'];
+
+    new Chart(document.getElementById('deptPieChart'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: counts, backgroundColor: paltte, borderWidth: 2, borderColor: '#fff' }] },
+        options: { plugins: { legend: { position: 'right' } }, cutout: '55%', animation: { duration: 500 } }
+    });
+
+    new Chart(document.getElementById('salaryBarChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Lương TB', data: salaries, backgroundColor: paltte, borderRadius: 5 }] },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => (v/1000000).toFixed(0) + 'M' } } },
+            animation: { duration: 500 }
+        }
+    });
+
+    {% if trend_has_data %}
+    (function() {
+        const trendLabels = {{ trend_labels|safe }};
+        const trendJoins  = {{ trend_joins|safe }};
+        const trendLeaves = {{ trend_leaves|safe }};
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [
+                    {
+                        label: 'Chuyển sang active',
+                        data: trendJoins,
+                        borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.1)',
+                        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#4CAF50',
+                        fill: true, tension: 0.3
+                    },
+                    {
+                        label: 'Nghỉ việc',
+                        data: trendLeaves,
+                        borderColor: '#F44336', backgroundColor: 'rgba(244,67,54,0.08)',
+                        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#F44336',
+                        fill: true, tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                },
+                animation: { duration: 400 }
+            }
+        });
+    })();
+    {% endif %}
+{% endif %}
+
+{% if active_tab == 'status' %}
+    // Donut chart
+    (function() {
+        const labels = [{% for sd in status_data %}'{{ sd.label }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+        const counts = [{% for sd in status_data %}{{ sd.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+        const colors = [{% for sd in status_data %}'{{ sd.color }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+        new Chart(document.getElementById('statusDonut'), {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: counts, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverBorderWidth: 3 }] },
+            options: {
+                cutout: '65%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => {
+                        const t = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                        return ` ${ctx.label}: ${ctx.parsed} người (${t ? Math.round(ctx.parsed*100/t) : 0}%)`;
+                    }}}
+                },
+                animation: { duration: 500 }
+            }
+        });
+    })();
+
+    // Filter helpers
+    function syncCheckboxes(changedCb) {
+        const val = changedCb.value, checked = changedCb.checked;
+        document.querySelectorAll('#filterForm input[type=checkbox][value="'+val+'"]').forEach(cb => cb.checked = checked);
+        document.querySelectorAll('.chips input[type=checkbox][value="'+val+'"]').forEach(cb => cb.checked = checked);
+    }
+
+    function submitFilter() {
+        syncCheckboxes(event.target);
+        document.getElementById('filterForm').submit();
+    }
+
+    function selectAll() {
+        document.querySelectorAll('input[type=checkbox][name=status]').forEach(cb => cb.checked = true);
+        document.getElementById('filterForm').submit();
+    }
+    function clearAll() {
+        document.querySelectorAll('input[type=checkbox][name=status]').forEach(cb => cb.checked = false);
+        document.getElementById('filterForm').submit();
+    }
+{% endif %}
+
+{% if active_tab == 'analytics' %}
+(function() {
+    const palette = ['#1565C0','#42A5F5','#4CAF50','#FF9800','#E53935','#AB47BC','#26A69A','#8D6E63','#FF7043','#EC407A'];
+
+    // Chart 1: Cơ cấu phòng ban (doughnut)
+    const deptLabels = {{ dept_labels|safe }};
+    const deptCounts = {{ dept_counts|safe }};
+    if (deptLabels.length) {
+        new Chart(document.getElementById('an_deptDonut'), {
+            type: 'doughnut',
+            data: { labels: deptLabels, datasets: [{ data: deptCounts, backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }] },
+            options: {
+                cutout: '55%',
+                plugins: { legend: { position: 'right', labels: { font: { size: 12 }, padding: 10 } } },
+                animation: { duration: 500 }
+            }
+        });
+    }
+
+    // Chart 2: Biến động nhân sự 6 tháng (line)
+    {% if trend_has_data %}
+    const trendLabels = {{ trend_labels|safe }};
+    const trendJoins  = {{ trend_joins|safe }};
+    const trendLeaves = {{ trend_leaves|safe }};
+    new Chart(document.getElementById('an_trendChart'), {
+        type: 'line',
+        data: {
+            labels: trendLabels,
+            datasets: [
+                { label: 'Chuyển sang active', data: trendJoins, borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.1)', borderWidth: 2.5, pointRadius: 4, fill: true, tension: 0.3 },
+                { label: 'Nghỉ việc', data: trendLeaves, borderColor: '#F44336', backgroundColor: 'rgba(244,67,54,0.08)', borderWidth: 2.5, pointRadius: 4, fill: true, tension: 0.3 }
+            ]
+        },
+        options: {
+            plugins: { legend: { position: 'top', labels: { font: { size: 12 } } } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } },
+            animation: { duration: 400 }
+        }
+    });
+    {% endif %}
+
+    // Chart 3: Phân bổ trạng thái (horizontal bar)
+    const stLabels = [{% for sd in status_data %}'{{ sd.label }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    const stCounts = [{% for sd in status_data %}{{ sd.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+    const stColors = [{% for sd in status_data %}'{{ sd.color }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    new Chart(document.getElementById('an_statusBar'), {
+        type: 'bar',
+        data: { labels: stLabels, datasets: [{ data: stCounts, backgroundColor: stColors, borderRadius: 4 }] },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+            animation: { duration: 400 }
+        }
+    });
+
+    // Chart 4: Thâm niên (bar)
+    new Chart(document.getElementById('an_tenureBar'), {
+        type: 'bar',
+        data: {
+            labels: ['< 1 năm', '1–2 năm', '2–5 năm', '5–10 năm', '> 10 năm'],
+            datasets: [{ data: {{ tenure_buckets|safe }}, backgroundColor: ['#42A5F5','#66BB6A','#FFA726','#EF5350','#AB47BC'], borderRadius: 5 }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } },
+            animation: { duration: 400 }
+        }
+    });
+})();
+{% endif %}
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chấm dứt HĐ {{ contract.contract_number }} — HRM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+.topbar {
+    background: #1565C0; color: white;
+    padding: 0 30px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.topbar-brand { font-size: 17px; font-weight: 700; }
+.breadcrumb { font-size: 13px; opacity: 0.8; }
+.breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.btn-logout {
+    padding: 5px 13px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    text-decoration: none; color: white;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer; font-family: inherit;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+.container { padding: 24px 28px; max-width: 700px; margin: 0 auto; }
+.page-title { font-size: 19px; font-weight: 700; margin-bottom: 20px; }
+
+.contract-summary {
+    background: #fce4ec; border: 1px solid #f48fb1; border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 20px;
+}
+.contract-summary h3 { font-size: 13px; font-weight: 700; color: #c62828; text-transform: uppercase; margin-bottom: 10px; }
+.cs-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.cs-item .c-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+.cs-item .c-value { font-size: 14px; font-weight: 700; color: #c62828; }
+
+.form-card {
+    background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 24px 26px; box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+.form-group label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; }
+.form-group input, .form-group select, .form-group textarea {
+    padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: inherit; width: 100%;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: #c62828; box-shadow: 0 0 0 2px rgba(198,40,40,0.1);
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+.error-list { margin: 3px 0 0; padding: 0; list-style: none; }
+.error-list li { font-size: 12px; color: #c62828; }
+.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn-terminate {
+    padding: 9px 22px; background: #c62828; color: white;
+    border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+}
+.btn-terminate:hover { background: #b71c1c; }
+.btn-back {
+    padding: 9px 22px; background: #e0e0e0; color: #444;
+    border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center;
+}
+.btn-back:hover { background: #ccc; }
+</style>
+</head>
+<body>
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="topbar-brand">📄 Hợp đồng Lao động</div>
+        <div class="breadcrumb">
+            <a href="{% url 'contracts:contract_list' %}">Danh sách</a> ›
+            <a href="{% url 'contracts:contract_detail' contract.pk %}">{{ contract.contract_number }}</a> › Chấm dứt
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span style="font-size:13px; opacity:0.85;">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="page-title">🚫 Chấm dứt hợp đồng</div>
+
+    <div class="contract-summary">
+        <h3>Hợp đồng sẽ bị chấm dứt</h3>
+        <div class="cs-row">
+            <div class="cs-item"><div class="c-label">Số HĐ</div><div class="c-value">{{ contract.contract_number }}</div></div>
+            <div class="cs-item"><div class="c-label">Nhân viên</div><div class="c-value">{{ contract.employee.full_name }}</div></div>
+            <div class="cs-item"><div class="c-label">Phòng ban</div><div class="c-value">{{ contract.department.name }}</div></div>
+            <div class="cs-item"><div class="c-label">Ngày kết thúc HĐ</div><div class="c-value">{% if contract.end_date %}{{ contract.end_date|date:"d/m/Y" }}{% else %}Không XĐ{% endif %}</div></div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Ngày chấm dứt *</label>
+                <input type="date" name="termination_date" value="{{ form.termination_date.value|default:'' }}">
+                {% if form.termination_date.errors %}<ul class="error-list">{% for e in form.termination_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Lý do chấm dứt *</label>
+                <select name="termination_reason">
+                    {% for val, label in form.termination_reason.field.choices %}
+                    <option value="{{ val }}" {% if form.termination_reason.value == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.termination_reason.errors %}<ul class="error-list">{% for e in form.termination_reason.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea name="termination_note" rows="4" placeholder="Thêm ghi chú về việc chấm dứt hợp đồng (không bắt buộc)">{{ form.termination_note.value|default:'' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-terminate">🚫 Xác nhận chấm dứt</button>
+                <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn-back">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

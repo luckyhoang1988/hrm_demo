@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chứng chỉ {{ cert.certificate_number }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .container { padding: 32px 30px; max-width: 700px; margin: 0 auto; }
+        .cert-card { background: white; border-radius: 16px; border: 2px solid #e8ecf0; padding: 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; margin-bottom: 20px; }
+        .cert-badge { font-size: 60px; margin-bottom: 16px; }
+        .cert-num { font-family: monospace; font-size: 16px; font-weight: 700; color: #888; margin-bottom: 8px; }
+        .cert-employee { font-size: 24px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
+        .cert-course { font-size: 16px; color: #555; margin-bottom: 20px; }
+        .cert-dates { display: flex; justify-content: center; gap: 32px; }
+        .cert-date-item { text-align: center; }
+        .cert-date-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; margin-bottom: 4px; }
+        .cert-date-value { font-size: 14px; font-weight: 600; }
+        .info-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 20px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: #888; }
+        .stat-value { font-weight: 600; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-valid   { background: #e8f5e9; color: #2e7d32; }
+        .pill-expired { background: #ffebee; color: #c62828; }
+        .pill-soon    { background: #fff3e0; color: #e65100; }
+        .pill-nolimit { background: #f3e5f5; color: #6a1b9a; }
+        .alert-expired { background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #c62828; font-weight: 600; }
+        .alert-soon { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #e65100; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🏆 Chứng chỉ</h1>
+    <a href="{% url 'talent:certificate_print' cert.pk %}" target="_blank" class="btn btn-white">🖨 In chứng chỉ</a>
+    <a href="{% url 'talent:certificate_list' %}" class="btn btn-white">← Danh sách</a>
+</div>
+<div class="container">
+    {% if cert.expiry_date and cert.expiry_date < today %}
+    <div class="alert-expired">⚠️ Chứng chỉ này đã hết hiệu lực từ {{ cert.expiry_date|date:"d/m/Y" }}</div>
+    {% elif cert.expiring_soon %}
+    <div class="alert-soon">⏰ Chứng chỉ sắp hết hạn — còn {{ cert.days_until_expiry }} ngày ({{ cert.expiry_date|date:"d/m/Y" }})</div>
+    {% endif %}
+
+    <div class="cert-card">
+        <div class="cert-badge">🏆</div>
+        <div class="cert-num">{{ cert.certificate_number }}</div>
+        <div class="cert-employee">{{ cert.employee.full_name }}</div>
+        <div class="cert-course">đã hoàn thành khóa học<br><strong>{{ cert.course.name }}</strong></div>
+        <div class="cert-dates">
+            <div class="cert-date-item">
+                <div class="cert-date-label">Ngày cấp</div>
+                <div class="cert-date-value">{{ cert.issued_date|date:"d/m/Y" }}</div>
+            </div>
+            <div class="cert-date-item">
+                <div class="cert-date-label">Hết hạn</div>
+                <div class="cert-date-value">{% if cert.expiry_date %}{{ cert.expiry_date|date:"d/m/Y" }}{% else %}Không hết hạn{% endif %}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="stat-row"><span class="stat-label">Phòng ban</span><span class="stat-value">{{ cert.employee.department.name }}</span></div>
+        <div class="stat-row"><span class="stat-label">Khóa học</span><span class="stat-value"><a href="{% url 'talent:course_detail' cert.course.pk %}" style="color:#1565C0; text-decoration:none;">{{ cert.course.name }}</a></span></div>
+        <div class="stat-row">
+            <span class="stat-label">Buổi học</span>
+            <span class="stat-value">
+                <a href="{% url 'talent:session_detail' cert.enrollment.session.pk %}" style="color:#1565C0; text-decoration:none;">{{ cert.enrollment.session.session_code }}</a>
+            </span>
+        </div>
+        <div class="stat-row"><span class="stat-label">Điểm</span><span class="stat-value">{{ cert.enrollment.score|default:"—" }}</span></div>
+        <div class="stat-row">
+            <span class="stat-label">Trạng thái</span>
+            <span class="stat-value">
+                {% if not cert.is_active %}<span class="pill pill-expired">Đã thu hồi</span>
+                {% elif cert.expiry_date and cert.expiry_date < today %}<span class="pill pill-expired">Hết hạn</span>
+                {% elif cert.expiring_soon %}<span class="pill pill-soon">Sắp hết hạn</span>
+                {% elif not cert.expiry_date %}<span class="pill pill-nolimit">Không hết hạn</span>
+                {% else %}<span class="pill pill-valid">Còn hiệu lực</span>
+                {% endif %}
+            </span>
+        </div>
+        {% if cert.notes %}
+        <div class="stat-row"><span class="stat-label">Ghi chú</span><span class="stat-value">{{ cert.notes }}</span></div>
+        {% endif %}
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

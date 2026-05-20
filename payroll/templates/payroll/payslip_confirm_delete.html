@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Xác nhận xóa phiếu lương — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:500px;margin:60px auto;padding:24px}
+.card{background:#fff;border-radius:12px;border:1px solid #ffcdd2;overflow:hidden}
+.card-header{background:#ffebee;padding:14px 20px;font-weight:700;font-size:15px;color:#c62828}
+.card-body{padding:24px}
+p{font-size:14px;margin-bottom:20px;line-height:1.6}
+strong{color:#c62828}
+.form-actions{display:flex;gap:10px}
+.btn{padding:9px 20px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;cursor:pointer;border:none}
+.btn-danger{background:#c62828;color:#fff}
+.btn-danger:hover{background:#b71c1c}
+.btn-outline{background:#fff;color:#555;border:1.5px solid #ddd}
+.btn-outline:hover{background:#f5f5f5}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'payroll:payslip_list' %}">💰 Bảng lương</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+<div class="container">
+  <div class="card">
+    <div class="card-header">🗑 Xác nhận xóa phiếu lương</div>
+    <div class="card-body">
+      <p>Bạn có chắc muốn xóa phiếu lương của <strong>{{ payslip.employee.full_name }}</strong> tháng {{ payslip.month|stringformat:"02d" }}/{{ payslip.year }} không?<br>Hành động này không thể hoàn tác.</p>
+      <div class="form-actions">
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+        </form>
+        <a href="{% url 'payroll:payslip_detail' payslip.pk %}" class="btn btn-outline">Hủy</a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

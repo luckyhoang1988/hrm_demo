@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chấm công & Nghỉ phép — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.topbar-right a:hover{color:#fff}
+.container{max-width:1200px;margin:0 auto;padding:24px 20px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.toolbar h1{font-size:20px;font-weight:700;color:#1a1a2e}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-bottom:28px}
+.module-card{background:#fff;border-radius:14px;padding:24px;border:1.5px solid #e0e0e0;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:block}
+.module-card:hover{border-color:#1565C0;box-shadow:0 4px 16px rgba(21,101,192,.12);transform:translateY(-2px)}
+.module-card .mc-icon{font-size:36px;margin-bottom:12px}
+.module-card .mc-title{font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:6px}
+.module-card .mc-desc{font-size:13px;color:#666;line-height:1.5;margin-bottom:14px}
+.mc-links{display:flex;flex-wrap:wrap;gap:8px}
+.mc-link{font-size:12px;padding:4px 10px;border-radius:20px;background:#e3f2fd;color:#1565C0;text-decoration:none;font-weight:500}
+.mc-link:hover{background:#1565C0;color:#fff}
+.quick-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.qs-card{background:#fff;border-radius:12px;padding:16px 20px;border:1px solid #e8ecf0;display:flex;align-items:center;gap:14px}
+.qs-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.qs-label{font-size:11px;color:#999;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.qs-value{font-size:20px;font-weight:800;color:#1a1a2e}
+.admin-section{background:#fff;border-radius:12px;padding:20px 24px;border:1px solid #e8ecf0;margin-bottom:20px}
+.admin-section h3{font-size:14px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.admin-links{display:flex;flex-wrap:wrap;gap:10px}
+.btn-admin{padding:8px 16px;border-radius:8px;background:#f5f5f5;color:#333;text-decoration:none;font-size:13px;font-weight:500;border:1px solid #e0e0e0}
+.btn-admin:hover{background:#e3f2fd;color:#1565C0;border-color:#90caf9}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <a href="{% url 'home' %}">← Trang chủ</a>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <h1>⏱ Chấm công & Nghỉ phép</h1>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'attendance:attendance_dashboard' %}" class="btn-admin" style="background:#1565C0;color:#fff;border-color:#1565C0">📊 Dashboard</a>
+    {% endif %}
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="qs-card">
+      <div class="qs-icon" style="background:#e3f2fd">📋</div>
+      <div>
+        <div class="qs-label">Bản ghi hôm nay</div>
+        <div class="qs-value">{{ total_records_today }}</div>
+      </div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-icon" style="background:#fff3e0">⏳</div>
+      <div>
+        <div class="qs-label">Đơn chờ duyệt</div>
+        <div class="qs-value">{{ pending_leaves }}</div>
+      </div>
+    </div>
+    <div class="qs-card">
+      <div class="qs-icon" style="background:#e8f5e9">📅</div>
+      <div>
+        <div class="qs-label">Hôm nay</div>
+        <div class="qs-value" style="font-size:14px">{{ today|date:"d/m/Y" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module Cards -->
+  <div class="module-grid">
+    <div class="module-card">
+      <div class="mc-icon">⏱</div>
+      <div class="mc-title">Chấm công</div>
+      <div class="mc-desc">Quản lý bản ghi giờ vào/ra, tính giờ OT, import từ máy chấm công.</div>
+      <div class="mc-links">
+        <a href="{% url 'attendance:attendance_list' %}" class="mc-link">📋 Danh sách</a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'attendance:attendance_create' %}" class="mc-link">+ Thêm mới</a>
+        <a href="{% url 'attendance:attendance_import' %}" class="mc-link">📥 Import</a>
+        {% endif %}
+        <a href="{% url 'attendance:attendance_export' %}" class="mc-link">📤 Xuất Excel</a>
+      </div>
+    </div>
+
+    <div class="module-card">
+      <div class="mc-icon">🏖</div>
+      <div class="mc-title">Nghỉ phép</div>
+      <div class="mc-desc">Tạo đơn xin nghỉ, theo dõi trạng thái duyệt, xem số dư ngày phép.</div>
+      <div class="mc-links">
+        <a href="{% url 'attendance:leave_request_list' %}" class="mc-link">📋 Danh sách đơn</a>
+        <a href="{% url 'attendance:leave_request_create' %}" class="mc-link">+ Tạo đơn</a>
+        <a href="{% url 'attendance:leave_balance_list' %}" class="mc-link">💰 Số dư phép</a>
+      </div>
+    </div>
+  </div>
+
+  {% if request.user.is_superuser %}
+  <!-- Admin Section -->
+  <div class="admin-section">
+    <h3>Cài đặt & Quản trị</h3>
+    <div class="admin-links">
+      <a href="{% url 'attendance:shift_list' %}" class="btn-admin">🕐 Ca làm việc</a>
+      <a href="{% url 'attendance:holiday_manage' %}" class="btn-admin">🎌 Ngày lễ tết</a>
+      <a href="{% url 'attendance:leave_type_list' %}" class="btn-admin">📂 Loại nghỉ phép</a>
+      <a href="{% url 'attendance:leave_policy_manage' %}" class="btn-admin">📜 Chính sách phép năm</a>
+      <a href="{% url 'attendance:leave_balance_init' %}" class="btn-admin">🔄 Khởi tạo số dư phép</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

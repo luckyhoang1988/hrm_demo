@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chi tiết phiếu lương — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:900px;margin:0 auto;padding:24px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.toolbar h1{font-size:18px;font-weight:700}
+.btn{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none}
+.btn-outline{background:#fff;color:#1565C0;border:1.5px solid #1565C0}
+.btn-outline:hover{background:#e3f2fd}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.btn-danger{background:#ffebee;color:#c62828;border:1.5px solid #ffcdd2}
+.btn-danger:hover{background:#c62828;color:#fff}
+.btn-purple{background:#f3e5f5;color:#6a1b9a;border:1.5px solid #ce93d8}
+.btn-purple:hover{background:#6a1b9a;color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;margin-bottom:16px;overflow:hidden}
+.card-header{background:#f8f9fa;padding:12px 20px;font-weight:700;font-size:14px;border-bottom:1px solid #e0e0e0;color:#1a1a2e}
+.card-body{padding:20px}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.info-item label{font-size:11px;font-weight:600;color:#999;text-transform:uppercase;display:block;margin-bottom:3px}
+.info-item span{font-size:14px;font-weight:500}
+.salary-table{width:100%;border-collapse:collapse;font-size:13px}
+.salary-table td{padding:8px 0;border-bottom:1px solid #f0f0f0}
+.salary-table td:last-child{text-align:right;font-weight:600}
+.salary-table .section-header td{font-weight:700;color:#1565C0;background:#f0f7ff;padding:8px 12px;font-size:12px;text-transform:uppercase}
+.salary-table .total-row td{font-size:15px;font-weight:700;padding-top:12px;border-top:2px solid #1565C0}
+.salary-table .net-row td{font-size:18px;font-weight:800;color:#2e7d32;padding-top:8px}
+.status-pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.pill-draft{background:#fff3e0;color:#e65100}
+.pill-confirmed{background:#e8f5e9;color:#2e7d32}
+.msg-success{background:#e8f5e9;color:#2e7d32;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.msg-error{background:#ffebee;color:#c62828;padding:10px 16px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.deduct{color:#c62828}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'payroll:payslip_list' %}">💰 Bảng lương</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  {% for msg in messages %}
+  <div class="msg-{% if msg.tags == 'error' %}error{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+
+  <div class="toolbar">
+    <h1>💰 Phiếu lương — {{ payslip.employee.full_name }} ({{ payslip.month|stringformat:"02d" }}/{{ payslip.year }})</h1>
+    <div class="actions">
+      <a href="{% url 'payroll:payslip_list' %}?month={{ payslip.month }}&year={{ payslip.year }}" class="btn btn-outline">← Danh sách</a>
+      {% if request.user.is_superuser or payslip.status == 'draft' %}
+      <a href="{% url 'payroll:payslip_update' payslip.pk %}" class="btn btn-primary">✏ Sửa</a>
+      {% endif %}
+      <a href="{% url 'payroll:payslip_print' payslip.pk %}" class="btn btn-purple" target="_blank">🖨 In phiếu</a>
+      {% if request.user.is_superuser %}
+      <a href="{% url 'payroll:payslip_delete' payslip.pk %}" class="btn btn-danger">🗑 Xóa</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Thông tin nhân viên -->
+  <div class="card">
+    <div class="card-header">👤 Thông tin nhân viên</div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Mã nhân viên</label><span>{{ payslip.employee.employee_code }}</span></div>
+        <div class="info-item"><label>Họ tên</label><span>{{ payslip.employee.full_name }}</span></div>
+        <div class="info-item"><label>Phòng ban</label><span>{{ payslip.employee.department.name }}</span></div>
+        <div class="info-item"><label>Kỳ lương</label><span>Tháng {{ payslip.month|stringformat:"02d" }}/{{ payslip.year }}</span></div>
+        <div class="info-item"><label>Hợp đồng</label><span>{% if payslip.contract %}{{ payslip.contract.contract_number }}{% else %}—{% endif %}</span></div>
+        <div class="info-item"><label>Trạng thái</label><span><span class="status-pill pill-{{ payslip.status }}">{{ payslip.get_status_display }}</span></span></div>
+        <div class="info-item"><label>Người phụ thuộc</label><span>{{ payslip.dependents }} người</span></div>
+        <div class="info-item"><label>Cập nhật lúc</label><span>{{ payslip.calculated_at|date:"d/m/Y H:i" }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chi tiết lương -->
+  <div class="card">
+    <div class="card-header">📊 Chi tiết tính lương</div>
+    <div class="card-body">
+      {% with earning_lines=payslip.lines.all %}
+      {% if earning_lines %}
+      <!-- Hiển thị từ PayslipLine (chi tiết dòng) -->
+      <table class="salary-table">
+        <tr class="section-header"><td colspan="2">Thu nhập</td></tr>
+        {% for line in earning_lines %}
+          {% if line.category == 'earning' %}
+          <tr><td {% if line.name != 'Lương cơ bản' %}style="padding-left:16px"{% endif %}>{{ line.name }}</td><td>{{ line.amount|floatformat:0 }} đ</td></tr>
+          {% endif %}
+        {% endfor %}
+        <tr class="total-row"><td>Tổng thu nhập (Gross)</td><td>{{ payslip.gross_salary|floatformat:0 }} đ</td></tr>
+
+        <tr style="height:12px"><td colspan="2"></td></tr>
+        <tr class="section-header"><td colspan="2">Khấu trừ bảo hiểm &amp; thuế</td></tr>
+        {% for line in earning_lines %}
+          {% if line.category == 'deduction' or line.category == 'tax' %}
+          <tr><td class="deduct">{{ line.name }}</td><td class="deduct">- {{ line.amount|floatformat:0 }} đ</td></tr>
+          {% endif %}
+        {% endfor %}
+        <tr><td>Thu nhập chịu thuế</td><td>{{ payslip.taxable_income|floatformat:0 }} đ</td></tr>
+
+        <tr style="height:12px"><td colspan="2"></td></tr>
+        <tr class="net-row"><td>💵 LƯƠNG THỰC NHẬN (NET)</td><td>{{ payslip.net_salary|floatformat:0 }} đ</td></tr>
+      </table>
+      {% else %}
+      <!-- Fallback: hiển thị từ field trực tiếp (phiếu cũ chưa có PayslipLine) -->
+      <table class="salary-table">
+        <tr class="section-header"><td colspan="2">Thu nhập</td></tr>
+        <tr><td>Lương cơ bản</td><td>{{ payslip.basic_salary|floatformat:0 }} đ</td></tr>
+        {% if payslip.allowances_detail %}
+        {% for key, val in payslip.allowances_detail.items %}
+        <tr><td style="padding-left:16px">Phụ cấp: {{ key }}</td><td>{{ val|floatformat:0 }} đ</td></tr>
+        {% endfor %}
+        {% endif %}
+        {% if payslip.ot_hours %}
+        <tr><td>OT ({{ payslip.ot_hours }} giờ)</td><td>{{ payslip.ot_pay|floatformat:0 }} đ</td></tr>
+        {% endif %}
+        {% if payslip.other_additions %}
+        <tr><td>Thưởng / Phụ cấp khác</td><td>{{ payslip.other_additions|floatformat:0 }} đ</td></tr>
+        {% endif %}
+        <tr class="total-row"><td>Tổng thu nhập (Gross)</td><td>{{ payslip.gross_salary|floatformat:0 }} đ</td></tr>
+
+        <tr style="height:12px"><td colspan="2"></td></tr>
+        <tr class="section-header"><td colspan="2">Khấu trừ</td></tr>
+        <tr><td class="deduct">BHXH</td><td class="deduct">- {{ payslip.bhxh_amount|floatformat:0 }} đ</td></tr>
+        <tr><td class="deduct">BHYT</td><td class="deduct">- {{ payslip.bhyt_amount|floatformat:0 }} đ</td></tr>
+        <tr><td class="deduct">BHTN</td><td class="deduct">- {{ payslip.bhtn_amount|floatformat:0 }} đ</td></tr>
+        <tr><td>Thu nhập chịu thuế</td><td>{{ payslip.taxable_income|floatformat:0 }} đ</td></tr>
+        <tr><td class="deduct">Thuế TNCN</td><td class="deduct">- {{ payslip.pit_amount|floatformat:0 }} đ</td></tr>
+        {% if payslip.other_deductions %}
+        <tr><td class="deduct">Khấu trừ khác</td><td class="deduct">- {{ payslip.other_deductions|floatformat:0 }} đ</td></tr>
+        {% endif %}
+
+        <tr style="height:12px"><td colspan="2"></td></tr>
+        <tr class="net-row"><td>💵 LƯƠNG THỰC NHẬN (NET)</td><td>{{ payslip.net_salary|floatformat:0 }} đ</td></tr>
+      </table>
+      {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+
+  {% if payslip.note %}
+  <div class="card">
+    <div class="card-header">📝 Ghi chú</div>
+    <div class="card-body" style="font-size:14px;color:#555">{{ payslip.note }}</div>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

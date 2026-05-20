@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 16px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+        .container { padding: 28px 30px; display: flex; justify-content: center; }
+        .form-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.07); padding: 30px; width: 500px; }
+        .form-card h2 { font-size: 16px; font-weight: 600; color: #1565C0; margin-bottom: 22px; padding-bottom: 10px; border-bottom: 2px solid #E3F2FD; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+        .form-group input[type=text] { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .form-group input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.1); }
+
+        .dept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .dept-item {
+            display: flex; align-items: center; gap: 8px;
+            background: #f5f5f5; border: 1px solid #e0e0e0;
+            border-radius: 8px; padding: 9px 14px;
+            cursor: pointer; transition: all 0.2s; font-size: 14px;
+        }
+        .dept-item:has(input:checked) { background: #E3F2FD; border-color: #90CAF9; color: #1565C0; font-weight: 500; }
+        .dept-item input { accent-color: #1565C0; width: 15px; height: 15px; cursor: pointer; }
+        .dept-item.dept-used { background: #f5f5f5; border-color: #e0e0e0; color: #bbb; cursor: not-allowed; }
+        .dept-item.dept-used input { cursor: not-allowed; }
+        .used-tag { margin-left: auto; font-size: 11px; background: #eeeeee; color: #999; border-radius: 4px; padding: 1px 7px; white-space: nowrap; }
+
+        .error-box { background: #FFEBEE; color: #c62828; border: 1px solid #FFCDD2; border-radius: 6px; padding: 10px 14px; font-size: 13px; margin-bottom: 18px; }
+        .form-actions { display: flex; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 1px solid #f0f0f0; }
+        .btn { padding: 9px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-save { background: #1565C0; color: white; }
+        .btn-back { background: #e0e0e0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'system_settings:group_list' %}" class="btn btn-back">← Danh sách nhóm</a>
+    </div>
+    <div class="container">
+        <div class="form-card">
+            <h2>Thông tin nhóm</h2>
+            {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Tên nhóm *</label>
+                    <input type="text" name="name" id="group-name" value="{{ group.name|default:'' }}" placeholder="Ví dụ: Nhóm Kinh doanh...">
+                </div>
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <input type="text" name="description" value="{{ group.description|default:'' }}" placeholder="Mô tả ngắn về nhóm...">
+                </div>
+                <div class="form-group">
+                    <label>Bộ phận được phép xem</label>
+                    <div class="dept-grid">
+                        {% for dept in all_departments %}
+                        {% if dept.pk in used_dept_ids %}
+                        <label class="dept-item dept-used" title="Bộ phận này đã thuộc nhóm khác">
+                            <input type="checkbox" name="departments" value="{{ dept.pk }}"
+                                data-deptname="{{ dept.name }}" disabled>
+                            {{ dept.name }}
+                            <span class="used-tag">Đã dùng</span>
+                        </label>
+                        {% else %}
+                        <label class="dept-item">
+                            <input type="checkbox" name="departments" value="{{ dept.pk }}"
+                                data-deptname="{{ dept.name }}"
+                                {% if group and dept in group.departments.all %}checked{% endif %}
+                                onchange="syncGroupName()">
+                            {{ dept.name }}
+                        </label>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-save">Lưu nhóm</button>
+                    <a href="{% url 'system_settings:group_list' %}" class="btn btn-back">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+<script>
+    function syncGroupName() {
+        const nameInput = document.getElementById('group-name');
+        const checked   = [...document.querySelectorAll('input[name="departments"]:checked')];
+        const names = checked.map(cb => cb.dataset.deptname);
+        if (names.length > 0) {
+            nameInput.value = names.join(' + ');
+        } else {
+            nameInput.value = '';
+        }
+    }
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

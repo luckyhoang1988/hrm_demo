@@ -1,0 +1,26 @@
+# Environment & secrets
+.env
+*.env
+
+# Database backup (chỉ dùng khi migrate)
+data_backup.json
+
+# SQLite (không cần nếu đã dùng PostgreSQL)
+db.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Django
+*.log
+local_settings.py
+media/
+
+# Virtual environment
+venv/
+env/
+.venv/

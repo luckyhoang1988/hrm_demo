@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Khởi tạo số dư phép — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right a{color:#bbdefb;text-decoration:none;font-size:13px}
+.container{max-width:620px;margin:32px auto;padding:0 20px}
+.card{background:#fff;border-radius:12px;padding:28px;border:1px solid #e0e0e0;margin-bottom:18px}
+.card-title{font-size:17px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #e0e0e0}
+.info-box{background:#fff3e0;border-radius:8px;padding:14px 18px;font-size:13px;color:#e65100;line-height:1.7;margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:5px}
+.form-group select,.form-group input{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px}
+.form-group select:focus,.form-group input:focus{outline:none;border-color:#1565C0}
+.form-actions{display:flex;gap:10px;margin-top:20px}
+.btn{padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none}
+.btn-primary{background:#1565C0;color:#fff}
+.btn-primary:hover{background:#0d47a1}
+.btn-cancel{background:#f5f5f5;color:#555;border:1.5px solid #ddd}
+.result-card{background:#e8f5e9;border-radius:12px;padding:22px 24px;border:1px solid #a5d6a7}
+.result-card h3{font-size:16px;font-weight:700;color:#2e7d32;margin-bottom:14px}
+.result-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.res-box{text-align:center;background:#fff;border-radius:8px;padding:14px}
+.res-num{font-size:26px;font-weight:800}
+.res-lbl{font-size:12px;color:#888;font-weight:600;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right"><a href="{% url 'attendance:leave_balance_list' %}">← Số dư phép</a></div>
+</div>
+<div class="container">
+  <div class="card">
+    <div class="card-title">🔄 Khởi tạo số dư ngày phép đầu năm</div>
+    <div class="info-box">
+      <strong>⚠ Lưu ý:</strong> Tính năng này sẽ tạo/cập nhật số dư ngày phép cho <strong>tất cả nhân viên đang hoạt động</strong>.<br>
+      • Nếu chưa có record → tạo mới.<br>
+      • Nếu đã có → chỉ cập nhật <em>allocated_days</em>, giữ nguyên used/pending.<br>
+      • Đối với <strong>Nghỉ phép năm</strong>: tự tính theo thâm niên (12 ngày + 1/5 năm).<br>
+      • Loại khác: dùng <em>max_days_per_year</em> của loại nghỉ.
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Năm *</label>
+        {{ form.year }}
+      </div>
+      <div class="form-group">
+        <label>Loại nghỉ phép *</label>
+        {{ form.leave_type }}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">🔄 Khởi tạo</button>
+        <a href="{% url 'attendance:leave_balance_list' %}" class="btn btn-cancel">Hủy</a>
+      </div>
+    </form>
+  </div>
+
+  {% if results %}
+  <div class="result-card">
+    <h3>✅ Kết quả khởi tạo</h3>
+    <div class="result-row">
+      <div class="res-box"><div class="res-num" style="color:#2e7d32">{{ results.created }}</div><div class="res-lbl">Tạo mới</div></div>
+      <div class="res-box"><div class="res-num" style="color:#1565C0">{{ results.updated }}</div><div class="res-lbl">Cập nhật</div></div>
+      <div class="res-box"><div class="res-num">{{ results.total }}</div><div class="res-lbl">Tổng</div></div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

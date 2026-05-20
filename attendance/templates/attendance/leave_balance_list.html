@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Số dư ngày phép — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.toolbar h1{font-size:18px;font-weight:700}
+.btn{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;display:inline-block}
+.btn-primary{background:#1565C0;color:#fff}
+.filter-box{background:#fff;border-radius:10px;padding:13px 16px;margin-bottom:14px;border:1px solid #e0e0e0}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-size:11px;font-weight:600;color:#666;text-transform:uppercase}
+.filter-group select,.filter-group input{padding:6px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;min-width:120px}
+.btn-filter{padding:6px 14px;background:#1565C0;color:#fff;border:none;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600}
+.btn-reset{padding:6px 12px;background:#f5f5f5;color:#666;border:1.5px solid #ddd;border-radius:7px;font-size:13px;text-decoration:none}
+.table-wrap{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fa;padding:10px 12px;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:hover td{background:#fafbff}
+.remaining{font-weight:700}
+.remaining.ok{color:#2e7d32}
+.remaining.warn{color:#e65100}
+.remaining.over{color:#c62828}
+.btn-sm{padding:4px 10px;border-radius:6px;font-size:12px;text-decoration:none;font-weight:500;border:none;cursor:pointer}
+.btn-edit{background:#e3f2fd;color:#1565C0}
+.btn-edit:hover{background:#1565C0;color:#fff}
+.empty-state{text-align:center;padding:48px;color:#999}
+.pagination{display:flex;gap:6px;padding:14px 16px;justify-content:center;background:#fff;border-top:1px solid #f0f0f0}
+.pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;text-decoration:none;font-size:13px;border:1px solid #e0e0e0;color:#555}
+.pagination a:hover{background:#e3f2fd;color:#1565C0}
+.pagination .current{background:#1565C0;color:#fff;border-color:#1565C0}
+.pagination .disabled{color:#bbb}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:attendance_home' %}">⏱ Chấm công</a>
+    <span>👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <h1>💰 Số dư ngày phép</h1>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'attendance:leave_balance_init' %}" class="btn btn-primary">🔄 Khởi tạo số dư</a>
+    {% endif %}
+  </div>
+
+  <div class="filter-box">
+    <form method="get">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Năm</label>
+          <select name="year">
+            {% for y in years %}<option value="{{ y }}" {% if q_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Phòng ban</label>
+          <select name="dept">
+            <option value="">Tất cả</option>
+            {% for d in departments %}<option value="{{ d.name }}" {% if q_dept == d.name %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Loại nghỉ</label>
+          <select name="type">
+            <option value="">Tất cả</option>
+            {% for lt in leave_types %}<option value="{{ lt.pk }}" {% if q_type == lt.pk|stringformat:"s" %}selected{% endif %}>{{ lt.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Nhân viên</label>
+          <input type="text" name="emp" value="{{ q_emp }}" placeholder="Tên hoặc mã NV...">
+        </div>
+        <div class="filter-group" style="flex-direction:row;gap:6px;align-items:flex-end">
+          <button type="submit" class="btn-filter">Lọc</button>
+          <a href="{% url 'attendance:leave_balance_list' %}" class="btn-reset">Xóa lọc</a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div style="font-size:13px;color:#666;margin-bottom:10px">Tổng: <strong>{{ total_count }}</strong> bản ghi</div>
+
+  <div class="table-wrap">
+    {% if page_obj.object_list %}
+    <table>
+      <thead>
+        <tr>
+          <th>Nhân viên</th>
+          <th>Phòng ban</th>
+          <th>Loại nghỉ</th>
+          <th>Năm</th>
+          <th style="text-align:right">Được cấp</th>
+          <th style="text-align:right">Chuyển từ năm trước</th>
+          <th style="text-align:right">Đã dùng</th>
+          <th style="text-align:right">Chờ duyệt</th>
+          <th style="text-align:right">Còn lại</th>
+          {% if request.user.is_superuser %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in page_obj.object_list %}
+        <tr>
+          <td>
+            <strong>{{ b.employee.full_name }}</strong><br>
+            <span style="color:#999;font-size:11px">{{ b.employee.employee_code }}</span>
+          </td>
+          <td>{{ b.employee.department.name|default:"—" }}</td>
+          <td>{{ b.leave_type.name }}</td>
+          <td>{{ b.year }}</td>
+          <td style="text-align:right">{{ b.allocated_days }}</td>
+          <td style="text-align:right">{{ b.carried_days }}</td>
+          <td style="text-align:right">{{ b.used_days }}</td>
+          <td style="text-align:right">{% if b.pending_days > 0 %}<span style="color:#e65100">{{ b.pending_days }}</span>{% else %}0{% endif %}</td>
+          <td style="text-align:right">
+            {% with rem=b.remaining_days %}
+            <span class="remaining {% if rem > 3 %}ok{% elif rem > 0 %}warn{% else %}over{% endif %}">{{ rem }}</span>
+            {% endwith %}
+          </td>
+          {% if request.user.is_superuser %}
+          <td><a href="{% url 'attendance:leave_balance_edit' b.pk %}" class="btn-sm btn-edit">Sửa</a></td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:48px">💰</div>
+      <p style="margin-top:8px">Không có dữ liệu số dư ngày phép.</p>
+    </div>
+    {% endif %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    {% with pf=base_filter_qs %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}<a href="?{{ pf }}&page=1">«</a><a href="?{{ pf }}&page={{ page_obj.previous_page_number }}">‹</a>
+      {% else %}<span class="disabled">«</span><span class="disabled">‹</span>{% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}<span class="current">{{ num }}</span>
+        {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}<a href="?{{ pf }}&page={{ num }}">{{ num }}</a>{% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}<a href="?{{ pf }}&page={{ page_obj.next_page_number }}">›</a><a href="?{{ pf }}&page={{ page_obj.paginator.num_pages }}">»</a>
+      {% else %}<span class="disabled">›</span><span class="disabled">»</span>{% endif %}
+    </div>
+    {% endwith %}
+    {% endif %}
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

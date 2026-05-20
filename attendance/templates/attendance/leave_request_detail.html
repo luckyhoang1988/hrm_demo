@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chi tiết đơn nghỉ — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;gap:12px;align-items:center;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:900px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+.card{background:#fff;border-radius:12px;padding:24px;border:1px solid #e0e0e0}
+.card h2{font-size:16px;font-weight:700;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #e0e0e0}
+.info-row{display:flex;padding:9px 0;border-bottom:1px solid #f5f5f5;font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-label{width:140px;flex-shrink:0;color:#888;font-size:13px}
+.info-value{font-weight:500}
+.status-pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.pill-draft{background:#f5f5f5;color:#777}
+.pill-pending{background:#fff3e0;color:#e65100}
+.pill-waiting_hr{background:#e8eaf6;color:#3949ab}
+.pill-approved{background:#e8f5e9;color:#2e7d32}
+.pill-rejected{background:#ffebee;color:#c62828}
+.pill-cancelled{background:#f5f5f5;color:#999}
+.timeline{padding-top:4px}
+.timeline-item{display:flex;gap:12px;margin-bottom:14px}
+.tl-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.tl-approved{background:#e8f5e9;color:#2e7d32}
+.tl-rejected{background:#ffebee;color:#c62828}
+.tl-forwarded{background:#e8eaf6;color:#3949ab}
+.tl-body{}
+.tl-who{font-size:13px;font-weight:600}
+.tl-action{font-size:12px;color:#888}
+.tl-comment{font-size:12px;color:#555;background:#f5f5f5;border-radius:6px;padding:5px 8px;margin-top:4px;font-style:italic}
+.tl-pending{padding:10px;background:#fff3e0;border-radius:8px;font-size:13px;color:#e65100;text-align:center}
+.sidebar-actions{display:flex;flex-direction:column;gap:10px}
+.btn{padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;display:block;text-align:center}
+.btn-success{background:#2e7d32;color:#fff}
+.btn-success:hover{background:#1b5e20}
+.btn-danger{background:#c62828;color:#fff}
+.btn-danger:hover{background:#b71c1c}
+.btn-warning{background:#e65100;color:#fff}
+.btn-warning:hover{background:#bf360c}
+.btn-outline{background:#fff;color:#555;border:1.5px solid #ddd}
+.btn-outline:hover{background:#f5f5f5}
+.level-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#e3f2fd;color:#1565C0;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:leave_request_list' %}">← Danh sách đơn</a>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div class="container">
+  <div>
+    <!-- Thông tin đơn -->
+    <div class="card" style="margin-bottom:16px">
+      <h2>📋 Thông tin đơn xin nghỉ</h2>
+      <div class="info-row"><span class="info-label">Nhân viên</span><span class="info-value">{{ leave_req.employee.full_name }} ({{ leave_req.employee.employee_code }})</span></div>
+      <div class="info-row"><span class="info-label">Phòng ban</span><span class="info-value">{{ leave_req.employee.department.name|default:"—" }}</span></div>
+      <div class="info-row"><span class="info-label">Loại nghỉ</span><span class="info-value">{{ leave_req.leave_type.name }}</span></div>
+      <div class="info-row"><span class="info-label">Từ ngày</span><span class="info-value">{{ leave_req.start_date|date:"d/m/Y" }}</span></div>
+      <div class="info-row"><span class="info-label">Đến ngày</span><span class="info-value">{{ leave_req.end_date|date:"d/m/Y" }}</span></div>
+      <div class="info-row"><span class="info-label">Số ngày nghỉ</span><span class="info-value"><strong>{{ leave_req.total_days }} ngày</strong>{% if leave_req.half_day %} ({{ leave_req.get_half_day_period_display }}){% endif %}</span></div>
+      <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value"><span class="status-pill pill-{{ leave_req.status }}">{{ leave_req.get_status_display }}</span></span></div>
+      <div class="info-row"><span class="info-label">Lý do</span><span class="info-value" style="white-space:pre-line">{{ leave_req.reason }}</span></div>
+      {% if leave_req.document %}
+      <div class="info-row"><span class="info-label">Giấy tờ</span><span class="info-value"><a href="{{ leave_req.document.url }}" target="_blank">⬇ {{ leave_req.document.name|slice:"17:" }}</a></span></div>
+      {% endif %}
+      <div class="info-row"><span class="info-label">Ngày tạo</span><span class="info-value">{{ leave_req.created_at|date:"d/m/Y H:i" }}</span></div>
+      {% if leave_req.approved_at %}
+      <div class="info-row"><span class="info-label">Ngày duyệt</span><span class="info-value">{{ leave_req.approved_at|date:"d/m/Y H:i" }}</span></div>
+      {% endif %}
+    </div>
+
+    <!-- Timeline duyệt -->
+    <div class="card">
+      <h2>🔄 Lịch sử duyệt</h2>
+      <div class="timeline">
+        {% for ap in approvals %}
+        <div class="timeline-item">
+          <div class="tl-dot tl-{{ ap.action }}">
+            {% if ap.action == 'approved' %}✓{% elif ap.action == 'rejected' %}✗{% else %}→{% endif %}
+          </div>
+          <div class="tl-body">
+            <div class="level-badge">Cấp {{ ap.level }}</div>
+            <div class="tl-who">{{ ap.approver.get_full_name|default:ap.approver.username }}</div>
+            <div class="tl-action">{{ ap.get_action_display }} — {{ ap.acted_at|date:"d/m/Y H:i" }}</div>
+            {% if ap.comment %}<div class="tl-comment">"{{ ap.comment }}"</div>{% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:#999;font-size:13px">Chưa có lịch sử duyệt.</div>
+        {% endfor %}
+
+        {% if leave_req.status in 'pending waiting_hr' %}
+        <div class="tl-pending">
+          ⏳ Đang chờ duyệt {% if leave_req.status == 'pending' %}cấp 1 (Trưởng phòng){% else %}cấp 2 (HR){% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar actions -->
+  <div class="sidebar-actions">
+    {% if can_approve_l1 or can_approve_l2 %}
+    <a href="{% url 'attendance:leave_approve' leave_req.pk %}" class="btn btn-success">✓ Duyệt đơn{% if can_approve_l1 %} (Cấp 1){% else %} (HR){% endif %}</a>
+    <a href="{% url 'attendance:leave_reject' leave_req.pk %}" class="btn btn-warning">✗ Từ chối</a>
+    {% endif %}
+
+    {% if leave_req.status in 'pending waiting_hr approved' %}
+    <a href="{% url 'attendance:leave_request_cancel' leave_req.pk %}" class="btn btn-danger">🚫 Hủy đơn</a>
+    {% endif %}
+
+    <a href="{% url 'attendance:leave_request_list' %}" class="btn btn-outline">← Quay lại</a>
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

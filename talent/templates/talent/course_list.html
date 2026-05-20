@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách khóa đào tạo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar-right { display: flex; gap: 10px; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-blue  { background: #1565C0; color: white; }
+        .container { padding: 24px 30px; }
+        .filter-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .filter-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; }
+        .filter-box input, .filter-box select { padding: 7px 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; height: 34px; }
+        .filter-box input:focus, .filter-box select:focus { border-color: #1565C0; }
+        .table-box { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #1565C0; }
+        th { color: white; padding: 11px 16px; text-align: left; font-size: 13px; }
+        td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f9fbff; }
+        .pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-active { background: #e8f5e9; color: #2e7d32; }
+        .pill-inactive { background: #f5f5f5; color: #999; }
+        .pill-mandatory { background: #fff3e0; color: #e65100; }
+        .action-links a { color: #1565C0; text-decoration: none; font-size: 12px; margin-right: 8px; }
+        .action-links a:hover { text-decoration: underline; }
+        .action-links a.del { color: #c62828; }
+        .empty-state { padding: 60px 20px; text-align: center; color: #bbb; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>📚 Khóa đào tạo</h1>
+    <div class="topbar-right">
+        <a href="{% url 'talent:talent_home' %}" class="btn btn-white">← Tổng quan</a>
+        <a href="{% url 'talent:course_create' %}" class="btn btn-green">+ Tạo khóa học</a>
+    </div>
+</div>
+<div class="container">
+    <form method="get" class="filter-box">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="q" value="{{ q }}" placeholder="Tên, mã khóa học..." style="width:220px;">
+            </div>
+            <div class="filter-group">
+                <label>Danh mục</label>
+                <select name="category">
+                    <option value="">Tất cả</option>
+                    {% for key, label in categories %}
+                    <option value="{{ key }}" {% if category_f == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Trạng thái</label>
+                <select name="active">
+                    <option value="">Tất cả</option>
+                    <option value="1" {% if active_f == '1' %}selected{% endif %}>Đang hoạt động</option>
+                    <option value="0" {% if active_f == '0' %}selected{% endif %}>Đã tắt</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-blue" style="height:34px;">Lọc</button>
+            <a href="{% url 'talent:course_list' %}" class="btn" style="background:#e0e0e0; color:#555; height:34px; line-height:20px;">Xóa lọc</a>
+        </div>
+    </form>
+    <div class="table-box">
+        {% if courses %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã</th><th>Tên khóa học</th><th>Danh mục</th>
+                    <th>Hình thức</th><th>Số giờ</th><th>Trạng thái</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                <tr>
+                    <td style="font-family:monospace; color:#888;">{{ course.code }}</td>
+                    <td>
+                        <a href="{% url 'talent:course_detail' course.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ course.name }}</a>
+                        {% if course.is_mandatory %}<span class="pill pill-mandatory" style="margin-left:6px;">Bắt buộc</span>{% endif %}
+                    </td>
+                    <td>{{ course.get_category_display }}</td>
+                    <td>{{ course.get_delivery_method_display }}</td>
+                    <td>{{ course.duration_hours }}h</td>
+                    <td>
+                        {% if course.is_active %}
+                        <span class="pill pill-active">Hoạt động</span>
+                        {% else %}
+                        <span class="pill pill-inactive">Không hoạt động</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-links">
+                        <a href="{% url 'talent:course_detail' course.pk %}">Chi tiết</a>
+                        <a href="{% url 'talent:course_update' course.pk %}">Sửa</a>
+                        <a href="{% url 'talent:course_delete' course.pk %}" class="del">Xóa</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size:40px; margin-bottom:12px;">📚</div>
+            <p>Chưa có khóa học nào. <a href="{% url 'talent:course_create' %}" style="color:#1565C0;">Tạo ngay</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

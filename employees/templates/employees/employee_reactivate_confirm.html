@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận kích hoạt lại</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .box {
+            background: white;
+            border: 1px solid #A5D6A7;
+            border-radius: 12px;
+            padding: 32px 36px;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .icon { font-size: 48px; margin-bottom: 16px; }
+        h2 { color: #2E7D32; font-size: 20px; margin-bottom: 10px; }
+        .desc { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+        .name { font-weight: 700; color: #1B5E20; }
+        .status-badge {
+            display: inline-block;
+            background: #FFEBEE;
+            color: #C62828;
+            border-radius: 12px;
+            padding: 3px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin: 8px 0 20px;
+        }
+        .btn-row { display: flex; gap: 12px; justify-content: center; }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-confirm { background: #4CAF50; color: white; }
+        .btn-cancel  { background: #e0e0e0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="icon">✅</div>
+        <h2>Kích hoạt lại nhân viên</h2>
+        <p class="desc">Bạn có chắc muốn kích hoạt lại<br><span class="name">{{ employee.full_name }}</span>?</p>
+        <div class="status-badge">{{ employee.get_status_display }} → Đang làm việc</div>
+        <p class="desc" style="font-size:13px; color:#888; margin-bottom:20px;">
+            Trạng thái sẽ được chuyển về <strong>"Đang làm việc"</strong>.<br>Lịch sử nghỉ việc sẽ bị xóa.
+        </p>
+        <div class="btn-row">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-confirm">✓ Xác nhận kích hoạt</button>
+            </form>
+            <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-cancel">Hủy</a>
+        </div>
+    </div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

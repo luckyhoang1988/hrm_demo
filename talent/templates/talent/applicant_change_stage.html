@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chuyển giai đoạn ứng viên</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-blue { background: #1565C0; color: white; }
+        .container { padding: 32px 30px; max-width: 640px; margin: 0 auto; }
+        .form-box { background: white; border-radius: 12px; border: 1px solid #e0e0e0; padding: 32px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .form-title { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+        .form-subtitle { font-size: 13px; color: #888; margin-bottom: 24px; }
+        .current-stage { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #e3f2fd; color: #1565C0; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 6px; }
+        .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 7px; font-size: 14px; outline: none; font-family: inherit; }
+        .form-group select:focus, .form-group textarea:focus { border-color: #1565C0; }
+        .stage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
+        .stage-option { display: flex; flex-direction: column; align-items: center; border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px 6px; cursor: pointer; transition: border-color 0.2s; font-size: 12px; text-align: center; }
+        .stage-option:hover { border-color: #90CAF9; }
+        .stage-option input { display: none; }
+        .stage-option.checked { border-color: #1565C0; background: #e3f2fd; color: #1565C0; font-weight: 700; }
+        .stage-emoji { font-size: 20px; margin-bottom: 4px; }
+        .actions { display: flex; gap: 10px; margin-top: 24px; }
+        .btn-cancel { background: #e0e0e0; color: #555; text-decoration: none; display: inline-block; padding: 7px 16px; border-radius: 6px; font-size: 13px; }
+        .btn-cancel:hover { background: #ccc; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🔄 Chuyển giai đoạn</h1>
+    <a href="{% url 'talent:applicant_detail' applicant.pk %}" class="btn btn-white">← Quay lại</a>
+</div>
+<div class="container">
+    <div class="form-box">
+        <div class="form-title">{{ applicant.full_name }}</div>
+        <div class="form-subtitle">Vị trí: {{ applicant.job_position.title }} &nbsp;|&nbsp; Giai đoạn hiện tại: <span class="current-stage">{{ applicant.get_stage_display }}</span></div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Chuyển sang giai đoạn</label>
+                {% for key, label in stage_choices %}
+                {% with emojis="🆕🔍💬📩✅❌" %}
+                <div></div>
+                {% endwith %}
+                {% endfor %}
+                <select name="stage" id="stageSelect" style="width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:7px; font-size:14px;">
+                    {% for key, label in stage_choices %}
+                    <option value="{{ key }}" {% if form.stage.value == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" id="rejectReasonGroup" style="display:none;">
+                <label>Lý do loại</label>
+                <textarea name="reject_reason" rows="3" placeholder="Nhập lý do loại ứng viên...">{{ form.reject_reason.value|default:'' }}</textarea>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-blue">Cập nhật</button>
+                <a href="{% url 'talent:applicant_detail' applicant.pk %}" class="btn-cancel">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const sel = document.getElementById('stageSelect');
+    const rr = document.getElementById('rejectReasonGroup');
+    function checkStage() { rr.style.display = sel.value === 'rejected' ? '' : 'none'; }
+    sel.addEventListener('change', checkStage);
+    checkStage();
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,215 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Nhập nhân viên từ Excel</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+        .topbar {
+            background: #1565C0; color: white;
+            padding: 16px 30px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+
+        .container { padding: 28px 30px; max-width: 860px; }
+
+        .btn {
+            padding: 9px 20px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-back     { background: rgba(255,255,255,0.2); color: white; }
+        .btn-template { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+        .btn-upload   { background: #1565C0; color: white; }
+
+        /* Upload card */
+        .card {
+            background: white; border: 1px solid #e0e0e0; border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 15px; font-weight: 700; color: #1565C0;
+            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #E3F2FD;
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 2px dashed #90CAF9; border-radius: 10px;
+            padding: 40px 20px; text-align: center; cursor: pointer;
+            background: #f8fbff; transition: all 0.2s; margin-bottom: 16px;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #1565C0; background: #EEF5FF; }
+        .drop-zone .icon { font-size: 40px; margin-bottom: 10px; }
+        .drop-zone p { font-size: 14px; color: #777; }
+        .drop-zone p strong { color: #1565C0; }
+        .drop-zone .file-name { font-size: 13px; color: #2E7D32; font-weight: 600; margin-top: 8px; display: none; }
+        #excel-file-input { display: none; }
+
+        .actions-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        /* Hướng dẫn */
+        .guide {
+            background: #FFF8E1; border: 1px solid #FFE082; border-radius: 8px;
+            padding: 14px 18px; font-size: 13px; line-height: 1.7; color: #5D4037;
+        }
+        .guide strong { color: #E65100; }
+
+        /* Kết quả */
+        .result-summary {
+            display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .stat-box {
+            flex: 1; min-width: 140px; border-radius: 8px; padding: 14px 18px; text-align: center;
+        }
+        .stat-box .num { font-size: 28px; font-weight: 700; }
+        .stat-box .lbl { font-size: 12px; margin-top: 2px; }
+        .stat-success { background: #E8F5E9; color: #2E7D32; }
+        .stat-error   { background: #FFEBEE; color: #c62828; }
+        .stat-total   { background: #E3F2FD; color: #1565C0; }
+
+        /* Bảng lỗi */
+        .error-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .error-table th {
+            background: #FFEBEE; color: #c62828; padding: 9px 14px;
+            text-align: left; font-weight: 700;
+        }
+        .error-table td { padding: 9px 14px; border-bottom: 1px solid #fafafa; }
+        .error-table tr:last-child td { border-bottom: none; }
+        .error-table tr:hover td { background: #fff5f5; }
+        .row-num { color: #aaa; font-size: 12px; }
+        .error-list { color: #c62828; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>Nhập nhân viên từ Excel</h1>
+    <a href="{% url 'employee_list' %}" class="btn btn-back">← Danh sách nhân viên</a>
+</div>
+
+<div class="container">
+
+    <!-- Kết quả import (nếu có) -->
+    {% if results %}
+    <div class="card">
+        <h2>Kết quả nhập dữ liệu</h2>
+        <div class="result-summary">
+            <div class="stat-box stat-total">
+                <div class="num">{{ results.total }}</div>
+                <div class="lbl">Tổng hàng xử lý</div>
+            </div>
+            <div class="stat-box stat-success">
+                <div class="num">{{ results.success }}</div>
+                <div class="lbl">Nhập thành công</div>
+            </div>
+            <div class="stat-box stat-error">
+                <div class="num">{{ results.errors|length }}</div>
+                <div class="lbl">Hàng bị lỗi</div>
+            </div>
+        </div>
+
+        {% if results.errors %}
+        <table class="error-table">
+            <thead>
+                <tr>
+                    <th>Hàng</th>
+                    <th>Tên nhân viên</th>
+                    <th>Lý do lỗi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for err in results.errors %}
+                <tr>
+                    <td class="row-num">#{{ err.row }}</td>
+                    <td>{{ err.name }}</td>
+                    <td class="error-list">{{ err.errors }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:#2E7D32; font-weight:600;">✔ Tất cả hàng đều nhập thành công!</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div style="background:#FFEBEE; border:1px solid #FFCDD2; border-radius:8px; padding:14px 18px; color:#c62828; margin-bottom:20px;">
+        ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Form upload -->
+    <div class="card">
+        <h2>⬆ Tải file Excel lên</h2>
+        <form method="post" enctype="multipart/form-data" id="import-form">
+            {% csrf_token %}
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('excel-file-input').click()">
+                <div class="icon">📊</div>
+                <p><strong>Nhấn để chọn file</strong> hoặc kéo thả vào đây</p>
+                <p>Chỉ hỗ trợ file <strong>.xlsx</strong></p>
+                <div class="file-name" id="file-name-display"></div>
+            </div>
+            <input type="file" name="excel_file" id="excel-file-input" accept=".xlsx">
+
+            <div class="actions-row">
+                <button type="submit" class="btn btn-upload" id="btn-submit" disabled>⬆ Nhập dữ liệu</button>
+                <a href="{% url 'download_import_template' %}" class="btn btn-template">⬇ Tải file mẫu</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Hướng dẫn -->
+    <div class="card">
+        <h2>📋 Hướng dẫn định dạng file</h2>
+        <div class="guide">
+            File Excel cần có các cột theo thứ tự:<br><br>
+            <strong>Mã NV</strong> · <strong>Họ tên*</strong> · <strong>Số điện thoại</strong> · <strong>Địa chỉ</strong> · <strong>Căn cước CD</strong> · <strong>Tình trạng HN</strong> · <strong>Bằng cấp</strong> · <strong>Email*</strong> · <strong>Bộ phận*</strong> · <strong>Chức vụ*</strong> · <strong>Lương</strong> · <strong>Ngày vào làm*</strong>
+            <br><br>
+            <strong>Tình trạng hôn nhân:</strong> doc_than · da_ket_hon · ly_hon · goa<br>
+            <strong>Bằng cấp:</strong> trung_hoc · trung_cap · cao_dang · dai_hoc · thac_si · tien_si<br>
+            <strong>Ngày vào làm:</strong> định dạng YYYY-MM-DD (VD: 2023-06-15)<br>
+            <strong>Lương:</strong> nhập số không có dấu phẩy (VD: 15000000)<br><br>
+            (*) Các trường bắt buộc. Hàng thiếu thông tin bắt buộc sẽ bị bỏ qua và báo lỗi.
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const input   = document.getElementById('excel-file-input');
+    const dropZ   = document.getElementById('drop-zone');
+    const display = document.getElementById('file-name-display');
+    const btnSub  = document.getElementById('btn-submit');
+
+    input.addEventListener('change', function () {
+        if (this.files[0]) {
+            display.textContent  = '✔ ' + this.files[0].name;
+            display.style.display = 'block';
+            btnSub.disabled = false;
+        }
+    });
+
+    // Drag & drop
+    dropZ.addEventListener('dragover', e => { e.preventDefault(); dropZ.classList.add('dragover'); });
+    dropZ.addEventListener('dragleave', () => dropZ.classList.remove('dragover'));
+    dropZ.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZ.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.xlsx')) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            display.textContent   = '✔ ' + file.name;
+            display.style.display = 'block';
+            btnSub.disabled = false;
+        }
+    });
+</script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

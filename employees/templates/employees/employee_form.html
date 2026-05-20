@@ -1,0 +1,796 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    {% load humanize %}
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        .topbar {
+            background: #1565C0;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+
+        .container {
+            padding: 28px 30px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* ===== CỘT TRÁI: FORM ===== */
+        .form-panel {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            padding: 28px;
+            flex: 1;
+        }
+        .form-panel h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1565C0;
+            margin-bottom: 22px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E3F2FD;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #1565C0;
+            box-shadow: 0 0 0 3px rgba(21,101,192,0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+        .form-row .form-group { flex: 1; }
+
+        .btn {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-save { background: #1565C0; color: white; }
+        .btn-back { background: #e0e0e0; color: #555; }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        /* ===== PHOTO UPLOAD ===== */
+        .photo-upload-box {
+            border: 2px dashed #c5d8f5;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+            background: #f8fbff;
+            margin-bottom: 18px;
+        }
+        .photo-upload-box:hover { border-color: #1565C0; background: #EEF5FF; }
+
+        #photo-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #1565C0;
+            display: none;
+            margin: 0 auto 10px;
+        }
+        .photo-avatar-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #E3F2FD;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 10px;
+        }
+        .photo-upload-label {
+            font-size: 13px;
+            color: #777;
+        }
+        .photo-upload-label strong { color: #1565C0; }
+        #photo-input { display: none; }
+        .photo-change-btn {
+            margin-top: 8px;
+            display: inline-block;
+            font-size: 12px;
+            color: #1565C0;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* ===== CỘT PHẢI: THÔNG TIN ===== */
+        .info-panel {
+            width: 320px;
+            flex-shrink: 0;
+        }
+
+        .info-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            overflow: hidden;
+        }
+
+        .info-card-header {
+            background: #1565C0;
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .info-card-header h3 { font-size: 16px; font-weight: 600; }
+        .info-card-header p  { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+        .info-card-body { padding: 20px; }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .info-row:last-child { border-bottom: none; }
+
+        .info-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: #E3F2FD;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .info-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 2px;
+        }
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .badge-success {
+            display: inline-block;
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #A5D6A7;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .empty-card {
+            background: white;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            color: #bbb;
+        }
+        .empty-card .icon { font-size: 40px; margin-bottom: 12px; }
+        .empty-card p { font-size: 14px; }
+
+        /* ===== TRẠNG THÁI 3 CARDS ===== */
+        .status-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .status-form-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 18px 12px;
+            text-align: center;
+            transition: all 0.18s;
+            background: white;
+            cursor: pointer;
+            user-select: none;
+        }
+        .status-form-card:hover { border-color: #90CAF9; background: #F8FAFF; }
+        .status-form-card.selected-intern    { border-color: #7B1FA2; background: #F3E5F5; box-shadow: 0 0 0 1px #7B1FA2; }
+        .status-form-card.selected-probation { border-color: #1565C0; background: #E3F2FD; box-shadow: 0 0 0 1px #1565C0; }
+        .status-form-card.selected-official  { border-color: #2E7D32; background: #E8F5E9; box-shadow: 0 0 0 1px #2E7D32; }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'employee_list' %}" class="btn btn-back">← Danh sách</a>
+    </div>
+
+    <div class="container">
+
+        <!-- ===== CỘT TRÁI: FORM ===== -->
+        <div class="form-panel">
+            <h2>Thông tin nhân viên</h2>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Mã NV + Upload ảnh trên cùng 1 dòng -->
+                <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:18px;">
+
+                    <!-- Mã nhân viên -->
+                    <div class="form-group" style="flex:1; margin-bottom:0;">
+                        <label>Mã nhân viên</label>
+                        <div style="position:relative;">
+                            <input type="text" name="employee_code" id="id_employee_code"
+                                   value="{% if form.employee_code.value %}{{ form.employee_code.value }}{% endif %}"
+                                   placeholder="VD: NV001, HR-2024-001..."
+                                   autocomplete="off" style="padding-right:36px; text-transform:uppercase;"
+                                   oninput="this.value = this.value.toUpperCase()">
+                            <span id="code-status" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:16px; display:none;"></span>
+                        </div>
+                        <div id="code-msg" style="font-size:12px; margin-top:4px; display:none;"></div>
+                        {{ form.employee_code.errors }}
+                    </div>
+
+                    <!-- Upload ảnh -->
+                    <div style="width:130px; flex-shrink:0; display:flex; flex-direction:column; gap:6px;">
+                        <div class="photo-upload-box" onclick="document.getElementById('photo-input').click()" style="margin-bottom:0;">
+                            {% if form.photo.value %}
+                                <img id="photo-preview" src="/media/{{ form.photo.value }}" style="display:block;">
+                                <div class="photo-avatar-placeholder" id="photo-placeholder" style="display:none;">📷</div>
+                            {% else %}
+                                <img id="photo-preview" src="">
+                                <div class="photo-avatar-placeholder" id="photo-placeholder">📷</div>
+                            {% endif %}
+                            <div class="photo-upload-label" style="font-size:11px;">
+                                <strong>Chọn ảnh</strong><br>JPG, PNG
+                            </div>
+                            <input type="file" name="photo" id="photo-input" accept="image/*">
+                        </div>
+                        <button type="button" onclick="openWebcam()"
+                                style="width:100%; padding:7px 0; background:#E3F2FD; color:#1565C0; border:1px solid #90CAF9; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                            📸 Chụp webcam
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label>Họ và tên</label>
+                    <input type="text" name="full_name"
+                           value="{% if form.full_name.value %}{{ form.full_name.value }}{% endif %}"
+                           placeholder="Nhập họ và tên...">
+                    {{ form.full_name.errors }}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="text" name="phone"
+                               value="{% if form.phone.value %}{{ form.phone.value }}{% endif %}"
+                               placeholder="0xxx xxx xxx">
+                    </div>
+                    <div class="form-group">
+                        <label>Căn cước công dân</label>
+                        <input type="text" name="id_card"
+                               value="{% if form.id_card.value %}{{ form.id_card.value }}{% endif %}"
+                               placeholder="Số CCCD...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <input type="text" name="address"
+                           value="{% if form.address.value %}{{ form.address.value }}{% endif %}"
+                           placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tình trạng hôn nhân</label>
+                        <select name="marital_status">
+                            <option value="">-- Chọn --</option>
+                            <option value="doc_than"   {% if form.marital_status.value == "doc_than"   %}selected{% endif %}>Độc thân</option>
+                            <option value="da_ket_hon" {% if form.marital_status.value == "da_ket_hon" %}selected{% endif %}>Đã kết hôn</option>
+                            <option value="ly_hon"     {% if form.marital_status.value == "ly_hon"     %}selected{% endif %}>Ly hôn</option>
+                            <option value="goa"        {% if form.marital_status.value == "goa"        %}selected{% endif %}>Góa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bằng cấp</label>
+                        <select name="degree">
+                            <option value="">-- Chọn --</option>
+                            <option value="trung_hoc" {% if form.degree.value == "trung_hoc" %}selected{% endif %}>Trung học</option>
+                            <option value="trung_cap" {% if form.degree.value == "trung_cap" %}selected{% endif %}>Trung cấp</option>
+                            <option value="cao_dang"  {% if form.degree.value == "cao_dang"  %}selected{% endif %}>Cao đẳng</option>
+                            <option value="dai_hoc"   {% if form.degree.value == "dai_hoc"   %}selected{% endif %}>Đại học</option>
+                            <option value="thac_si"   {% if form.degree.value == "thac_si"   %}selected{% endif %}>Thạc sĩ</option>
+                            <option value="tien_si"   {% if form.degree.value == "tien_si"   %}selected{% endif %}>Tiến sĩ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email"
+                           value="{% if form.email.value %}{{ form.email.value }}{% endif %}"
+                           placeholder="example@company.com">
+                    {{ form.email.errors }}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bộ phận</label>
+                        <select name="department">
+                            <option value="">-- Chọn bộ phận --</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.name }}" {% if form.department.value == dept.name %}selected{% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {{ form.department.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>Chức vụ</label>
+                        <input type="text" name="position"
+                               value="{% if form.position.value %}{{ form.position.value }}{% endif %}"
+                               placeholder="Nhập chức vụ...">
+                        {{ form.position.errors }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Lương (VND)</label>
+                        <input type="number" name="salary"
+                               value="{% if form.salary.value %}{{ form.salary.value }}{% endif %}"
+                               placeholder="0">
+                        {{ form.salary.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày vào làm</label>
+                        <input type="date" name="hire_date"
+                               value="{% if form.hire_date.value %}{{ form.hire_date.value }}{% endif %}">
+                        {{ form.hire_date.errors }}
+                    </div>
+                </div>
+
+                {% if form.status.value == 'nghi_phep' or form.status.value == 'nghi_sinh' or form.status.value == 'nghi_khong_luong' or form.status.value == 'nghi_om' or form.status.value == 'nghi_viec' %}
+                <input type="hidden" name="status" value="{{ form.status.value }}">
+                <div class="form-group">
+                    <label>Trạng thái nhân viên</label>
+                    <div style="background:#FFF3E0; border:1px solid #FFE082; border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:22px;">ℹ️</span>
+                        <div>
+                            <div style="font-weight:700; color:#555; font-size:14px;">
+                                Trạng thái hiện tại:
+                                {% if form.status.value == 'nghi_phep' %}🏖 Nghỉ phép
+                                {% elif form.status.value == 'nghi_sinh' %}🤱 Nghỉ thai sản
+                                {% elif form.status.value == 'nghi_khong_luong' %}⏸ Nghỉ không lương
+                                {% elif form.status.value == 'nghi_om' %}🏥 Nghỉ ốm dài ngày
+                                {% elif form.status.value == 'nghi_viec' %}🚫 Nghỉ việc
+                                {% endif %}
+                            </div>
+                            <div style="font-size:12px; color:#888; margin-top:5px;">
+                                Để thay đổi trạng thái, dùng chức năng
+                                {% if employee_pk %}<a href="{% url 'employee_change_status' employee_pk %}" style="color:#1565C0; font-weight:600;">Thay đổi trạng thái</a>{% else %}<strong>Thay đổi trạng thái</strong>{% endif %}
+                                trên trang chi tiết nhân viên.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="form-group">
+                    <label>Trạng thái nhân viên <span style="color:#c62828;">*</span></label>
+                    <div class="status-cards-grid">
+
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="status" value="thuc_tap_sinh" id="status_thuc_tap_sinh"
+                                   {% if form.status.value == 'thuc_tap_sinh' %}checked{% endif %}
+                                   style="display:none;">
+                            <div class="status-form-card" id="card_thuc_tap_sinh">
+                                <div style="font-size:28px; margin-bottom:8px;">🎓</div>
+                                <div style="font-size:13px; font-weight:700; color:#7B1FA2; margin-bottom:4px;">Thực tập sinh</div>
+                                <div style="font-size:11px; color:#aaa; line-height:1.4;">Cần nhập thời gian thực tập</div>
+                            </div>
+                        </label>
+
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="status" value="thu_viec" id="status_thu_viec"
+                                   {% if form.status.value == 'thu_viec' %}checked{% endif %}
+                                   style="display:none;">
+                            <div class="status-form-card" id="card_thu_viec">
+                                <div style="font-size:28px; margin-bottom:8px;">📋</div>
+                                <div style="font-size:13px; font-weight:700; color:#1565C0; margin-bottom:4px;">Thử việc</div>
+                                <div style="font-size:11px; color:#aaa; line-height:1.4;">Cần nhập thời gian thử việc</div>
+                            </div>
+                        </label>
+
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="status" value="dang_lam" id="status_dang_lam"
+                                   {% if form.status.value == 'dang_lam' or not form.status.value %}checked{% endif %}
+                                   style="display:none;">
+                            <div class="status-form-card" id="card_dang_lam">
+                                <div style="font-size:28px; margin-bottom:8px;">✅</div>
+                                <div style="font-size:13px; font-weight:700; color:#2E7D32; margin-bottom:4px;">Chính thức</div>
+                                <div style="font-size:11px; color:#aaa; line-height:1.4;">Hiển thị: Đang làm việc</div>
+                            </div>
+                        </label>
+
+                    </div>
+                    {{ form.status.errors }}
+                </div>
+
+                <div id="date-section" style="display:none; background:#F8FAFF; border:1px solid #E3EAF5; border-radius:8px; padding:16px; margin-bottom:18px;">
+                    <div id="date-section-label" style="font-size:13px; font-weight:700; color:#1565C0; margin-bottom:12px;"></div>
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Từ ngày <span style="color:#c62828;">*</span></label>
+                            <input type="date" name="status_start_date" id="id_status_start_date"
+                                   value="{% if form.status_start_date.value %}{{ form.status_start_date.value }}{% endif %}">
+                            {{ form.status_start_date.errors }}
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Đến ngày <span style="color:#c62828;">*</span></label>
+                            <input type="date" name="status_end_date" id="id_status_end_date"
+                                   value="{% if form.status_end_date.value %}{{ form.status_end_date.value }}{% endif %}">
+                            {{ form.status_end_date.errors }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-save">Lưu nhân viên</button>
+                    <a href="{% url 'employee_list' %}" class="btn btn-back">Hủy</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- ===== CỘT PHẢI: THÔNG TIN SAU KHI LƯU ===== -->
+        <div class="info-panel">
+            {% if saved_employee %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="avatar">
+                        {% if saved_employee.photo %}
+                            <img src="{{ saved_employee.photo.url }}" alt="">
+                        {% else %}
+                            {{ saved_employee.full_name|first }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3>{{ saved_employee.full_name }}</h3>
+                        <p>{{ saved_employee.position }} · {{ saved_employee.department }}</p>
+                    </div>
+                </div>
+                <div class="info-card-body">
+                    <div class="badge-success">✓ Đã lưu thành công</div>
+
+                    <div class="info-row">
+                        <div class="info-icon">📧</div>
+                        <div>
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ saved_employee.email }}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">🏢</div>
+                        <div>
+                            <div class="info-label">Bộ phận</div>
+                            <div class="info-value">{{ saved_employee.department }}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">💼</div>
+                        <div>
+                            <div class="info-label">Chức vụ</div>
+                            <div class="info-value">{{ saved_employee.position }}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">💰</div>
+                        <div>
+                            <div class="info-label">Lương</div>
+                            <div class="info-value">{{ saved_employee.salary|intcomma }} ₫</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📅</div>
+                        <div>
+                            <div class="info-label">Ngày vào làm</div>
+                            <div class="info-value">{{ saved_employee.hire_date }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="empty-card">
+                <div class="icon">👤</div>
+                <p>Thông tin nhân viên sẽ<br>hiển thị ở đây sau khi lưu</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- ===== MODAL WEBCAM ===== -->
+    <div id="webcam-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:14px; overflow:hidden; width:500px; box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+
+            <!-- Header -->
+            <div style="background:#1565C0; color:white; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-weight:700; font-size:15px;">📸 Chụp ảnh qua webcam</span>
+                <button onclick="closeWebcam()" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:6px; padding:5px 10px; cursor:pointer; font-size:14px;">✕</button>
+            </div>
+
+            <!-- Video + Canvas -->
+            <div style="position:relative; background:#000; text-align:center; min-height:300px; display:flex; align-items:center; justify-content:center;">
+                <video id="webcam-video" autoplay playsinline
+                       style="max-width:100%; max-height:340px; display:block;"></video>
+                <canvas id="webcam-canvas" style="display:none;"></canvas>
+                <div id="webcam-error" style="display:none; color:#fff; padding:30px; font-size:14px; text-align:center;">
+                    ⚠️ Không thể truy cập webcam.<br>Vui lòng kiểm tra quyền trình duyệt.
+                </div>
+            </div>
+
+            <!-- Nút chụp -->
+            <div style="padding:16px 20px; display:flex; gap:10px; justify-content:center; border-top:1px solid #f0f0f0;">
+                <button id="btn-capture" onclick="capturePhoto()"
+                        style="background:#1565C0; color:white; border:none; border-radius:8px; padding:10px 28px; font-size:14px; font-weight:700; cursor:pointer;">
+                    📸 Chụp ảnh
+                </button>
+                <button onclick="closeWebcam()"
+                        style="background:#e0e0e0; color:#555; border:none; border-radius:8px; padding:10px 20px; font-size:14px; cursor:pointer;">
+                    Hủy
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const photoInput   = document.getElementById('photo-input');
+        const photoPreview = document.getElementById('photo-preview');
+        const placeholder  = document.getElementById('photo-placeholder');
+
+        // ── Kiểm tra mã nhân viên trùng ─────────────────────────────
+        const codeInput  = document.getElementById('id_employee_code');
+        const codeStatus = document.getElementById('code-status');
+        const codeMsg    = document.getElementById('code-msg');
+        const employeePk = '{{ employee_pk|default:"" }}';
+        let codeTimer    = null;
+
+        codeInput.addEventListener('input', function () {
+            clearTimeout(codeTimer);
+            const val = this.value.trim();
+            if (!val) {
+                codeStatus.style.display = 'none';
+                codeMsg.style.display    = 'none';
+                codeInput.style.borderColor = '';
+                return;
+            }
+            codeStatus.textContent  = '⏳';
+            codeStatus.style.display = 'inline';
+            codeMsg.style.display    = 'none';
+
+            codeTimer = setTimeout(function () {
+                let url = '{% url "check_employee_code" %}?code=' + encodeURIComponent(val);
+                if (employeePk) url += '&pk=' + employeePk;
+
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.exists) {
+                            codeStatus.textContent       = '✖';
+                            codeStatus.style.color       = '#c62828';
+                            codeInput.style.borderColor  = '#c62828';
+                            codeInput.style.boxShadow    = '0 0 0 3px rgba(198,40,40,0.1)';
+                            codeMsg.textContent          = 'Mã này đã tồn tại, vui lòng chọn mã khác.';
+                            codeMsg.style.color          = '#c62828';
+                            codeMsg.style.display        = 'block';
+                        } else {
+                            codeStatus.textContent       = '✔';
+                            codeStatus.style.color       = '#2E7D32';
+                            codeInput.style.borderColor  = '#4CAF50';
+                            codeInput.style.boxShadow    = '0 0 0 3px rgba(76,175,80,0.1)';
+                            codeMsg.textContent          = 'Mã hợp lệ, chưa được sử dụng.';
+                            codeMsg.style.color          = '#2E7D32';
+                            codeMsg.style.display        = 'block';
+                        }
+                    });
+            }, 400);  // chờ 400ms sau khi ngừng gõ mới gọi API
+        });
+
+        // ── Chọn file từ máy ────────────────────────────────────────
+        photoInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                showPreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function showPreview(src) {
+            photoPreview.src = src;
+            photoPreview.style.display = 'block';
+            placeholder.style.display  = 'none';
+        }
+
+        // ── Webcam ──────────────────────────────────────────────────
+        let webcamStream = null;
+
+        function openWebcam() {
+            const modal = document.getElementById('webcam-modal');
+            const video = document.getElementById('webcam-video');
+            const err   = document.getElementById('webcam-error');
+            modal.style.display = 'flex';
+            err.style.display   = 'none';
+            video.style.display = 'block';
+
+            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false })
+                .then(function (stream) {
+                    webcamStream   = stream;
+                    video.srcObject = stream;
+                })
+                .catch(function () {
+                    video.style.display = 'none';
+                    err.style.display   = 'block';
+                });
+        }
+
+        function closeWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(t => t.stop());
+                webcamStream = null;
+            }
+            document.getElementById('webcam-modal').style.display = 'none';
+            document.getElementById('webcam-video').srcObject = null;
+        }
+
+        function capturePhoto() {
+            const video  = document.getElementById('webcam-video');
+            const canvas = document.getElementById('webcam-canvas');
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            // Hiển thị preview ngay
+            showPreview(canvas.toDataURL('image/jpeg'));
+
+            // Chuyển canvas → File → gán vào input
+            canvas.toBlob(function (blob) {
+                const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
+                const dt   = new DataTransfer();
+                dt.items.add(file);
+                photoInput.files = dt.files;
+            }, 'image/jpeg', 0.92);
+
+            closeWebcam();
+        }
+
+        // Đóng modal khi click nền
+        document.getElementById('webcam-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeWebcam();
+        });
+
+        // ── Trạng thái 3 cards: hiện/ẩn phần ngày ──────────────────
+        const DATE_STATUSES = ['thuc_tap_sinh', 'thu_viec'];
+        const CARD_CLASSES  = {
+            'thuc_tap_sinh': 'selected-intern',
+            'thu_viec':      'selected-probation',
+            'dang_lam':      'selected-official',
+        };
+        const DATE_LABELS = {
+            'thuc_tap_sinh': '🎓 Thời gian thực tập <span style="color:#c62828;">(bắt buộc)</span>',
+            'thu_viec':      '📋 Thời gian thử việc <span style="color:#c62828;">(bắt buộc)</span>',
+        };
+
+        function onStatusSelect(value) {
+            // Cập nhật style cards
+            ['thuc_tap_sinh', 'thu_viec', 'dang_lam'].forEach(v => {
+                const card = document.getElementById('card_' + v);
+                if (card) card.className = 'status-form-card' + (v === value && CARD_CLASSES[v] ? ' ' + CARD_CLASSES[v] : '');
+            });
+            // Hiện/ẩn date section
+            const showDates  = DATE_STATUSES.includes(value);
+            const dateSection = document.getElementById('date-section');
+            const startInp    = document.getElementById('id_status_start_date');
+            const endInp      = document.getElementById('id_status_end_date');
+            if (dateSection) {
+                dateSection.style.display = showDates ? 'block' : 'none';
+                if (startInp) startInp.required = showDates;
+                if (endInp)   endInp.required   = showDates;
+                if (showDates) {
+                    document.getElementById('date-section-label').innerHTML = DATE_LABELS[value] || '📅 Thời gian';
+                }
+            }
+        }
+
+        // Gắn sự kiện cho các radio buttons
+        document.querySelectorAll('input[name="status"]').forEach(function(r) {
+            r.addEventListener('change', function() { onStatusSelect(this.value); });
+        });
+        // Chạy ngay khi tải trang
+        (function() {
+            const checked = document.querySelector('input[name="status"]:checked');
+            if (checked) onStatusSelect(checked.value);
+        })();
+    </script>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

@@ -1,0 +1,440 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý bộ phận</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; min-height: 100vh; }
+
+        .topbar {
+            background: #1565C0;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+        .btn-back {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 7px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.28); }
+
+        .container {
+            padding: 28px 30px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* ── Form thêm bộ phận ── */
+        .add-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            width: 280px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .add-card-header {
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+            padding: 20px 22px;
+            color: white;
+        }
+        .add-card-header .header-icon {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+        .add-card-header h2 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+        .add-card-header p  { font-size: 12px; opacity: 0.8; }
+
+        .add-card-body { padding: 20px 22px; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: #fafafa;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #1565C0;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(21,101,192,0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background: #1565C0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background: #1251A3; }
+
+        .error-msg {
+            background: #FFEBEE;
+            border: 1px solid #FFCDD2;
+            color: #c62828;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 13px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        /* ── Danh sách bộ phận ── */
+        .list-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .list-card-header h2 { font-size: 15px; font-weight: 700; color: #222; }
+        .badge-count {
+            background: #E3F2FD;
+            color: #1565C0;
+            border: 1px solid #BBDEFB;
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .list-search {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        .list-search-input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            background: #f8f9fa;
+            transition: border 0.2s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+        }
+        .list-search-input:focus { border-color: #1565C0; background-color: white; }
+
+        .dept-list {
+            overflow-y: auto;
+            max-height: 520px;
+            flex: 1;
+        }
+        .dept-list::-webkit-scrollbar { width: 6px; }
+        .dept-list::-webkit-scrollbar-track { background: #f5f5f5; }
+        .dept-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        .dept-list::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+        .dept-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 20px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.12s;
+        }
+        .dept-item:last-child { border-bottom: none; }
+        .dept-item:hover { background: #F5F9FF; }
+        .dept-item.hidden { display: none; }
+
+        .dept-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #222;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dept-icon {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: #E3F2FD;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        .dept-index {
+            font-size: 11px;
+            color: #bbb;
+            font-weight: 600;
+            width: 20px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .dept-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+        .btn-edit {
+            background: #E3F2FD;
+            color: #1565C0;
+            border: 1px solid #BBDEFB;
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-edit:hover { background: #BBDEFB; }
+
+        .btn-delete {
+            background: #FFEBEE;
+            color: #c62828;
+            border: 1px solid #FFCDD2;
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .btn-delete:hover { background: #FFCDD2; }
+
+        .dept-edit-form {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+        .dept-edit-form.show { display: flex; }
+        .dept-edit-input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1.5px solid #1565C0;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(21,101,192,0.08);
+        }
+        .btn-save {
+            background: #1565C0;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-save:hover { background: #1251A3; }
+        .btn-cancel {
+            background: #f5f5f5;
+            color: #555;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-cancel:hover { background: #eee; }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #bbb;
+        }
+        .empty-state .icon { font-size: 42px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; }
+
+        .list-footer {
+            padding: 10px 20px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 12px;
+            color: #aaa;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #search-result-info { color: #1565C0; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>Quản lý bộ phận</h1>
+    <a href="{% url 'system_settings:settings_home' %}" class="btn-back">← Cài đặt hệ thống</a>
+</div>
+
+<div class="container">
+
+    <!-- Form thêm mới -->
+    <div class="add-card">
+        <div class="add-card-header">
+            <div class="header-icon">🏢</div>
+            <h2>Thêm bộ phận mới</h2>
+            <p>Nhập tên và bấm xác nhận</p>
+        </div>
+        <div class="add-card-body">
+            {% if error %}
+            <div class="error-msg">⚠ {{ error }}</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Tên bộ phận</label>
+                    <input type="text" name="name" placeholder="Vd: Kế toán, IT, Nhân sự..." autofocus>
+                </div>
+                <button type="submit" class="btn-submit">+ Thêm bộ phận</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="list-card">
+        <div class="list-card-header">
+            <h2>Danh sách bộ phận</h2>
+            <span class="badge-count">{{ departments|length }} bộ phận</span>
+        </div>
+
+        {% if departments %}
+        <div class="list-search">
+            <input type="text" class="list-search-input" id="deptSearch"
+                   placeholder="Tìm kiếm bộ phận..." oninput="filterList(this.value)">
+        </div>
+
+        <div class="dept-list" id="deptList">
+            {% for dept in departments %}
+            <div class="dept-item" data-name="{{ dept.name|lower }}" id="row-{{ dept.pk }}">
+                <!-- View mode -->
+                <div class="dept-name" id="view-{{ dept.pk }}">
+                    <span class="dept-index">{{ forloop.counter }}</span>
+                    <div class="dept-icon">🏢</div>
+                    <span id="label-{{ dept.pk }}">{{ dept.name }}</span>
+                </div>
+                <div class="dept-actions" id="actions-{{ dept.pk }}">
+                    <button type="button" class="btn-edit" onclick="startEdit({{ dept.pk }}, '{{ dept.name }}')">✏ Sửa</button>
+                    <form method="post" action="{% url 'system_settings:department_delete' dept.pk %}"
+                          onsubmit="return confirm('Xóa bộ phận «{{ dept.name }}»?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-delete">Xóa</button>
+                    </form>
+                </div>
+
+                <!-- Edit mode (ẩn mặc định) -->
+                <form method="post" action="{% url 'system_settings:department_update' dept.pk %}"
+                      class="dept-edit-form" id="edit-{{ dept.pk }}">
+                    {% csrf_token %}
+                    <input type="text" name="name" class="dept-edit-input" id="input-{{ dept.pk }}" value="{{ dept.name }}">
+                    <button type="submit" class="btn-save">Lưu</button>
+                    <button type="button" class="btn-cancel" onclick="cancelEdit({{ dept.pk }})">Hủy</button>
+                </form>
+            </div>
+            {% endfor %}
+            <div id="no-result" style="display:none; padding:30px; text-align:center; color:#bbb; font-size:14px;">
+                Không tìm thấy bộ phận nào
+            </div>
+        </div>
+
+        <div class="list-footer">
+            <span id="search-result-info"></span>
+            <span>Cuộn để xem thêm ↕</span>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🏢</div>
+            <p>Chưa có bộ phận nào.<br>Hãy thêm bộ phận đầu tiên!</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+function filterList(query) {
+    const q = query.trim().toLowerCase();
+    const items = document.querySelectorAll('.dept-item[data-name]');
+    let visible = 0;
+
+    items.forEach(function(item) {
+        const match = !q || item.dataset.name.includes(q);
+        item.classList.toggle('hidden', !match);
+        if (match) visible++;
+    });
+
+    const noResult = document.getElementById('no-result');
+    const info     = document.getElementById('search-result-info');
+    const total    = items.length;
+
+    noResult.style.display = (visible === 0) ? 'block' : 'none';
+    info.textContent = q ? ('Hiển thị ' + visible + ' / ' + total + ' bộ phận') : '';
+}
+
+function startEdit(pk, currentName) {
+    document.getElementById('view-' + pk).style.display    = 'none';
+    document.getElementById('actions-' + pk).style.display = 'none';
+    const form  = document.getElementById('edit-' + pk);
+    const input = document.getElementById('input-' + pk);
+    form.classList.add('show');
+    input.focus();
+    input.select();
+}
+
+function cancelEdit(pk) {
+    document.getElementById('edit-' + pk).classList.remove('show');
+    document.getElementById('view-' + pk).style.display    = '';
+    document.getElementById('actions-' + pk).style.display = '';
+}
+</script>
+
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

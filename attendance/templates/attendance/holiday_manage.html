@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Ngày lễ tết — HRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.topbar{background:#1565C0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{font-size:16px;font-weight:700;text-decoration:none;color:#fff}
+.topbar-right{display:flex;gap:12px;align-items:center;font-size:13px}
+.topbar-right a{color:#bbdefb;text-decoration:none}
+.container{max-width:900px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:1fr 340px;gap:20px}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:2px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between}
+.card-header h2{font-size:16px;font-weight:700}
+.year-tabs{display:flex;gap:6px}
+.year-tab{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;border:1.5px solid #e0e0e0;color:#666}
+.year-tab.active{background:#1565C0;color:#fff;border-color:#1565C0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fa;padding:9px 14px;text-align:left;font-weight:700;color:#555;border-bottom:1.5px solid #e0e0e0}
+td{padding:9px 14px;border-bottom:1px solid #f0f0f0}
+.btn-sm{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;border:none;cursor:pointer;text-decoration:none}
+.btn-del{background:#ffebee;color:#c62828}
+.btn-del:hover{background:#c62828;color:#fff}
+.add-form{padding:20px}
+.add-form h3{font-size:14px;font-weight:700;color:#555;margin-bottom:14px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px}
+.form-group input{width:100%;padding:8px 11px;border:1.5px solid #ddd;border-radius:7px;font-size:13px}
+.form-group input:focus{outline:none;border-color:#1565C0}
+.errorlist{list-style:none;color:#c62828;font-size:11px;margin-top:3px}
+.btn-add{width:100%;padding:9px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-add:hover{background:#0d47a1}
+.empty{text-align:center;padding:32px;color:#999;font-size:13px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="topbar-brand" href="{% url 'home' %}">🏢 HRM System</a>
+  <div class="topbar-right">
+    <a href="{% url 'attendance:attendance_home' %}">← Chấm công</a>
+    <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:none;color:#bbdefb;cursor:pointer;font-size:13px">Đăng xuất</button></form>
+  </div>
+</div>
+
+<div style="max-width:900px;margin:24px auto;padding:0 20px">
+  <h1 style="font-size:18px;font-weight:700;margin-bottom:18px">🎌 Quản lý ngày lễ tết</h1>
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Ngày lễ năm {{ year }}</h2>
+        <div class="year-tabs">
+          {% for y in years %}
+          <a href="?year={{ y }}" class="year-tab {% if y == year %}active{% endif %}">{{ y }}</a>
+          {% endfor %}
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Ngày</th><th>Thứ</th><th>Tên ngày lễ</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for h in holidays %}
+          <tr>
+            <td>{{ h.date|date:"d/m/Y" }}</td>
+            <td>{% with wd=h.date.weekday %}
+              {% if wd == 0 %}Thứ Hai{% elif wd == 1 %}Thứ Ba{% elif wd == 2 %}Thứ Tư{% elif wd == 3 %}Thứ Năm{% elif wd == 4 %}Thứ Sáu{% elif wd == 5 %}Thứ Bảy{% else %}Chủ Nhật{% endif %}
+            {% endwith %}</td>
+            <td>{{ h.name }}</td>
+            <td>
+              <form method="post" action="{% url 'attendance:holiday_delete' h.pk %}" style="display:inline" onsubmit="return confirm('Xóa ngày lễ này?')">
+                {% csrf_token %}<button type="submit" class="btn-sm btn-del">Xóa</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty">Chưa có ngày lễ nào cho năm {{ year }}.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="add-form">
+        <h3>➕ Thêm ngày lễ</h3>
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label>Tên ngày lễ *</label>
+            {{ form.name }}
+            {% if form.name.errors %}<ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="form-group">
+            <label>Ngày *</label>
+            {{ form.date }}
+            {% if form.date.errors %}<ul class="errorlist">{% for e in form.date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <button type="submit" class="btn-add">Thêm ngày lễ</button>
+        </form>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
+          <p style="font-size:12px;color:#888;font-weight:600;margin-bottom:8px">NGÀY LỄ VIỆT NAM 2025</p>
+          {% for name, date_str in "Tết Dương lịch (01/01),Tết Nguyên Đán (28-30/01),Giỗ Tổ Hùng Vương (06/04),Ngày 30/4 (30/04),Quốc tế Lao động (01/05),Quốc khánh (02/09)"|split:"," %}
+          <div style="font-size:11px;color:#999;padding:2px 0">• {{ name }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>
