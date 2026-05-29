@@ -5,6 +5,41 @@ from datetime import date
 from employees.models import Employee
 from departments.models import Department
 
+PRIORITY_CHOICES = [
+    ('low', 'Thấp'),
+    ('normal', 'Bình thường'),
+    ('high', 'Cao'),
+    ('urgent', 'Khẩn cấp'),
+]
+RECOMMENDATION_CHOICES = [
+    ('strong_yes', 'Rất đồng ý tuyển'),
+    ('yes', 'Đồng ý tuyển'),
+    ('maybe', 'Cân nhắc'),
+    ('no', 'Không đồng ý'),
+]
+NEED_STATUS = [
+    ('pending', 'Chờ duyệt'),
+    ('approved', 'Đã duyệt'),
+    ('rejected', 'Từ chối'),
+    ('enrolled', 'Đã đăng ký học'),
+]
+PLAN_STATUS = [
+    ('not_started', 'Chưa bắt đầu'),
+    ('in_progress', 'Đang học'),
+    ('completed', 'Hoàn thành'),
+    ('overdue', 'Quá hạn'),
+]
+PLAN_APPROVAL_STATUS = [
+    ('pending',  'Chờ duyệt'),
+    ('approved', 'Đã duyệt'),
+    ('rejected', 'Từ chối'),
+]
+JOB_APPROVAL_STATUS = [
+    ('pending',  'Chờ duyệt'),
+    ('approved', 'Đã duyệt'),
+    ('rejected', 'Từ chối'),
+]
+
 EMPLOYMENT_TYPE = [
     ('full_time', 'Toàn thời gian'),
     ('part_time', 'Bán thời gian'),
@@ -86,6 +121,27 @@ SESSION_STATUS = [
     ('cancelled', 'Đã hủy'),
 ]
 
+# Constants để dùng thay magic strings trong views/tasks
+APPROVAL_PENDING  = 'pending'
+APPROVAL_APPROVED = 'approved'
+APPROVAL_REJECTED = 'rejected'
+
+STAGE_NEW      = 'new'
+STAGE_HIRED    = 'hired'
+STAGE_REJECTED = 'rejected'
+
+OFFER_SENT    = 'sent'
+OFFER_EXPIRED = 'expired'
+
+PLAN_NOT_STARTED = 'not_started'
+PLAN_IN_PROGRESS = 'in_progress'
+PLAN_COMPLETED   = 'completed'
+PLAN_OVERDUE     = 'overdue'
+
+RESULT_PASS    = 'pass'
+RESULT_FAIL    = 'fail'
+RESULT_PENDING = 'pending'
+
 
 class JobPosition(models.Model):
     title = models.CharField(max_length=200)
@@ -103,12 +159,23 @@ class JobPosition(models.Model):
     status = models.CharField(max_length=20, choices=JOB_STATUS, default='draft')
     hiring_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_jobs')
     source_channels = models.CharField(max_length=500, blank=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='normal')
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs_created')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='requested_jobs')
+    approval_status = models.CharField(max_length=20, choices=JOB_APPROVAL_STATUS, default='approved')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_jobs')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approval_note = models.TextField('Ghi chú duyệt', blank=True)
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status'], name='talent_job_status_idx'),
+            models.Index(fields=['status', 'created_at'], name='talent_job_status_date_idx'),
+        ]
 
     def __str__(self):
         return self.title
@@ -142,11 +209,18 @@ class Applicant(models.Model):
     reject_reason = models.TextField(blank=True)
     notes = models.TextField(blank=True)
     converted_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='converted_from')
+    hired_at = models.DateTimeField(null=True, blank=True, help_text='Tự động set khi stage chuyển sang hired')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='applicants_created')
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('job_position', 'email')
         ordering = ['-applied_at']
+        indexes = [
+            models.Index(fields=['stage'], name='talent_applicant_stage_idx'),
+            models.Index(fields=['applied_at'], name='talent_app_applied_at_idx'),
+            models.Index(fields=['stage', 'applied_at'], name='talent_app_stage_date_idx'),
+        ]
 
     def __str__(self):
         return f"{self.full_name} — {self.job_position.title}"
@@ -165,8 +239,13 @@ class Interview(models.Model):
     duration_minutes = models.PositiveIntegerField(default=60)
     location = models.CharField(max_length=200, blank=True)
     interviewers = models.ManyToManyField(User, blank=True, related_name='interviews')
+    meeting_url = models.URLField(blank=True, help_text='Link Zoom/Google Meet/Teams')
     status = models.CharField(max_length=20, choices=INTERVIEW_STATUS, default='scheduled')
     score = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    score_technical = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    score_communication = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    score_culture_fit = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    recommendation = models.CharField(max_length=20, choices=RECOMMENDATION_CHOICES, blank=True)
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='interviews_created')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -176,6 +255,13 @@ class Interview(models.Model):
 
     def __str__(self):
         return f"PV vòng {self.round_number} — {self.applicant.full_name}"
+
+    @property
+    def average_score(self):
+        scores = [s for s in [self.score_technical, self.score_communication, self.score_culture_fit] if s is not None]
+        if scores:
+            return round(sum(scores) / len(scores), 1)
+        return self.score
 
 
 class JobOffer(models.Model):
@@ -213,9 +299,13 @@ class TrainingCourse(models.Model):
     cost_per_person = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True)
     certificate_validity_months = models.PositiveIntegerField(null=True, blank=True)
     target_departments = models.ManyToManyField(Department, blank=True, related_name='training_courses')
+    learning_objectives = models.TextField(blank=True, help_text='Học viên đạt được gì sau khóa học (mỗi dòng 1 mục tiêu)')
+    prerequisites = models.TextField(blank=True, help_text='Yêu cầu trước khi tham gia')
+    passing_score = models.PositiveIntegerField(default=60, validators=[MinValueValidator(0), MaxValueValidator(100)], help_text='Điểm tối thiểu để đạt (%)')
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses_created')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['name']
@@ -233,13 +323,20 @@ class TrainingSession(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     max_participants = models.PositiveIntegerField(null=True, blank=True)
+    online_meeting_url = models.URLField(blank=True, help_text='Link Zoom/Meet/Teams nếu học online')
+    recording_url = models.URLField(blank=True, help_text='Link video ghi lại buổi học')
+    materials_file = models.FileField(upload_to='training/materials/', null=True, blank=True, help_text='Tài liệu đào tạo (PDF, PPT...)')
     status = models.CharField(max_length=20, choices=SESSION_STATUS, default='planned')
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sessions_created')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-start_date']
+        indexes = [
+            models.Index(fields=['status', 'start_date'], name='talent_session_status_date_idx'),
+        ]
 
     def __str__(self):
         return f"[{self.session_code}] {self.course.name}"
@@ -266,10 +363,14 @@ def _add_months(d, months):
 
 
 def generate_cert_number():
-    import random
     today = date.today().strftime('%Y%m%d')
-    suffix = str(random.randint(1000, 9999))
-    return f"CERT-{today}-{suffix}"
+    prefix = f"CERT-{today}-"
+    count = TrainingCertificate.objects.filter(certificate_number__startswith=prefix).count()
+    candidate = f"{prefix}{count + 1:04d}"
+    while TrainingCertificate.objects.filter(certificate_number=candidate).exists():
+        count += 1
+        candidate = f"{prefix}{count + 1:04d}"
+    return candidate
 
 
 class TrainingEnrollment(models.Model):
@@ -286,11 +387,18 @@ class TrainingEnrollment(models.Model):
     class Meta:
         unique_together = ('session', 'employee')
         ordering = ['-enrolled_at']
+        indexes = [
+            models.Index(fields=['result'], name='talent_enrollment_result_idx'),
+            models.Index(fields=['status'], name='talent_enrollment_status_idx'),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} — {self.session.session_code}"
 
     def save(self, *args, **kwargs):
+        if self.score is not None and self.result == 'pending':
+            passing = self.session.course.passing_score
+            self.result = 'pass' if self.score >= passing else 'fail'
         super().save(*args, **kwargs)
         if self.result == 'pass' and not TrainingCertificate.objects.filter(enrollment=self).exists():
             course = self.session.course
@@ -320,6 +428,9 @@ class TrainingCertificate(models.Model):
 
     class Meta:
         ordering = ['-issued_date']
+        indexes = [
+            models.Index(fields=['expiry_date', 'is_active'], name='talent_cert_expiry_idx'),
+        ]
 
     def __str__(self):
         return f"[{self.certificate_number}] {self.employee.full_name} — {self.course.name}"
@@ -338,3 +449,79 @@ class TrainingCertificate(models.Model):
     def expiring_soon(self):
         d = self.days_until_expiry
         return d is not None and d <= 30
+
+
+class ApplicantStageHistory(models.Model):
+    """Lịch sử thay đổi stage ứng viên — tự động ghi mỗi khi stage thay đổi."""
+    applicant = models.ForeignKey(Applicant, on_delete=models.CASCADE, related_name='stage_history')
+    from_stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    to_stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='stage_changes')
+    changed_at = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.applicant.full_name}: {self.from_stage} → {self.to_stage}"
+
+
+class TrainingNeedAssessment(models.Model):
+    """Đề xuất nhu cầu đào tạo từ nhân viên hoặc quản lý."""
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='training_needs')
+    course = models.ForeignKey(
+        TrainingCourse, on_delete=models.PROTECT, related_name='needs',
+        null=True, blank=True, help_text='Khóa học nếu đã có trong danh mục'
+    )
+    course_name_free = models.CharField(max_length=200, blank=True, help_text='Tên khóa học nếu chưa có trong danh mục')
+    reason = models.TextField(help_text='Lý do cần đào tạo, kỹ năng cần nâng cao')
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='training_requests')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=NEED_STATUS, default='pending')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='training_reviews')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+
+    def __str__(self):
+        course_label = self.course.name if self.course else self.course_name_free
+        return f"{self.employee.full_name} — {course_label}"
+
+
+class EmployeeTrainingPlan(models.Model):
+    """Kế hoạch đào tạo bắt buộc theo năm cho từng nhân viên."""
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='training_plans')
+    course = models.ForeignKey(TrainingCourse, on_delete=models.PROTECT, related_name='plans')
+    year = models.PositiveIntegerField(help_text='Năm kế hoạch, ví dụ 2026')
+    deadline = models.DateField(null=True, blank=True, help_text='Hạn hoàn thành')
+    status = models.CharField(max_length=20, choices=PLAN_STATUS, default='not_started')
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='plans_assigned')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    completed_enrollment = models.ForeignKey(
+        TrainingEnrollment, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='fulfills_plans', help_text='Enrollment hoàn thành kế hoạch này'
+    )
+    notes = models.TextField(blank=True)
+    is_employee_request = models.BooleanField('Nhân viên tự đề xuất', default=False)
+    approval_status = models.CharField(max_length=20, choices=PLAN_APPROVAL_STATUS, default='approved')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_plans')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approval_note = models.TextField('Ghi chú duyệt', blank=True)
+
+    class Meta:
+        unique_together = ('employee', 'course', 'year')
+        ordering = ['year', 'deadline']
+
+    def __str__(self):
+        return f"{self.employee.full_name} — {self.course.name} ({self.year})"
+
+    @property
+    def is_overdue(self):
+        return (
+            self.deadline is not None and
+            self.deadline < date.today() and
+            self.status not in ('completed',)
+        )

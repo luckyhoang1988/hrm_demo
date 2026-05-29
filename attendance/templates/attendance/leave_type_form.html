@@ -37,6 +37,12 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     <div class="card-title">{{ title }}</div>
     <form method="post">
       {% csrf_token %}
+      {% if form.errors %}
+      <div class="non-field-errors" style="background:#ffebee;border-radius:8px;padding:10px 14px;color:#c62828;font-size:13px;margin-bottom:14px;">
+        {% for field in form %}{% for err in field.errors %}<div>{{ field.label }}: {{ err }}</div>{% endfor %}{% endfor %}
+        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+      </div>
+      {% endif %}
       <div class="form-row">
         <div class="form-group">
           <label>Tên loại nghỉ *</label>
@@ -76,6 +82,15 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     </form>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.non-field-errors, .errorlist');
+    if (!e) return;
+    var g = e.closest('.form-group'), i = g ? g.querySelector('input:not([type=hidden]), select, textarea') : null;
+    if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus(); }
+    else { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+</script>
 {% include 'employees/includes/auto_logout.html' %}
 </body>
 </html>

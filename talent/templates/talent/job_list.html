@@ -38,6 +38,14 @@
         .pill-interviewing { background: #e3f2fd; color: #1565c0; }
         .pill-filled       { background: #f3e5f5; color: #6a1b9a; }
         .pill-cancelled    { background: #ffebee; color: #c62828; }
+        .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 2px solid #e0e0e0; }
+        .tab-link { padding: 9px 20px; font-size: 13px; font-weight: 600; text-decoration: none; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; display: flex; align-items: center; gap: 6px; }
+        .tab-link.active { color: #1565C0; border-bottom-color: #1565C0; }
+        .tab-link:hover { color: #1565C0; }
+        .badge { background: #e53935; color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+        .pill-pending  { background: #fff3e0; color: #e65100; }
+        .action-links a.approve-btn { color: #2e7d32; font-weight: 600; }
+        .action-links a.reject-btn { color: #c62828; }
 
         .action-links a { color: #1565C0; text-decoration: none; font-size: 12px; margin-right: 8px; }
         .action-links a:hover { text-decoration: underline; }
@@ -63,7 +71,18 @@
 </div>
 
 <div class="container">
+    {% if can_approve %}
+    <div class="tabs">
+        <a href="{% url 'talent:job_list' %}?tab=all" class="tab-link {% if tab == 'all' or not tab %}active{% endif %}">Tất cả vị trí</a>
+        <a href="{% url 'talent:job_list' %}?tab=pending" class="tab-link {% if tab == 'pending' %}active{% endif %}">
+            Chờ duyệt
+            {% if job_pending_count > 0 %}<span class="badge">{{ job_pending_count }}</span>{% endif %}
+        </a>
+    </div>
+    {% endif %}
+
     <form method="get" class="filter-box">
+        {% if tab %}<input type="hidden" name="tab" value="{{ tab }}">{% endif %}
         <div class="filter-row">
             <div class="filter-group">
                 <label>Tìm kiếm</label>
@@ -116,12 +135,20 @@
                     <td>{{ job.get_employment_type_display }}</td>
                     <td>{{ job.headcount }}</td>
                     <td>{{ job.open_date|date:"d/m/Y" }}</td>
-                    <td><span class="pill pill-{{ job.status }}">{{ job.get_status_display }}</span></td>
+                    <td>
+                        <span class="pill pill-{{ job.status }}">{{ job.get_status_display }}</span>
+                        {% if job.approval_status == 'pending' %}<span class="pill pill-pending" style="margin-left:4px;font-size:11px">Chờ duyệt</span>{% endif %}
+                    </td>
                     <td>{{ job.applicants.count }}</td>
                     <td class="action-links">
+                        {% if can_approve and job.approval_status == 'pending' %}
+                        <a href="{% url 'talent:job_approve' job.pk %}" class="approve-btn">Duyệt</a>
+                        <a href="{% url 'talent:job_reject' job.pk %}" class="reject-btn">Từ chối</a>
+                        {% else %}
                         <a href="{% url 'talent:job_detail' job.pk %}">Chi tiết</a>
                         <a href="{% url 'talent:job_update' job.pk %}">Sửa</a>
                         <a href="{% url 'talent:job_delete' job.pk %}" class="del">Xóa</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

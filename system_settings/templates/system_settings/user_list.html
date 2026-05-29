@@ -164,16 +164,6 @@
         .feat-tag { display: inline-flex; align-items: center; gap: 4px; background: #E8F5E9; color: #2E7D32; border-radius: 12px; padding: 3px 10px; font-size: 12px; margin: 2px; }
         .dept-tag-sg { display: inline-flex; align-items: center; gap: 4px; background: #FFF3E0; color: #E65100; border-radius: 12px; padding: 3px 10px; font-size: 12px; margin: 2px; }
 
-        /* NHÓM BỘ PHẬN GRID */
-        .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-        .group-card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
-        .group-card-header { background: #1565C0; color: white; padding: 14px 18px; }
-        .group-card-header h3 { font-size: 15px; font-weight: 600; }
-        .group-card-header p  { font-size: 12px; opacity: 0.8; margin-top: 2px; }
-        .group-card-body { padding: 14px 18px; }
-        .section-label { font-size: 11px; color: #999; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
-        .dept-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; margin-bottom: 12px; }
-        .dept-tag { background: #E3F2FD; color: #1565C0; border-radius: 20px; padding: 3px 12px; font-size: 12px; }
         .no-item { color: #bbb; font-size: 13px; font-style: italic; }
         .card-actions { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid #f0f0f0; background: #fafafa; }
         .empty-state { text-align: center; color: #aaa; padding: 60px; background: white; border-radius: 10px; border: 2px dashed #ddd; }
@@ -217,7 +207,6 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('users', this)">👤 Tài khoản</button>
         <button class="tab-btn" onclick="switchTab('staffgroups', this)">👥 Nhóm người dùng</button>
-        <button class="tab-btn" onclick="switchTab('groups', this)">🏢 Nhóm bộ phận</button>
     </div>
 
     <!-- TAB 1: TÀI KHOẢN -->
@@ -407,6 +396,13 @@
                                                 <span>Tính lương</span>
                                                 {% if not app_status.app_payroll_active %}<span class="soon-badge">Sắp ra mắt</span>{% endif %}
                                             </label>
+                                            <label class="feat-chip chip-blue">
+                                                <input type="checkbox" name="app_talent"
+                                                    {% if ud.app_talent %}checked{% endif %}>
+                                                <span class="feat-icon">🎯</span>
+                                                <span>Tuyển dụng & Đào tạo</span>
+                                                {% if not app_status.app_talent_active %}<span class="soon-badge">Sắp ra mắt</span>{% endif %}
+                                            </label>
                                         </div>
                                     </div>
 
@@ -431,6 +427,12 @@
                                                     {% if ud.can_import %}checked{% endif %}>
                                                 <span class="feat-icon">⬆</span>
                                                 <span>Nhập Excel</span>
+                                            </label>
+                                            <label class="feat-chip chip-green">
+                                                <input type="checkbox" name="feat_approve_talent"
+                                                    {% if ud.can_approve_talent %}checked{% endif %}>
+                                                <span class="feat-icon">✅</span>
+                                                <span>Duyệt Talent</span>
                                             </label>
                                         </div>
                                     </div>
@@ -496,6 +498,7 @@
     <div id="tab-staffgroups" class="tab-panel">
         <div class="action-bar">
             <a href="{% url 'system_settings:staff_group_create' %}" class="btn btn-green">+ Tạo nhóm người dùng</a>
+            <a href="{% url 'system_settings:group_list' %}" class="btn btn-gray">🗂 Quản lý nhóm bộ phận</a>
         </div>
         {% if staff_groups %}
         <div class="staff-grid">
@@ -528,7 +531,8 @@
                         {% if sg.app_contracts %}<span class="app-tag">📄 Hợp đồng</span>{% endif %}
                         {% if sg.app_attendance %}<span class="app-tag">⏱ Chấm công</span>{% endif %}
                         {% if sg.app_payroll %}<span class="app-tag">💰 Lương</span>{% endif %}
-                        {% if not sg.app_employees and not sg.app_contracts and not sg.app_attendance and not sg.app_payroll %}
+                        {% if sg.app_talent %}<span class="app-tag">🎯 Tuyển dụng & ĐT</span>{% endif %}
+                        {% if not sg.app_employees and not sg.app_contracts and not sg.app_attendance and not sg.app_payroll and not sg.app_talent %}
                         <span class="no-item">Chưa có</span>{% endif %}
                     </div>
 
@@ -537,7 +541,8 @@
                         {% if sg.can_view_dashboard %}<span class="feat-tag">📊 Dashboard</span>{% endif %}
                         {% if sg.can_export %}<span class="feat-tag">⬇ Xuất</span>{% endif %}
                         {% if sg.can_import %}<span class="feat-tag">⬆ Nhập</span>{% endif %}
-                        {% if not sg.can_view_dashboard and not sg.can_export and not sg.can_import %}
+                        {% if sg.can_approve_talent %}<span class="feat-tag">✅ Duyệt Talent</span>{% endif %}
+                        {% if not sg.can_view_dashboard and not sg.can_export and not sg.can_import and not sg.can_approve_talent %}
                         <span class="no-item">Chưa có</span>{% endif %}
                     </div>
 
@@ -566,45 +571,6 @@
         {% endif %}
     </div>
 
-    <!-- TAB 3: NHÓM BỘ PHẬN -->
-    <div id="tab-groups" class="tab-panel">
-        <div class="action-bar">
-            <a href="{% url 'system_settings:group_create' %}" class="btn btn-green">+ Tạo nhóm mới</a>
-        </div>
-        {% if groups %}
-        <div class="groups-grid">
-            {% for group in groups %}
-            <div class="group-card">
-                <div class="group-card-header">
-                    <h3>{{ group.name }}</h3>
-                    {% if group.description %}<p>{{ group.description }}</p>{% endif %}
-                </div>
-                <div class="group-card-body">
-                    <div class="section-label">Bộ phận được phép</div>
-                    <div class="dept-tags">
-                        {% for dept in group.departments.all %}
-                            <span class="dept-tag">{{ dept.name }}</span>
-                        {% empty %}
-                            <span class="no-item">Chưa có bộ phận</span>
-                        {% endfor %}
-                    </div>
-                    <div class="section-label">Số user thuộc nhóm</div>
-                    <span style="font-size:14px; color:#555;"><strong style="color:#1565C0;">{{ group.user_perms.count }}</strong> tài khoản</span>
-                </div>
-                <div class="card-actions">
-                    <a href="{% url 'system_settings:group_update' group.pk %}" class="btn btn-light">Chỉnh sửa</a>
-                    <a href="{% url 'system_settings:group_delete' group.pk %}" class="btn btn-red">Xóa</a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="icon">🗂</div>
-            <p>Chưa có nhóm nào. Bấm <strong>"+ Tạo nhóm mới"</strong> để bắt đầu.</p>
-        </div>
-        {% endif %}
-    </div>
 
 </div>
 
@@ -669,10 +635,6 @@
             cb.checked = false;
             onAccessChange(cb);
         });
-    }
-
-    if (window.location.hash === '#groups') {
-        switchTab('groups', document.querySelectorAll('.tab-btn')[1]);
     }
 
     function saveLinkEmployee(userId) {

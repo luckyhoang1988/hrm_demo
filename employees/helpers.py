@@ -64,6 +64,7 @@ def get_user_features(user):
             'app_attendance': True, 'app_payroll': True,
             'app_talent': True,
             'can_export': True, 'can_import': True, 'can_view_dashboard': True,
+            'can_approve_talent': True,
         }
     profile, _ = UserProfile.objects.get_or_create(user=user)
     f = {
@@ -75,6 +76,7 @@ def get_user_features(user):
         'can_export':         profile.can_export,
         'can_import':         profile.can_import,
         'can_view_dashboard': profile.can_view_dashboard,
+        'can_approve_talent': profile.can_approve_talent,
     }
     for sg in user.staff_groups.all():
         if sg.app_employees:      f['app_employees']      = True
@@ -85,4 +87,5 @@ def get_user_features(user):
         if sg.can_export:         f['can_export']         = True
         if sg.can_import:         f['can_import']         = True
         if sg.can_view_dashboard: f['can_view_dashboard'] = True
+        if sg.can_approve_talent: f['can_approve_talent'] = True
     return f

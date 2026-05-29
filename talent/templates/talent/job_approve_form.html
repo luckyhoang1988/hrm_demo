@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if action == 'approve' %}Duyệt{% else %}Từ chối{% endif %} vị trí tuyển dụng</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: {% if action == 'approve' %}#2e7d32{% else %}#c62828{% endif %}; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .container { padding: 30px; max-width: 680px; margin: 0 auto; }
+        .card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 28px; margin-bottom: 20px; }
+        .card h2 { font-size: 15px; font-weight: 700; color: #555; margin-bottom: 16px; }
+        .info-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px 12px; font-size: 13px; }
+        .info-label { color: #888; font-weight: 600; }
+        .info-value { color: #222; }
+        .alert-info { background: #fff3e0; border: 1px solid #ffcc02; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #e65100; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 6px; text-transform: uppercase; }
+        .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; font-family: inherit; }
+        .form-group textarea:focus { border-color: #1565C0; }
+        .form-error { color: #c62828; font-size: 12px; margin-top: 4px; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-approve { background: #2e7d32; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-reject  { background: #c62828; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-cancel  { background: #f5f5f5; color: #555; padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; text-decoration: none; }
+        .priority-urgent { color: #c62828; font-weight: 700; }
+        .priority-high   { color: #e65100; font-weight: 600; }
+        .priority-normal { color: #333; }
+        .priority-low    { color: #888; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>{% if action == 'approve' %}✅ Duyệt{% else %}❌ Từ chối{% endif %} vị trí tuyển dụng</h1>
+    <a href="{% url 'talent:job_list' %}?tab=pending" class="btn btn-white">← Quay lại</a>
+</div>
+<div class="container">
+    <!-- Thông tin vị trí -->
+    <div class="card">
+        <h2>Thông tin vị trí tuyển dụng đề xuất</h2>
+        <div class="info-grid">
+            <span class="info-label">Vị trí:</span>
+            <span class="info-value"><strong>{{ job.title }}</strong></span>
+            <span class="info-label">Phòng ban:</span>
+            <span class="info-value">{{ job.department.name }}</span>
+            <span class="info-label">Số lượng:</span>
+            <span class="info-value">{{ job.headcount }} người</span>
+            <span class="info-label">Loại hình:</span>
+            <span class="info-value">{{ job.get_employment_type_display }}</span>
+            <span class="info-label">Mức lương:</span>
+            <span class="info-value">
+                {% if job.salary_min and job.salary_max %}
+                    {{ job.salary_min|floatformat:0 }} – {{ job.salary_max|floatformat:0 }} VND
+                {% elif job.salary_min %}từ {{ job.salary_min|floatformat:0 }} VND
+                {% else %}Thỏa thuận{% endif %}
+            </span>
+            <span class="info-label">Ngày mở:</span>
+            <span class="info-value">{{ job.open_date|date:"d/m/Y" }}</span>
+            <span class="info-label">Ưu tiên:</span>
+            <span class="info-value priority-{{ job.priority }}">{{ job.get_priority_display }}</span>
+            <span class="info-label">Người đề xuất:</span>
+            <span class="info-value">{{ job.requested_by.get_full_name|default:job.requested_by.username }}</span>
+        </div>
+    </div>
+
+    {% if action == 'approve' %}
+    <div class="alert-info">
+        ⚠ Khi duyệt, vị trí sẽ được mở tuyển ngay lập tức (status = Đang tuyển).
+        Người đề xuất sẽ nhận được thông báo.
+    </div>
+    {% endif %}
+
+    <!-- Form duyệt/từ chối -->
+    <div class="card">
+        <h2>{% if action == 'approve' %}Xác nhận duyệt{% else %}Xác nhận từ chối{% endif %}</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}{% if action == 'reject' %} *{% endif %}</label>
+                {{ field }}
+                {% if field.errors %}<div class="form-error">{{ field.errors.0 }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-actions">
+                {% if action == 'approve' %}
+                <button type="submit" class="btn-approve">✅ Duyệt và mở tuyển</button>
+                {% else %}
+                <button type="submit" class="btn-reject">❌ Từ chối</button>
+                {% endif %}
+                <a href="{% url 'talent:job_list' %}?tab=pending" class="btn-cancel">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

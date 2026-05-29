@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xóa kế hoạch đào tạo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .container { padding: 32px 30px; max-width: 500px; margin: 0 auto; }
+        .confirm-box { background: white; border-radius: 12px; border: 1px solid #ffcdd2; padding: 32px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .confirm-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #c62828; }
+        .confirm-info { font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+        .actions { display: flex; gap: 10px; }
+        .btn-danger { background: #c62828; color: white; padding: 9px 20px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; }
+        .btn-cancel { background: #e0e0e0; color: #555; text-decoration: none; padding: 9px 20px; border-radius: 6px; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="topbar"><h1>📅 Kế hoạch đào tạo</h1></div>
+<div class="container">
+    <div class="confirm-box">
+        <div class="confirm-title">Xác nhận xóa kế hoạch</div>
+        <div class="confirm-info">
+            Bạn có chắc muốn xóa kế hoạch đào tạo này?<br><br>
+            <strong>Nhân viên:</strong> {{ plan.employee.full_name }}<br>
+            <strong>Khóa học:</strong> {{ plan.course.name }}<br>
+            <strong>Năm:</strong> {{ plan.year }}<br>
+            <strong>Trạng thái:</strong> {{ plan.get_status_display }}
+        </div>
+        <div class="actions">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">Xóa</button>
+            </form>
+            <a href="{% url 'talent:plan_list' %}" class="btn-cancel">Hủy</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

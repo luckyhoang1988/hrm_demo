@@ -160,6 +160,21 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.auto_terminate_employees_task',
         'schedule': crontab(hour=0, minute=5),
     },
+    # Tự động expire offer hết hạn trả lời — chạy lúc 8:30 sáng
+    'check-offer-expiry': {
+        'task': 'talent.tasks.check_offer_expiry',
+        'schedule': crontab(hour=8, minute=30),
+    },
+    # Vô hiệu hóa chứng chỉ đào tạo đã hết hạn — chạy lúc 8:35 sáng
+    'check-certificate-expiry': {
+        'task': 'talent.tasks.check_certificate_expiry',
+        'schedule': crontab(hour=8, minute=35),
+    },
+    # Đồng bộ trạng thái kế hoạch đào tạo — chạy lúc 9:00 sáng thứ Hai
+    'sync-training-plan-status': {
+        'task': 'talent.tasks.sync_training_plan_status',
+        'schedule': crontab(hour=9, minute=0, day_of_week=1),
+    },
 }
 
 # ── LOGGING (ra stdout để Docker logs đọc được) ───────────────────────────────

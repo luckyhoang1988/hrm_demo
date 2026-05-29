@@ -13,6 +13,8 @@ urlpatterns = [
     path('jobs/<int:pk>/', views.job_detail, name='job_detail'),
     path('jobs/<int:pk>/edit/', views.job_update, name='job_update'),
     path('jobs/<int:pk>/delete/', views.job_delete, name='job_delete'),
+    path('jobs/<int:pk>/approve/', views.job_approve, name='job_approve'),
+    path('jobs/<int:pk>/reject/', views.job_reject, name='job_reject'),
 
     # Applicants
     path('applicants/', views.applicant_list, name='applicant_list'),
@@ -66,4 +68,17 @@ urlpatterns = [
     # Training Dashboard & Export
     path('training/dashboard/', views.training_dashboard, name='training_dashboard'),
     path('training/export/', views.training_export, name='training_export'),
+
+    # Training Need Assessment
+    path('needs/', views.need_list, name='need_list'),
+    path('needs/create/', views.need_create, name='need_create'),
+    path('needs/<int:pk>/review/', views.need_review, name='need_review'),
+
+    # Employee Training Plan
+    path('plans/', views.plan_list, name='plan_list'),
+    path('plans/create/', views.plan_create, name='plan_create'),
+    path('plans/request/', views.plan_request_create, name='plan_request_create'),
+    path('plans/<int:pk>/delete/', views.plan_delete, name='plan_delete'),
+    path('plans/<int:pk>/approve/', views.plan_approve, name='plan_approve'),
+    path('plans/<int:pk>/reject/', views.plan_reject, name='plan_reject'),
 ]

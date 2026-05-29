@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đề xuất kế hoạch học tập</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+        .topbar { background: #1565C0; color: white; padding: 14px 30px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-white { background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .container { padding: 30px; max-width: 680px; margin: 0 auto; }
+        .card { background: white; border-radius: 10px; border: 1px solid #e0e0e0; padding: 28px; }
+        .card h2 { font-size: 16px; font-weight: 700; color: #1565C0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
+        .info-box { background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #1565C0; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 6px; text-transform: uppercase; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #1565C0; box-shadow: 0 0 0 2px rgba(21,101,192,0.12); }
+        .form-error { color: #c62828; font-size: 12px; margin-top: 4px; }
+        .form-actions { display: flex; gap: 10px; margin-top: 24px; }
+        .btn-primary { background: #1565C0; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-cancel { background: #f5f5f5; color: #555; padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>📚 Đề xuất kế hoạch học tập</h1>
+    <a href="{% url 'talent:plan_list' %}" class="btn btn-white">← Quay lại</a>
+</div>
+<div class="container">
+    <div class="card">
+        <h2>Điền thông tin đề xuất</h2>
+        <div class="info-box">
+            Bạn đang đề xuất kế hoạch học tập cho <strong>{{ employee.full_name }}</strong> ({{ employee.department.name }}).
+            Trưởng phòng sẽ xem xét và duyệt đề xuất của bạn.
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+                {{ field }}
+                {% if field.errors %}<div class="form-error">{{ field.errors.0 }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            {% if form.non_field_errors %}
+            <div class="form-error" style="margin-bottom:14px">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Gửi đề xuất</button>
+                <a href="{% url 'talent:plan_list' %}" class="btn-cancel">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.errorlist, .error-list, .non-field-errors');
+    if (!e) return;
+    var g = e.closest('.form-group'), i = g ? g.querySelector('input:not([type=hidden]), select, textarea') : null;
+    if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus(); }
+    else { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+</script>
+</body>
+</html>

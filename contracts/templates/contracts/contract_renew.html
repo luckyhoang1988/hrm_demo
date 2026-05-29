@@ -204,6 +204,13 @@ function onTypeChange(sel) {
 document.addEventListener('DOMContentLoaded', function() {
     const sel = document.getElementById('type-select');
     if (sel.value) onTypeChange(sel);
+
+    var e = document.querySelector('.errorlist, .error-list');
+    if (e) {
+        var g = e.closest('.form-group'), i = g ? g.querySelector('input:not([type=hidden]), select, textarea') : null;
+        if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus(); }
+        else { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
 });
 </script>
 {% include 'employees/includes/auto_logout.html' %}

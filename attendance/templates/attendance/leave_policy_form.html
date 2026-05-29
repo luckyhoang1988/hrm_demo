@@ -47,6 +47,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     {% endif %}
     <form method="post">
       {% csrf_token %}
+      {% if form.errors %}
+      <div style="background:#ffebee;border-radius:8px;padding:10px 14px;color:#c62828;font-size:13px;margin-bottom:14px;">
+        {% for field in form %}{% for err in field.errors %}<div>{{ field.label }}: {{ err }}</div>{% endfor %}{% endfor %}
+      </div>
+      {% endif %}
       <div class="form-group">
         <label>Tên chính sách</label>
         {{ form.name }}
@@ -75,6 +80,13 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     </form>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('[style*="ffebee"], .errorlist');
+    if (!e) return;
+    e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+</script>
 {% include 'employees/includes/auto_logout.html' %}
 </body>
 </html>

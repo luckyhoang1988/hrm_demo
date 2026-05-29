@@ -113,5 +113,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     </div>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.msg-error, .msg-success');
+    if (e && e.classList.contains('msg-error')) e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+</script>
 </body>
 </html>

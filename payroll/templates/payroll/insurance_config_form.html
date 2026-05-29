@@ -220,6 +220,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.msg-error');
+    if (e) e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
 let rowCount = {{ pit_brackets|length|default:7 }};
 
 function addRow() {

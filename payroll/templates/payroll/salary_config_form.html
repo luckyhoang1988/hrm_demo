@@ -130,5 +130,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     </div>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.msg-error, .errorlist');
+    if (!e) return;
+    var g = e.closest('.form-group'), i = g ? g.querySelector('input:not([type=hidden]), select, textarea') : null;
+    if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus(); }
+    else { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+</script>
 </body>
 </html>

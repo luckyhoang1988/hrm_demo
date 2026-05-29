@@ -11,15 +11,15 @@ python manage.py runserver  # http://127.0.0.1:8000/
 **9 app chính:**
 | App | Chức năng | Namespace URL |
 |---|---|---|
-| `core` | Nền tảng: BaseModel abstract, Notification, CurrentUserMiddleware | — |
-| `departments` | Phòng ban & Nhóm bộ phận (Department, EmployeeGroup) | — |
-| `employees` | Quản lý nhân viên, dashboard, import/export | — |
+| `core` | BaseModel abstract, Notification, CurrentUserMiddleware | — |
+| `departments` | Department, EmployeeGroup | — |
+| `employees` | Nhân viên, dashboard, import/export | — |
 | `contracts` | Hợp đồng lao động | `contracts` |
-| `system_settings` | Tài khoản, phân quyền, phòng ban, toggle app | `system_settings` |
-| `talent` | Tuyển dụng & Đào tạo | `talent` |
-| `attendance` | Chấm công & Nghỉ phép | `attendance` |
-| `payroll` | Bảng lương, tính thuế TNCN, BHXH | `payroll` |
-| `api` | REST API (DRF) — Employees, Attendance, Payroll | — |
+| `system_settings` | Tài khoản, phân quyền, toggle app | `system_settings` |
+| `talent` | Tuyển dụng & Đào tạo (11 models) | `talent` |
+| `attendance` | Chấm công & Nghỉ phép (8 models) | `attendance` |
+| `payroll` | Bảng lương, thuế TNCN, BHXH (7 models) | `payroll` |
+| `api` | REST API (DRF) — 7 ViewSets | — |
 
 ---
 
@@ -28,14 +28,14 @@ python manage.py runserver  # http://127.0.0.1:8000/
 ```
 myproject/
 ├── myproject/          # settings.py, urls.py, celery.py
-├── core/               # models.py (BaseModel, Notification), middleware.py, tasks.py, context_processors.py
-├── departments/        # models.py (Department, EmployeeGroup), serializers.py, migrations/
+├── core/               # models.py (BaseModel, Notification), middleware.py, tasks.py
+├── departments/        # models.py (Department, EmployeeGroup), serializers.py
 ├── employees/          # models.py, views.py, helpers.py, forms.py, signals.py, serializers.py
 ├── contracts/          # models.py, views.py, forms.py, urls.py
 ├── system_settings/    # models.py (AppStatus), views.py, urls.py
-├── talent/             # models.py (8 models), views.py (37+ views), urls.py
+├── talent/             # models.py (11 models), views.py, forms.py, urls.py, tasks.py
 │   └── management/commands/seed_talent.py
-├── attendance/         # models.py (8 models), views.py (28 views), forms.py, serializers.py
+├── attendance/         # models.py (8 models), views.py, forms.py, serializers.py
 ├── payroll/            # models.py (7 models), views.py, urls.py, serializers.py
 │   └── management/commands/seed_payroll_config.py
 └── api/                # views.py (7 ViewSets), urls.py, permissions.py
@@ -47,10 +47,8 @@ myproject/
 
 ### departments/models.py
 
-**Department** — Phòng ban. `name` (unique). Bảng: `departments_department`.
-
-**EmployeeGroup** — Nhóm bộ phận để phân quyền. ManyToMany với Department. Bảng: `departments_employeegroup`.
-
+**Department** — `name` (unique). Bảng: `departments_department`.
+**EmployeeGroup** — Nhóm phân quyền. ManyToMany với Department.
 Import: `from departments.models import Department, EmployeeGroup`
 
 ### employees/models.py
@@ -59,9 +57,9 @@ Import: `from departments.models import Department, EmployeeGroup`
 
 | Trường | Mô tả |
 |---|---|
-| `user` | FK → User (OneToOne nullable) — liên kết tài khoản đăng nhập |
-| `employee_code` | Mã NV (unique, auto-uppercase, auto-gen NV-YY#### nếu trống) |
-| `status` | 8 loại trạng thái |
+| `user` | OneToOne → User (nullable) — liên kết đăng nhập |
+| `employee_code` | unique, auto-uppercase, auto-gen `NV-YY####` nếu trống |
+| `status` | 8 loại trạng thái (xem bên dưới) |
 | `department` | FK → Department (PROTECT) |
 | `termination_date/reason` | Khi `status = nghi_viec` |
 | `scheduled_termination_date` | Lên lịch tự chuyển `nghi_viec` |
@@ -71,83 +69,64 @@ Import: `from departments.models import Department, EmployeeGroup`
 **8 trạng thái:** `dang_lam`, `thu_viec`, `thuc_tap_sinh`, `nghi_phep`, `nghi_sinh`, `nghi_khong_luong`, `nghi_om`, `nghi_viec`
 
 **LEAVE_STATUSES** (có start/end + note): `nghi_phep`, `nghi_sinh`, `nghi_khong_luong`, `nghi_om`
-
 **DATE_STATUSES** (có start/end, không note, bắt buộc): `thu_viec`, `thuc_tap_sinh`
-
 **Properties:** `is_active`, `days_until_status_end`, `status_expiring_soon`, `days_until_termination`
 
 **UserProfile** (1-1 với User) — Quyền cá nhân: `app_employees`, `app_contracts`, `app_attendance`, `app_payroll`, `app_talent`, `can_export`, `can_import`, `can_view_dashboard`
 
-**UserGroupPermission** — Quyền UserProfile trên từng EmployeeGroup: `can_add`, `can_edit`, `can_delete`
-
-**StaffGroup** — Nhóm user, cùng bộ quyền như UserProfile. `members` ManyToMany với User.
-
-**StaffGroupDeptPerm** — Quyền StaffGroup trên từng EmployeeGroup: `can_add`, `can_edit`, `can_delete`
-
+**UserGroupPermission** — Quyền UserProfile trên EmployeeGroup: `can_add`, `can_edit`, `can_delete`
+**StaffGroup** — Nhóm user, bộ quyền như UserProfile. `members` ManyToMany với User.
+**StaffGroupDeptPerm** — Quyền StaffGroup trên EmployeeGroup: `can_add`, `can_edit`, `can_delete`
 **ActivityLog** — Log hành động: user, action, target_type, target_name, detail, ip, created_at
-
 **StatusLog** — Lịch sử thay đổi trạng thái Employee.
 
 ### system_settings/models.py
 
-**AppStatus** — Singleton (pk=1), dùng `AppStatus.get()`. Toggle kích hoạt app:
-- `app_contracts_active`, `app_attendance_active`, `app_payroll_active`, `app_talent_active`
+**AppStatus** — Singleton (pk=1), dùng `AppStatus.get()`. Toggle: `app_contracts_active`, `app_attendance_active`, `app_payroll_active`, `app_talent_active`
 
-### talent/models.py (8 models)
+### talent/models.py (11 models)
 
-Tuyển dụng: `JobPosition`, `Applicant` (6 stage: new/screening/interview/offer/hired/rejected), `Interview`, `JobOffer`
+**Tuyển dụng:**
+- `JobPosition` — `priority` (low/normal/high/urgent), `status` (draft/open/interviewing/filled/cancelled)
+- `Applicant` — 6 stage (new/screening/interview/offer/hired/rejected), `hired_at` tự set khi stage→hired, `converted_employee` FK→Employee
+- `Interview` — `meeting_url`, `score_technical/communication/culture_fit` (1-5), `recommendation`, property `average_score`
+- `JobOffer` — OneToOne với Applicant, `status` (draft/sent/accepted/rejected/expired)
+- `ApplicantStageHistory` — Audit trail stage: `from_stage`, `to_stage`, `changed_by`, `changed_at`
 
-Đào tạo: `TrainingCourse`, `TrainingSession`, `TrainingEnrollment`, `TrainingCertificate` (tự tạo khi result='pass')
+**Đào tạo:**
+- `TrainingCourse` — `passing_score` (default 60), `learning_objectives`, `prerequisites`, `is_mandatory`
+- `TrainingSession` — `online_meeting_url`, `recording_url`, `materials_file`
+- `TrainingEnrollment` — Auto-set `result='pass'/'fail'` khi nhập score ≥/< passing_score trong `save()`. Tự tạo Certificate khi result='pass'
+- `TrainingCertificate` — `certificate_number` (CERT-YYYYMMDD-NNNN, đếm theo ngày), `expiry_date`, `is_active`
+- `TrainingNeedAssessment` — Đề xuất nhu cầu đào tạo. `status` (pending/approved/rejected/enrolled)
+- `EmployeeTrainingPlan` — Kế hoạch đào tạo theo năm. `unique_together = (employee, course, year)`. `status` (not_started/in_progress/completed/overdue)
 
-`Applicant.converted_employee` → FK nullable → Employee
+**Celery tasks** (`talent/tasks.py`): `notify_stage_change`, `check_offer_expiry` (8:30), `check_certificate_expiry` (8:35), `sync_training_plan_status` (thứ Hai 9:00)
 
 ### attendance/models.py (8 models)
 
-Chấm công: `WorkShift`, `PublicHoliday`, `AttendanceRecord` (6 status, tự tính actual_hours/ot_hours trong save())
-
-Nghỉ phép: `LeaveType`, `LeavePolicy` (12 ngày + 1/5 năm thâm niên), `LeaveBalance` (allocated/used/pending/carried, property `remaining_days`), `LeaveRequest` (tự tính total_days bỏ qua weekend+lễ), `LeaveApproval`
+**Chấm công:** `WorkShift`, `PublicHoliday`, `AttendanceRecord` (6 status, tự tính actual_hours/ot_hours trong `save()`)
+**Nghỉ phép:** `LeaveType`, `LeavePolicy` (12 ngày + 1/5 năm thâm niên), `LeaveBalance` (property `remaining_days`), `LeaveRequest` (tự tính total_days bỏ weekend+lễ), `LeaveApproval`
 
 ### payroll/models.py (7 models)
 
-**PayrollConfig** — Singleton (pk=1), dùng `PayrollConfig.get()`. Fallback khi không có InsuranceConfig theo năm.
+**PayrollConfig** — Singleton (pk=1), `PayrollConfig.get()`. Fallback khi không có InsuranceConfig.
+**InsuranceConfig** — BHXH/BHYT/BHTN theo năm. `salary_cap`, `personal_deduction`, `dependent_deduction`.
+**PITBracket** — Bậc thuế TNCN. `unique_together = (year, order)`.
+**SalaryConfig** — Lương riêng từng NV. Ưu tiên hơn Contract khi `is_active=True`. `allowances` JSONField.
+**OTRecord** — Tăng ca cần duyệt. `pending → approved/rejected`. Auto-fill `multiplier` trong `save()`.
+**Payslip** — `unique_together = (employee, month, year)`. Method `calculate()` gọi trước `save()`, `generate_lines()` gọi SAU `save()`.
+**PayslipLine** — Chi tiết phiếu lương. `category`: `earning`/`deduction`/`tax`.
 
-**InsuranceConfig** — Cấu hình BHXH/BHYT/BHTN theo năm (unique: year). Gồm tỷ lệ NV + chủ, `salary_cap`, `personal_deduction`, `dependent_deduction`.
-
-**PITBracket** — Bậc thuế TNCN theo năm. `unique_together = (year, order)`.
-
-**SalaryConfig** — Cấu hình lương riêng từng NV. Ưu tiên hơn Contract khi `is_active=True`. Có `basic_salary`, `allowances` JSONField, `dependents`, `effective_from/to`. Property `gross_salary`.
-
-**OTRecord** — Bản ghi tăng ca cần duyệt. Status: `pending` → `approved`/`rejected`. Auto-fill `multiplier` từ `ot_type` trong `save()`. OT approved mới được tính vào lương.
-
-**Payslip** — Phiếu lương tháng. `unique_together = (employee, month, year)`.
-
-| Field | Mô tả |
-|---|---|
-| `employee`, `contract` | FK → Employee / Contract |
-| `month`, `year` | Kỳ lương |
-| `basic_salary`, `allowances_detail` | Snapshot (từ SalaryConfig ưu tiên, fallback Contract) |
-| `ot_hours`, `ot_pay` | Từ OTRecord approved (fallback AttendanceRecord) |
-| `gross_salary` | basic + allowances + OT + other_additions |
-| `bhxh/bhyt/bhtn_amount`, `total_insurance` | Tính theo InsuranceConfig (có salary_cap), fallback PayrollConfig |
-| `dependents`, `taxable_income`, `pit_amount` | Thuế TNCN theo PITBracket DB (fallback hardcoded) |
-| `net_salary` | gross - insurance - PIT - other_deductions |
-| `status` | `draft` / `confirmed` |
-
-**Method `payslip.calculate(config=None, insurance_config=None)`** — tính lại toàn bộ, gọi trước `save()`.
-
-**Method `payslip.generate_lines()`** — tạo PayslipLine chi tiết, gọi SAU `save()`.
-
-**Hàm `_calculate_pit(taxable_income, year=None)`** — ưu tiên PITBracket DB; fallback hardcoded.
-
-**PayslipLine** — Dòng chi tiết phiếu lương. FK → Payslip. `category`: `earning`/`deduction`/`tax`.
+Hàm `_calculate_pit(taxable_income, year)` — ưu tiên PITBracket DB, fallback hardcoded.
 
 ---
 
 ## Hệ thống phân quyền
 
-**Logic OR**: quyền cuối = quyền cá nhân (UserProfile) OR quyền từ tất cả StaffGroup.
+**Logic OR**: quyền cuối = UserProfile OR tất cả StaffGroup của user.
 
-**`employees/helpers.py`** — 5 hàm dùng chung trong tất cả app:
+**`employees/helpers.py`** — dùng chung toàn bộ app:
 ```python
 get_allowed_departments(user)  # → QuerySet Department user được xem
 get_user_perms(user)           # → {'can_add', 'editable_depts', 'deletable_depts'}
@@ -155,332 +134,164 @@ get_user_features(user)        # → {'app_employees', 'can_export', ...}
 _get_client_ip(request)        # → IP string
 log_activity(user, action, target_type, target_name, detail, ip)
 ```
+Import: `from employees.helpers import get_user_features, log_activity, _get_client_ip`
 
-Import trong app khác: `from employees.helpers import get_user_features, log_activity, _get_client_ip`
+- Superuser bypass tất cả — luôn check `request.user.is_superuser` trước.
+- `editable_depts = None` → sửa tất cả. `editable_depts` là **set of department names**.
 
-- Superuser bypass tất cả quyền — luôn check `request.user.is_superuser` trước.
-- `editable_depts = None` → được sửa tất cả. `editable_depts` là **set of department names**.
-
-**`api/permissions.py`** — 3 DRF permission class (tái dùng helpers):
-- `HasEmployeesAppPermission` — check `app_employees` + object-level (editable/deletable_depts)
-- `HasAttendanceAppPermission` — check `app_attendance`
-- `HasPayrollAppPermission` — check `app_payroll`
+**`api/permissions.py`**: `HasEmployeesAppPermission`, `HasAttendanceAppPermission`, `HasPayrollAppPermission`
 
 ---
 
-## URLs — Web (Template Views)
+## URLs — Web
 
-### Global (myproject/urls.py)
-`/` → home | `/login/` | `/logout/`
+### Global: `/` home | `/login/` | `/logout/`
 
-### /employees/ — employees/urls.py
+### /employees/
+CRUD: `employee_list`, `employee_create`, `employee_detail`, `employee_update`, `employee_delete`
+Actions: `employee_terminate`, `employee_reactivate`, `employee_change_status`
+Export/Import: `export_csv`, `export_excel`, `import_excel`, `download_import_template`
+Khác: `check_employee_code` (AJAX), `dashboard`, `export_status_excel`, `change_password`
 
-| URL | Tên |
-|---|---|
-| `/employees/` | `employee_list` |
-| `/employees/create/` | `employee_create` |
-| `/employees/<pk>/` | `employee_detail` |
-| `/employees/edit/<pk>/` | `employee_update` |
-| `/employees/delete/<pk>/` | `employee_delete` |
-| `/employees/terminate/<pk>/` | `employee_terminate` |
-| `/employees/reactivate/<pk>/` | `employee_reactivate` |
-| `/employees/change-status/<pk>/` | `employee_change_status` |
-| `/employees/export/csv/` | `export_csv` |
-| `/employees/export/excel/` | `export_excel` |
-| `/employees/import/` | `import_excel` |
-| `/employees/import/template/` | `download_import_template` |
-| `/employees/check-code/` | `check_employee_code` (AJAX) |
-| `/employees/dashboard/` | `dashboard` |
-| `/employees/dashboard/export-status/` | `export_status_excel` |
-| `/employees/change-password/` | `change_password` |
+### /settings/ (namespace `system_settings`)
+Departments: `department_manage`, `department_update`, `department_delete`
+Groups: `group_list`, `group_create`, `group_update`, `group_delete`
+Users: `user_list`, `user_create`, `user_delete`, `admin_reset_password`, `user_link_employee` (AJAX)
+Staff: `staff_group_create`, `staff_group_update`, `staff_group_delete`
+Khác: `permission_manage`, `activity_log`, `toggle_app`
 
-### /settings/ — system_settings/urls.py (namespace `system_settings`)
+### /contracts/ (namespace `contracts`)
+CRUD: `contract_list`, `contract_create`, `contract_detail`, `contract_update`, `contract_delete`
+Actions: `contract_renew`, `contract_terminate`, `contract_print`
+Dashboard: `contract_dashboard`, `contract_dashboard_export_excel`, `contract_export_excel`
 
-| URL | Tên |
-|---|---|
-| `/settings/` | `settings_home` |
-| `/settings/departments/` | `department_manage` |
-| `/settings/departments/edit/<pk>/` | `department_update` |
-| `/settings/departments/delete/<pk>/` | `department_delete` |
-| `/settings/employee-groups/` | `group_list` |
-| `/settings/employee-groups/create/` | `group_create` |
-| `/settings/employee-groups/edit/<pk>/` | `group_update` |
-| `/settings/employee-groups/delete/<pk>/` | `group_delete` |
-| `/settings/users/` | `user_list` |
-| `/settings/users/create/` | `user_create` |
-| `/settings/users/delete/<pk>/` | `user_delete` |
-| `/settings/users/<pk>/reset-password/` | `admin_reset_password` |
-| `/settings/users/<pk>/link-employee/` | `user_link_employee` (AJAX POST) |
-| `/settings/staff-groups/create/` | `staff_group_create` |
-| `/settings/staff-groups/<pk>/edit/` | `staff_group_update` |
-| `/settings/staff-groups/<pk>/delete/` | `staff_group_delete` |
-| `/settings/permissions/` | `permission_manage` |
-| `/settings/activity-log/` | `activity_log` |
-| `/settings/toggle-app/<app_name>/` | `toggle_app` |
+### /talent/ (namespace `talent`)
 
-### /contracts/ — contracts/urls.py (namespace `contracts`)
-
-| URL | Tên |
-|---|---|
-| `/contracts/` | `contract_list` |
-| `/contracts/create/` | `contract_create` |
-| `/contracts/<pk>/` | `contract_detail` |
-| `/contracts/<pk>/edit/` | `contract_update` |
-| `/contracts/<pk>/delete/` | `contract_delete` |
-| `/contracts/<pk>/renew/` | `contract_renew` |
-| `/contracts/<pk>/terminate/` | `contract_terminate` |
-| `/contracts/<pk>/print/` | `contract_print` |
-| `/contracts/dashboard/` | `contract_dashboard` |
-| `/contracts/dashboard/export/excel/` | `contract_dashboard_export_excel` |
-| `/contracts/export/excel/` | `contract_export_excel` |
-
-### /talent/ — talent/urls.py (namespace `talent`)
-
-| URL | Tên |
+| URL pattern | View name |
 |---|---|
 | `/talent/` | `talent_home` |
-| `/talent/jobs/` | `job_list` |
-| `/talent/jobs/create/` | `job_create` |
-| `/talent/jobs/<pk>/` | `job_detail` |
-| `/talent/jobs/<pk>/edit/` | `job_update` |
-| `/talent/jobs/<pk>/delete/` | `job_delete` |
-| `/talent/applicants/` | `applicant_list` |
-| `/talent/applicants/create/` | `applicant_create` |
-| `/talent/applicants/generate-code/` | `generate_employee_code` (AJAX) |
-| `/talent/applicants/<pk>/` | `applicant_detail` |
-| `/talent/applicants/<pk>/edit/` | `applicant_update` |
-| `/talent/applicants/<pk>/delete/` | `applicant_delete` |
+| `/talent/jobs/` + CRUD | `job_list/create/detail/update/delete` |
+| `/talent/applicants/` + CRUD | `applicant_list/create/detail/update/delete` |
 | `/talent/applicants/<pk>/change-stage/` | `applicant_change_stage` |
 | `/talent/applicants/<pk>/convert/` | `applicant_convert` |
 | `/talent/applicants/kanban/` | `applicant_kanban` |
-| `/talent/interviews/create/` | `interview_create` |
+| `/talent/applicants/generate-code/` | `generate_employee_code` (AJAX) |
 | `/talent/interviews/<pk>/delete/` | `interview_delete` |
-| `/talent/offers/create/` | `offer_create` |
-| `/talent/offers/<pk>/edit/` | `offer_update` |
+| `/talent/offers/create/` + edit | `offer_create`, `offer_update` |
 | `/talent/recruitment-dashboard/` | `recruitment_dashboard` |
-| `/talent/courses/` | `course_list` |
-| `/talent/courses/create/` | `course_create` |
-| `/talent/courses/<pk>/` | `course_detail` |
-| `/talent/courses/<pk>/edit/` | `course_update` |
-| `/talent/courses/<pk>/delete/` | `course_delete` |
-| `/talent/sessions/` | `session_list` |
-| `/talent/sessions/create/` | `session_create` |
-| `/talent/sessions/<pk>/` | `session_detail` |
-| `/talent/sessions/<pk>/edit/` | `session_update` |
-| `/talent/sessions/<pk>/delete/` | `session_delete` |
+| `/talent/courses/` + CRUD | `course_list/create/detail/update/delete` |
+| `/talent/sessions/` + CRUD | `session_list/create/detail/update/delete` |
 | `/talent/sessions/<pk>/bulk-score/` | `bulk_score_update` |
-| `/talent/enrollments/create/` | `enrollment_create` |
-| `/talent/certificates/` | `certificate_list` |
-| `/talent/certificates/<pk>/` | `certificate_detail` |
-| `/talent/certificates/<pk>/print/` | `certificate_print` |
+| `/talent/enrollments/create/` + update/delete | `enrollment_create/update/delete` |
+| `/talent/certificates/` + detail/print | `certificate_list/detail/print` |
 | `/talent/training-dashboard/` | `training_dashboard` |
+| `/talent/needs/` | `need_list` |
+| `/talent/needs/create/` | `need_create` |
+| `/talent/needs/<pk>/review/` | `need_review` |
+| `/talent/plans/` | `plan_list` |
+| `/talent/plans/create/` | `plan_create` |
+| `/talent/plans/<pk>/delete/` | `plan_delete` |
 
-### /attendance/ — attendance/urls.py (namespace `attendance`)
+### /attendance/ (namespace `attendance`)
+Records: `attendance_list/create/update/delete`, `attendance_import`, `attendance_dashboard`
+Shifts: `shift_list/create/update/delete`
+Holidays: `holiday_manage`
+Leave types: `leave_type_list/create/update/delete`, `leave_policy_update`
+Balance: `leave_balance_list/create/init`
+Requests: `leave_request_list/create/detail/cancel`, `leave_approve`, `leave_reject`
 
-| URL | Tên |
-|---|---|
-| `/attendance/` | `attendance_home` |
-| `/attendance/records/` | `attendance_list` |
-| `/attendance/records/create/` | `attendance_create` |
-| `/attendance/records/<pk>/edit/` | `attendance_update` |
-| `/attendance/records/<pk>/delete/` | `attendance_delete` |
-| `/attendance/records/import/` | `attendance_import` |
-| `/attendance/dashboard/` | `attendance_dashboard` |
-| `/attendance/shifts/` | `shift_list` |
-| `/attendance/shifts/create/` | `shift_create` |
-| `/attendance/shifts/<pk>/edit/` | `shift_update` |
-| `/attendance/shifts/<pk>/delete/` | `shift_delete` |
-| `/attendance/holidays/` | `holiday_manage` |
-| `/attendance/leave-types/` | `leave_type_list` |
-| `/attendance/leave-types/create/` | `leave_type_create` |
-| `/attendance/leave-types/<pk>/edit/` | `leave_type_update` |
-| `/attendance/leave-types/<pk>/delete/` | `leave_type_delete` |
-| `/attendance/policy/` | `leave_policy_update` |
-| `/attendance/balance/` | `leave_balance_list` |
-| `/attendance/balance/create/` | `leave_balance_create` |
-| `/attendance/balance/init/` | `leave_balance_init` |
-| `/attendance/leaves/` | `leave_request_list` |
-| `/attendance/leaves/create/` | `leave_request_create` |
-| `/attendance/leaves/<pk>/` | `leave_request_detail` |
-| `/attendance/leaves/<pk>/cancel/` | `leave_request_cancel` |
-| `/attendance/leaves/<pk>/approve/` | `leave_approve` |
-| `/attendance/leaves/<pk>/reject/` | `leave_reject` |
-
-### /payroll/ — payroll/urls.py (namespace `payroll`)
-
-| URL | Tên |
-|---|---|
-| `/payroll/` | `payslip_list` |
-| `/payroll/bulk-create/` | `payslip_bulk_create` |
-| `/payroll/<pk>/` | `payslip_detail` |
-| `/payroll/<pk>/edit/` | `payslip_update` |
-| `/payroll/<pk>/delete/` | `payslip_delete` |
-| `/payroll/<pk>/print/` | `payslip_print` |
-| `/payroll/config/` | `payroll_config` |
-| `/payroll/insurance/` | `insurance_config_list` |
-| `/payroll/insurance/create/` | `insurance_config_create` |
-| `/payroll/insurance/<pk>/delete/` | `insurance_config_delete` |
-| `/payroll/salary-config/` | `salary_config_list` |
-| `/payroll/salary-config/create/` | `salary_config_create` |
-| `/payroll/salary-config/<pk>/edit/` | `salary_config_update` |
-| `/payroll/salary-config/<pk>/delete/` | `salary_config_delete` |
-| `/payroll/ot/` | `ot_list` |
-| `/payroll/ot/create/` | `ot_create` |
-| `/payroll/ot/<pk>/approve/` | `ot_approve` |
-| `/payroll/ot/<pk>/reject/` | `ot_reject` |
-| `/payroll/ot/<pk>/delete/` | `ot_delete` |
+### /payroll/ (namespace `payroll`)
+Payslips: `payslip_list`, `payslip_bulk_create`, `payslip_detail/update/delete/print`
+Config: `payroll_config`, `insurance_config_list/create/delete`, `salary_config_list/create/update/delete`
+OT: `ot_list/create`, `ot_approve/reject/delete`
 
 ---
 
 ## URLs — REST API (`/api/`)
 
-**Authentication:** `Authorization: Token <token>` hoặc Session.
-Lấy token: `POST /api/token/` với body `{"username": "...", "password": "..."}`.
-Swagger UI: `/api/docs/` | OpenAPI schema: `/api/schema/`
+Auth: `POST /api/token/` | Health: `GET /api/health/`
+Swagger: `/api/docs/` | Schema: `/api/schema/`
 
-**Serializers:**
-- `departments/serializers.py` — `DepartmentSerializer`
-- `employees/serializers.py` — `EmployeeSerializer`
-- `attendance/serializers.py` — `LeaveTypeSerializer`, `AttendanceRecordSerializer`, `LeaveRequestSerializer`
-- `payroll/serializers.py` — `PayslipSerializer`, `PayslipLineSerializer`, `OTRecordSerializer`
-
-| URL | Method | Chức năng |
+| Endpoint | Methods | Custom actions |
 |---|---|---|
-| `/api/token/` | POST | Lấy auth token |
-| `/api/health/` | GET | Health check (không cần login) |
-| `/api/employees/` | GET, POST | Danh sách + tạo nhân viên |
-| `/api/employees/{id}/` | GET, PUT, PATCH, DELETE | Chi tiết nhân viên |
-| `/api/departments/` | GET, POST | Danh sách + tạo phòng ban |
-| `/api/departments/{id}/` | GET, PUT, PATCH, DELETE | Chi tiết phòng ban |
-| `/api/attendance/records/` | GET, POST | Bản ghi chấm công |
-| `/api/attendance/records/{id}/` | GET, PUT, PATCH, DELETE | Chi tiết chấm công |
-| `/api/attendance/leave-requests/` | GET, POST | Đơn xin nghỉ |
-| `/api/attendance/leave-requests/{id}/` | GET, PUT, PATCH, DELETE | Chi tiết đơn nghỉ |
-| `/api/attendance/leave-requests/{id}/approve/` | POST | Duyệt đơn (2 cấp) |
-| `/api/attendance/leave-requests/{id}/reject/` | POST | Từ chối đơn |
-| `/api/attendance/leave-types/` | GET | Danh sách loại nghỉ (read-only) |
-| `/api/payroll/payslips/` | GET, POST | Danh sách + tạo phiếu lương (auto calculate) |
-| `/api/payroll/payslips/{id}/` | GET, PUT, PATCH, DELETE | Chi tiết phiếu lương |
-| `/api/payroll/payslips/{id}/recalculate/` | POST | Tính lại phiếu lương (chỉ draft) |
-| `/api/payroll/payslips/{id}/confirm/` | POST | Xác nhận phiếu lương |
-| `/api/payroll/ot-records/` | GET, POST | Danh sách + tạo bản ghi OT |
-| `/api/payroll/ot-records/{id}/` | GET, PUT, PATCH, DELETE | Chi tiết OT |
-| `/api/payroll/ot-records/{id}/approve/` | POST | Duyệt OT |
-| `/api/payroll/ot-records/{id}/reject/` | POST | Từ chối OT |
+| `/api/employees/` | CRUD | — |
+| `/api/departments/` | CRUD | — |
+| `/api/attendance/records/` | CRUD | — |
+| `/api/attendance/leave-requests/` | CRUD | `approve`, `reject` |
+| `/api/attendance/leave-types/` | GET only | — |
+| `/api/payroll/payslips/` | CRUD | `recalculate` (draft only), `confirm` |
+| `/api/payroll/ot-records/` | CRUD | `approve`, `reject` |
 
-**Query params chung:** `?search=` (tìm tên/mã) | `?ordering=` (sắp xếp)
-
-**Query params theo endpoint:**
-- employees: `?status=dang_lam` | `?status=all` | `?department=3`
-- attendance/records: `?employee=3` | `?date=2026-05-20` | `?month=5&year=2026` | `?status=present`
-- attendance/leave-requests: `?status=pending` | `?employee=3` | `?year=2026`
-- payroll/payslips: `?month=5&year=2026` | `?employee=3` | `?status=draft`
-- payroll/ot-records: `?employee=3` | `?month=5&year=2026` | `?status=pending`
+**Query params:** `?search=` | `?ordering=` | `?status=` | `?employee=` | `?month=&year=` | `?department=`
 
 ---
 
 ## Quy ước code
 
 ### Web Views
-- Mọi view: `@login_required`. Luôn check `request.user.is_superuser` trước.
+- Mọi view: `@login_required`. Luôn check `request.user.is_superuser` trước khi check quyền.
 - `employee_code` lưu UPPERCASE (`EmployeeForm.clean_employee_code`).
-- `department` là FK — filter bằng `department__in=` hoặc `department__name=`. Không dùng chuỗi thô.
+- `department` là FK — filter `department__in=` hoặc `department__name=`. Không dùng chuỗi thô.
 - `select_related('department')` khi loop qua Employee (tránh N+1).
-- Ngày trong template: `|date:"d/m/Y"`. Khi `.values('department__name')`: dùng `{{ d.department__name }}`.
-- `auto_terminate_employees()` gọi ở đầu `employee_list` — chuyển NV đến `scheduled_termination_date`.
-- Sort/pagination: dùng `base_filter_qs` — `request.GET.copy()` bỏ sort/order/page → `.urlencode()`.
-- `log_activity()` sau mỗi thao tác ghi dữ liệu quan trọng.
-- `paginator.count` thay vì `.count()` thủ công (tránh query thừa).
-- Status filter mặc định `'active'` → ẩn `nghi_viec`, không phải chỉ `dang_lam`.
+- Ngày trong template: `|date:"d/m/Y"`. Khi `.values('department__name')`: `{{ d.department__name }}`.
+- `auto_terminate_employees()` gọi ở đầu `employee_list`.
+- Sort/pagination: `base_filter_qs = request.GET.copy()` bỏ sort/order/page → `.urlencode()`.
+- `log_activity()` sau mỗi thao tác quan trọng. `paginator.count` thay vì `.count()` thủ công.
+- Status filter mặc định `'active'` → ẩn `nghi_viec` (không phải chỉ `dang_lam`).
 
 ### REST API
 - Permission class trong `api/permissions.py` — tái dùng `get_user_features` + `get_user_perms`.
-- Các trường tính toán tự động (ot_hours, gross_salary, pit_amount...) là `read_only` trong serializer.
-- Custom actions (`approve`, `reject`, `confirm`, `recalculate`) dùng `@action(detail=True, methods=['post'])`.
-- `perform_create()` trong ViewSet để inject logic trước khi save (vd: `payslip.calculate()`).
+- Trường tính toán tự động là `read_only` trong serializer.
+- Custom actions dùng `@action(detail=True, methods=['post'])`.
+- `perform_create()` trong ViewSet để inject logic trước khi save.
 
-### Chung
-- **Thêm quyền mới**: cập nhật `UserProfile`, `StaffGroup`, `get_user_features()`, tạo migration.
-- **Thêm trạng thái mới**: cập nhật `STATUS_CHOICES`, `DASH_STATUS_COLORS`, `EXCEL_STATUS_COLORS`.
+### Khi thêm tính năng mới
+- **Quyền mới**: cập nhật `UserProfile`, `StaffGroup`, `get_user_features()`, tạo migration.
+- **Trạng thái mới**: cập nhật `STATUS_CHOICES`, `DASH_STATUS_COLORS`, `EXCEL_STATUS_COLORS`.
 - **Sau mỗi tính năng**: cập nhật CLAUDE.md.
-- Windows: dùng `python -X utf8` khi chạy lệnh có output tiếng Việt (tránh UnicodeEncodeError).
+- Windows: `python -X utf8` khi chạy lệnh có tiếng Việt (tránh UnicodeEncodeError).
 
 ---
 
-## Dependencies
+## Dependencies & Settings
 
 ```
 django>=6.0  openpyxl  Pillow  psycopg2-binary  dj-database-url  python-decouple
-celery[redis]  django-celery-beat  django-celery-results  sqlalchemy
-djangorestframework  drf-spectacular  gunicorn  redis
+celery[redis]  django-celery-beat  django-celery-results
+djangorestframework  drf-spectacular  gunicorn  redis  sqlalchemy
 ```
 
 ```python
-# settings.py
-DATABASES = {'default': dj_database_url.config(default=config('DATABASE_URL'), conn_max_age=600)}
-SESSION_COOKIE_AGE = 900   # auto-logout 15 phút
-SESSION_SAVE_EVERY_REQUEST = True
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ['TokenAuthentication', 'SessionAuthentication'],
-    'DEFAULT_PERMISSION_CLASSES': ['IsAuthenticated'],
-    'DEFAULT_PAGINATION_CLASS': 'PageNumberPagination',
-    'PAGE_SIZE': 50,
-}
-# Celery — Redis broker (Docker), hoặc filesystem (dev local qua .env)
+SESSION_COOKIE_AGE = 900        # auto-logout 15 phút
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
 CELERY_RESULT_BACKEND = 'django-db'
-STATIC_ROOT = BASE_DIR / 'staticfiles'     # collectstatic dùng cho production
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+REST_FRAMEWORK = {'PAGE_SIZE': 50, ...}
 ```
 
-`.env` (Docker): `DATABASE_URL=postgresql://postgres:PASSWORD@db:5432/hrm_db`
-`.env` (Local dev): `DATABASE_URL=postgresql://postgres:PASSWORD@localhost:5432/hrm_db`
+`.env` local: `DATABASE_URL=postgresql://postgres:PASSWORD@localhost:5432/hrm_db`
+`.env` Docker: `DATABASE_URL=postgresql://postgres:PASSWORD@db:5432/hrm_db`
 
-**Chạy Celery local (2 terminal riêng, thêm `-X utf8` nếu cần):**
+**Celery local:**
 ```bash
-celery -A myproject worker --pool=solo -l info          # Terminal 1 — Worker
-celery -A myproject beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler  # Terminal 2 — Beat
+celery -A myproject worker --pool=solo -l info          # Terminal 1
+celery -A myproject beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler  # Terminal 2
 ```
 
 ---
 
-## Docker (Phase 6)
+## Docker
 
-**Cấu trúc files Docker:**
-```
-myproject/
-├── Dockerfile               # Build image Django
-├── docker-compose.yml       # 5 services: nginx, web, db, redis, celery
-├── entrypoint.sh            # migrate → collectstatic → gunicorn
-├── .env                     # Biến môi trường (KHÔNG commit lên git)
-├── .env.example             # Template (commit lên git)
-├── .dockerignore            # Files loại khỏi Docker build
-└── nginx/
-    └── nginx.conf           # Reverse proxy, serve static/media
-```
+5 services: `nginx` (port 80), `web` (Django+Gunicorn), `db` (postgres:16), `redis` (7-alpine), `celery`
 
-**5 Docker services:**
-| Service | Image | Vai trò |
-|---|---|---|
-| `nginx` | nginx:alpine | Reverse proxy, port 80 |
-| `web` | build . | Django + Gunicorn, port 8000 (internal) |
-| `db` | postgres:16-alpine | PostgreSQL, volume `postgres_data` |
-| `redis` | redis:7-alpine | Celery broker |
-| `celery` | build . | Worker + Beat (2 command khác nhau) |
-
-**Lệnh Docker thường dùng:**
 ```bash
-docker-compose up --build        # Build và chạy lần đầu
-docker-compose up -d             # Chạy nền (detach)
-docker-compose down              # Dừng và xóa containers
-docker-compose logs -f web       # Xem logs service web
+docker-compose up --build   # Lần đầu
+docker-compose up -d        # Chạy nền
+docker-compose down         # Dừng
+docker-compose logs -f web  # Logs
 docker-compose exec web python manage.py createsuperuser
-docker-compose exec web python manage.py shell
 ```
 
-**Chú ý khi chuyển đổi Local ↔ Docker:**
-- Local: `DATABASE_URL` dùng `localhost`, `CELERY_BROKER_URL=filesystem://`, `DEBUG=True`
-- Docker: `DATABASE_URL` dùng `db` (tên service), `CELERY_BROKER_URL=redis://redis:6379/0`, `DEBUG=False`
+Local ↔ Docker: đổi `DATABASE_URL` (localhost ↔ db), `CELERY_BROKER_URL` (filesystem ↔ redis), `DEBUG`.
 
 ---
 
@@ -488,22 +299,14 @@ docker-compose exec web python manage.py shell
 
 | Version | Tính năng chính |
 |---|---|
-| v1–v5 | Department FK, cảnh báo trạng thái, thử việc, thực tập sinh |
-| v6–v10 | Sort, bulk actions, scheduled termination, dashboard, phân trang |
-| v11–v15 | Nhóm bộ phận, activity log, PostgreSQL, dashboard Tab 2, filter URL |
-| v16–v20 | App Contracts: CRUD, upload, bản in, dashboard export, form tìm kiếm NV |
-| v21–v23 | App system_settings, AppStatus singleton, auto-logout 15 phút |
-| v24–v25 | App Talent: 7 models, 37 views, bulk ops, PDF chứng chỉ, Kanban |
-| v26 | App Attendance: 8 models, 28 views, duyệt nghỉ phép 2 cấp |
-| v27–v29 | seed_talent, đổi tên Kanban, bán tự động hired → nhân viên |
-| v30 | Tách Department + EmployeeGroup ra app `departments` riêng |
-| v31 | Liên kết User ↔ Employee: OneToOneField, AJAX link/unlink |
-| v32 | Phase 1 — core app (BaseModel, Notification, Middleware), auto-gen employee_code, Contract+AttendanceRecord thêm OT fields |
-| v33–v34 | Phase 2 — App Payroll đầy đủ: 7 models (InsuranceConfig, PITBracket, SalaryConfig, OTRecord, Payslip, PayslipLine), calculate()+generate_lines() |
-| v35 | Phase 3 — Celery filesystem broker, 3 periodic tasks, signals, Notification UI |
-| v36 | Phase 4 — Analytics: Tab "Phân tích nâng cao" cho Employees/Attendance/Talent (Chart.js 4.4.0) |
-| v37 | Phase 5 — DRF Setup: djangorestframework 3.17 + drf-spectacular, Token auth, app `api/`, Swagger UI /api/docs/ |
-| v38 | Employees API: DepartmentViewSet + EmployeeViewSet (CRUD), HasEmployeesAppPermission |
-| v39 | Attendance API: AttendanceRecordViewSet + LeaveRequestViewSet (approve/reject 2 cấp) + LeaveTypeViewSet |
-| v40 | Payroll API: PayslipViewSet (recalculate + confirm) + OTRecordViewSet (approve/reject), auto calculate() khi POST |
-| v41 | Phase 6 — Docker: Dockerfile, docker-compose.yml (5 services), Nginx, Gunicorn, Redis broker, STATIC_ROOT, ALLOWED_HOSTS từ env |
+| v1–v23 | Employees CRUD, Dashboard, Contracts, system_settings, AppStatus, auto-logout |
+| v24–v29 | App Talent: 8 models, Kanban, PDF cert, seed data, hired→nhân viên |
+| v30–v31 | App Departments tách riêng, User↔Employee link (AJAX) |
+| v32–v35 | core app, App Payroll (7 models, thuế TNCN, BHXH), Celery tasks, Notifications |
+| v36 | Analytics: Chart.js 4.4.0 cho Employees/Attendance/Talent |
+| v37–v40 | App API (DRF): 7 ViewSets, Token auth, Swagger, approve/reject/recalculate |
+| v41 | Docker: 5 services (nginx/web/db/redis/celery), Gunicorn, Redis broker |
+| v42 | Tối ưu Talent: 9 DB indexes, fix cert_number/avg_time_to_hire/N+1, thêm 10 fields mới, 3 models (ApplicantStageHistory/TrainingNeedAssessment/EmployeeTrainingPlan), 4 Celery tasks, views/forms/templates cho needs+plans |
+| v43 | Approval workflow Talent: TrainingNeedAssessment (permission check + notification), EmployeeTrainingPlan (nhân viên đề xuất → trưởng phòng duyệt), JobPosition (trưởng phòng đề xuất → HR/Admin duyệt). Helper `_can_review_talent`, 5 views mới (plan_request_create, plan_approve, plan_reject, job_approve, job_reject), tabs phân vai trong job_list/need_list/plan_list |
+| v44 | Tối ưu code Talent: fix N+1 (job_detail, sync_training_plan_status), transaction.atomic() trong applicant_convert, capacity check enrollment_add, helper `_process_approval()` + `_paginate()`, cache get_user_perms(), ApplicantConvertForm, notification khi cert hết hạn, constants thay magic strings, fix UI (màu button, CSS class, colspan) |
+| v45 | UX form toàn project: thêm field `priority` còn thiếu trong `job_form.html`, thêm JS scroll-to-error vào 23 form templates (employees/contracts/attendance/talent/payroll), thêm inline field errors còn thiếu cho shift_form/leave_type_form/leave_balance_form/leave_policy_form |

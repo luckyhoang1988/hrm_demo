@@ -47,20 +47,24 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
         <div class="form-group">
           <label>Giờ bắt đầu *</label>
           {{ form.start_time }}
+          {% if form.start_time.errors %}<ul class="errorlist">{% for e in form.start_time.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="form-group">
           <label>Giờ kết thúc *</label>
           {{ form.end_time }}
+          {% if form.end_time.errors %}<ul class="errorlist">{% for e in form.end_time.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Phút nghỉ giữa ca</label>
           {{ form.break_minutes }}
+          {% if form.break_minutes.errors %}<ul class="errorlist">{% for e in form.break_minutes.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         <div class="form-group">
           <label>Giờ chuẩn/ngày</label>
           {{ form.standard_hours }}
+          {% if form.standard_hours.errors %}<ul class="errorlist">{% for e in form.standard_hours.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
       </div>
       <div class="form-group">
@@ -73,6 +77,15 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
     </form>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.errorlist, .non-field-errors');
+    if (!e) return;
+    var g = e.closest('.form-group'), i = g ? g.querySelector('input:not([type=hidden]), select, textarea') : null;
+    if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus(); }
+    else { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+</script>
 {% include 'employees/includes/auto_logout.html' %}
 </body>
 </html>

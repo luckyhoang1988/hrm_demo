@@ -221,9 +221,11 @@ def user_list(request):
             'app_contracts':      profile.app_contracts,
             'app_attendance':     profile.app_attendance,
             'app_payroll':        profile.app_payroll,
+            'app_talent':         profile.app_talent,
             'can_export':         profile.can_export,
             'can_import':         profile.can_import,
             'can_view_dashboard': profile.can_view_dashboard,
+            'can_approve_talent': profile.can_approve_talent,
         })
 
     # Thêm thông tin employee liên kết cho mỗi user
@@ -337,9 +339,10 @@ def staff_group_create(request):
                 app_attendance     = 'app_attendance' in request.POST,
                 app_payroll        = 'app_payroll'    in request.POST,
                 app_talent         = 'app_talent'     in request.POST,
-                can_export         = 'feat_export'    in request.POST,
-                can_import         = 'feat_import'    in request.POST,
-                can_view_dashboard = 'feat_dashboard' in request.POST,
+                can_export         = 'feat_export'          in request.POST,
+                can_import         = 'feat_import'          in request.POST,
+                can_view_dashboard = 'feat_dashboard'       in request.POST,
+                can_approve_talent = 'feat_approve_talent'  in request.POST,
             )
             sg.members.set(request.POST.getlist('members'))
             for eg in all_emp_groups:
@@ -388,9 +391,10 @@ def staff_group_update(request, pk):
             sg.app_attendance     = 'app_attendance' in request.POST
             sg.app_payroll        = 'app_payroll'    in request.POST
             sg.app_talent         = 'app_talent'     in request.POST
-            sg.can_export         = 'feat_export'    in request.POST
-            sg.can_import         = 'feat_import'    in request.POST
-            sg.can_view_dashboard = 'feat_dashboard' in request.POST
+            sg.can_export         = 'feat_export'         in request.POST
+            sg.can_import         = 'feat_import'         in request.POST
+            sg.can_view_dashboard = 'feat_dashboard'      in request.POST
+            sg.can_approve_talent = 'feat_approve_talent' in request.POST
             sg.save()
             sg.members.set(request.POST.getlist('members'))
             sg.dept_perms.all().delete()
@@ -454,9 +458,10 @@ def permission_manage(request):
         profile.app_attendance = 'app_attendance' in request.POST
         profile.app_payroll    = 'app_payroll'    in request.POST
         profile.app_talent     = 'app_talent'     in request.POST
-        profile.can_export         = 'feat_export'    in request.POST
-        profile.can_import         = 'feat_import'    in request.POST
-        profile.can_view_dashboard = 'feat_dashboard' in request.POST
+        profile.can_export         = 'feat_export'         in request.POST
+        profile.can_import         = 'feat_import'         in request.POST
+        profile.can_view_dashboard = 'feat_dashboard'      in request.POST
+        profile.can_approve_talent = 'feat_approve_talent' in request.POST
         profile.save()
         profile.group_perms.all().delete()
         for group in all_groups:

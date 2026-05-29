@@ -131,6 +131,15 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #
         </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var e = document.querySelector('.errorlist, .error-list');
+    if (!e) return;
+    var g = e.closest('.form-group'), i = g ? g.querySelector('input:not([type=hidden]), select, textarea') : null;
+    if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus(); }
+    else { e.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+});
+</script>
 {% include 'employees/includes/auto_logout.html' %}
 </body>
 </html>

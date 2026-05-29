@@ -15,6 +15,7 @@ class UserProfile(models.Model):
     can_export         = models.BooleanField(default=False)
     can_import         = models.BooleanField(default=False)
     can_view_dashboard = models.BooleanField(default=False)
+    can_approve_talent = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
@@ -55,6 +56,7 @@ class StaffGroup(models.Model):
     can_export         = models.BooleanField(default=False)
     can_import         = models.BooleanField(default=False)
     can_view_dashboard = models.BooleanField(default=False)
+    can_approve_talent = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

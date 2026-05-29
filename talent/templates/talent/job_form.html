@@ -72,6 +72,11 @@
                         <label>Trạng thái</label>
                         {{ form.status }}
                     </div>
+                    <div class="form-group">
+                        <label>Độ ưu tiên *</label>
+                        {{ form.priority }}
+                        {% if form.priority.errors %}<div style="color:#c62828;font-size:12px;margin-top:4px;">{{ form.priority.errors.0 }}</div>{% endif %}
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -137,5 +142,28 @@
     </form>
 </div>
 {% include 'employees/includes/auto_logout.html' %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var firstError = document.querySelector('.form-group select.is-invalid, .form-group input.is-invalid, .error-list');
+    // Tìm field đầu tiên có lỗi inline
+    var errorFields = document.querySelectorAll('.form-group');
+    for (var i = 0; i < errorFields.length; i++) {
+        var errMsg = errorFields[i].querySelector('[style*="c62828"]');
+        if (errMsg) {
+            var input = errorFields[i].querySelector('input, select, textarea');
+            if (input) {
+                input.style.borderColor = '#c62828';
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                input.focus();
+            }
+            break;
+        }
+    }
+    // Nếu không có lỗi inline, scroll lên đầu thông báo lỗi
+    if (document.querySelector('.error-list') && !document.querySelector('[style*="c62828"]')) {
+        document.querySelector('.error-list').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+</script>
 </body>
 </html>
