@@ -24,6 +24,7 @@ services:
   web:
     build: .
     command: gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -
+    restart: always
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
@@ -75,6 +76,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    restart: always
     ports:
       - "80:80"
     volumes:
