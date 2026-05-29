@@ -4,6 +4,12 @@
 
 # Database backup (chỉ dùng khi migrate)
 data_backup.json
+backup.json
+backup2.json
+backup*.json
+backup*.sql
+*.sql
+*.dump
 
 # SQLite (không cần nếu đã dùng PostgreSQL)
 db.sqlite3
