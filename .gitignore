@@ -30,3 +30,11 @@ media/
 venv/
 env/
 .venv/
+
+# Celery runtime data
+celery_data/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
