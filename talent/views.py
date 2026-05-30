@@ -577,7 +577,7 @@ def applicant_detail(request, pk):
     )
     interviews = applicant.interviews.select_related('created_by').prefetch_related('interviewers')
     offer = getattr(applicant, 'joboffer', None)
-    stage_history = applicant.stagehistory_set.select_related('changed_by').order_by('-changed_at')[:10]
+    stage_history = applicant.stage_history.select_related('changed_by').order_by('-changed_at')[:10]
 
     return render(request, 'talent/applicant_detail.html', {
         'features': features,
