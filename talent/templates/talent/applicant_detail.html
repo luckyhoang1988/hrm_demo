@@ -123,7 +123,12 @@
         <div class="card">
             <div class="card-header">
                 📋 Offer
-                <a href="{% url 'talent:offer_update' offer.pk %}" style="font-size:13px; color:#1565C0; text-decoration:none;">Sửa</a>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <a href="{% url 'talent:offer_update' offer.pk %}" style="font-size:13px; color:#1565C0; text-decoration:none;">Sửa</a>
+                    {% if offer.status == 'draft' %}
+                    <a href="{% url 'talent:offer_delete' offer.pk %}" style="font-size:13px; color:#c62828; text-decoration:none;">Xóa</a>
+                    {% endif %}
+                </div>
             </div>
             <div class="card-body">
                 <div class="stat-item"><span class="stat-label">Trạng thái</span><span><span class="pill pill-offer-{{ offer.status }}">{{ offer.get_status_display }}</span></span></div>
@@ -159,6 +164,33 @@
         <div class="card" style="border-color: #a5d6a7; background: #f1fff2;">
             <div class="card-body" style="padding:16px;">
                 ✅ Đã chuyển thành nhân viên: <a href="{% url 'employee_detail' applicant.converted_employee.pk %}" style="color:#1565C0; font-weight:600; text-decoration:none;">{{ applicant.converted_employee.full_name }}</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Lịch sử giai đoạn -->
+        {% if stage_history %}
+        <div class="card">
+            <div class="card-header">🕓 Lịch sử giai đoạn</div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for h in stage_history %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="font-size:12px;width:32px;height:32px;">→</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">
+                                <span class="pill pill-{{ h.from_stage }}" style="font-size:11px;">{{ h.get_from_stage_display }}</span>
+                                → <span class="pill pill-{{ h.to_stage }}" style="font-size:11px;">{{ h.get_to_stage_display }}</span>
+                            </div>
+                            <div class="timeline-meta">
+                                {{ h.changed_at|date:"d/m/Y H:i" }}
+                                {% if h.changed_by %}· {{ h.changed_by.get_full_name|default:h.changed_by.username }}{% endif %}
+                                {% if h.note %}· {{ h.note }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
         {% endif %}

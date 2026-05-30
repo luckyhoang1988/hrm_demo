@@ -1,9 +1,12 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import date
 from .models import (
     JobPosition, Applicant, Interview, JobOffer,
     TrainingCourse, TrainingSession, TrainingEnrollment,
     TrainingNeedAssessment, EmployeeTrainingPlan,
+    STAGE_CHOICES,
 )
 from employees.models import Employee
 from departments.models import Department
@@ -58,6 +61,14 @@ class ApplicantStageForm(forms.ModelForm):
             'reject_reason': forms.Textarea(attrs={'rows': 3}),
         }
 
+    def clean(self):
+        cleaned = super().clean()
+        stage = cleaned.get('stage')
+        reject_reason = cleaned.get('reject_reason')
+        if stage == 'rejected' and not reject_reason:
+            self.add_error('reject_reason', 'Bắt buộc nhập lý do từ chối.')
+        return cleaned
+
 
 class InterviewForm(forms.ModelForm):
     class Meta:
@@ -74,6 +85,12 @@ class InterviewForm(forms.ModelForm):
             'meeting_url': forms.URLInput(attrs={'placeholder': 'https://meet.google.com/...'}),
         }
 
+    def clean_scheduled_date(self):
+        scheduled_date = self.cleaned_data.get('scheduled_date')
+        if scheduled_date and scheduled_date < date.today():
+            raise forms.ValidationError('Ngày phỏng vấn không được trong quá khứ.')
+        return scheduled_date
+
 
 class JobOfferForm(forms.ModelForm):
     class Meta:
@@ -87,6 +104,14 @@ class JobOfferForm(forms.ModelForm):
             'benefits_note': forms.Textarea(attrs={'rows': 3}),
             'rejection_reason': forms.Textarea(attrs={'rows': 2}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get('start_date')
+        deadline = cleaned.get('deadline_response')
+        if start and deadline and deadline < start:
+            self.add_error('deadline_response', 'Hạn phản hồi phải sau ngày bắt đầu làm việc.')
+        return cleaned
 
 
 class TrainingCourseForm(forms.ModelForm):
@@ -134,6 +159,12 @@ class EnrollmentUpdateForm(forms.ModelForm):
             'feedback_comment': forms.Textarea(attrs={'rows': 2}),
         }
 
+    def clean_score(self):
+        score = self.cleaned_data.get('score')
+        if score is not None and not (0 <= score <= 100):
+            raise forms.ValidationError('Điểm phải từ 0 đến 100.')
+        return score
+
 
 class EnrollmentAddForm(forms.Form):
     employees = forms.ModelMultipleChoiceField(
@@ -179,6 +210,12 @@ class EmployeeTrainingPlanForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 2}),
         }
 
+    def clean_deadline(self):
+        deadline = self.cleaned_data.get('deadline')
+        if deadline and deadline < date.today():
+            raise forms.ValidationError('Hạn hoàn thành không được trong quá khứ.')
+        return deadline
+
 
 class PlanRequestForm(forms.ModelForm):
     """Nhân viên tự đề xuất kế hoạch học — không cần chọn employee (lấy từ user hiện tại)."""
@@ -189,6 +226,18 @@ class PlanRequestForm(forms.ModelForm):
             'deadline': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Lý do muốn học khóa này...'}),
         }
+
+    def clean_year(self):
+        year = self.cleaned_data.get('year')
+        if year and year < date.today().year:
+            raise forms.ValidationError('Năm kế hoạch không được nhỏ hơn năm hiện tại.')
+        return year
+
+    def clean_deadline(self):
+        deadline = self.cleaned_data.get('deadline')
+        if deadline and deadline < date.today():
+            raise forms.ValidationError('Hạn hoàn thành không được trong quá khứ.')
+        return deadline
 
 
 class PlanApproveForm(forms.Form):

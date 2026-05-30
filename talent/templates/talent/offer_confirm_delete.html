@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xóa Offer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: white; border-radius: 12px; padding: 32px; max-width: 460px; width: 100%; border: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        h2 { font-size: 18px; color: #c62828; margin-bottom: 12px; }
+        p { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.6; }
+        .actions { display: flex; gap: 10px; }
+        .btn { padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; }
+        .btn-red { background: #c62828; color: white; }
+        .btn-gray { background: #e0e0e0; color: #555; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>Xóa Offer?</h2>
+    <p>Bạn sắp xóa offer của ứng viên <strong>{{ offer.applicant.full_name }}</strong> (trạng thái: {{ offer.get_status_display }}).<br>Thao tác này không thể hoàn tác.</p>
+    <div class="actions">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-red">Xóa</button>
+        </form>
+        <a href="{% url 'talent:applicant_detail' offer.applicant.pk %}" class="btn btn-gray">Hủy</a>
+    </div>
+</div>
+{% include 'employees/includes/auto_logout.html' %}
+</body>
+</html>

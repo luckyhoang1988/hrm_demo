@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(New-Item -ItemType Directory -Force -Path \"d:\\\\15.Python\\\\python-project\\\\myproject\\\\employees\\\\templates\\\\employees\\\\includes\")",
       "WebSearch"
     ]
   }

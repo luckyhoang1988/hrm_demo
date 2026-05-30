@@ -327,6 +327,12 @@ def job_update(request, pk):
         return redirect('home')
 
     job = get_object_or_404(JobPosition, pk=pk)
+
+    if not request.user.is_superuser and not features.get('can_approve_talent'):
+        if job.created_by != request.user:
+            messages.error(request, 'Bạn không có quyền chỉnh sửa vị trí này.')
+            return redirect('talent:job_detail', pk=job.pk)
+
     if request.method == 'POST':
         form = JobPositionForm(request.POST, instance=job)
         if form.is_valid():
@@ -423,7 +429,7 @@ def job_reject(request, pk):
         success_msg=f'Đã từ chối vị trí "{job.title}".',
         notif_user=job.requested_by,
         notif_title='Vị trí tuyển dụng bị từ chối',
-        notif_message=f'Vị trí "{job.title}" bị từ chối. Lý do: {job.approval_note}',
+        notif_message=f'Vị trí "{job.title}" đã bị từ chối. Xem lý do chi tiết tại mục Vị trí tuyển dụng.',
         notif_type=Notification.TYPE_DANGER,
         notif_link=reverse('talent:job_list'),
     )
@@ -571,12 +577,14 @@ def applicant_detail(request, pk):
     )
     interviews = applicant.interviews.select_related('created_by').prefetch_related('interviewers')
     offer = getattr(applicant, 'joboffer', None)
+    stage_history = applicant.stagehistory_set.select_related('changed_by').order_by('-changed_at')[:10]
 
     return render(request, 'talent/applicant_detail.html', {
         'features': features,
         'applicant': applicant,
         'interviews': interviews,
         'offer': offer,
+        'stage_history': stage_history,
         'stage_choices': STAGE_CHOICES,
     })
 
@@ -588,6 +596,12 @@ def applicant_update(request, pk):
         return redirect('home')
 
     applicant = get_object_or_404(Applicant, pk=pk)
+
+    if not request.user.is_superuser and not features.get('can_approve_talent'):
+        if applicant.created_by != request.user:
+            messages.error(request, 'Bạn không có quyền chỉnh sửa thông tin ứng viên này.')
+            return redirect('talent:applicant_detail', pk=applicant.pk)
+
     if request.method == 'POST':
         form = ApplicantForm(request.POST, request.FILES, instance=applicant)
         if form.is_valid():
@@ -874,6 +888,36 @@ def offer_update(request, pk):
     })
 
 
+@login_required
+def offer_delete(request, pk):
+    features = _check_talent(request)
+    if features is None:
+        return redirect('home')
+
+    offer = get_object_or_404(JobOffer.objects.select_related('applicant'), pk=pk)
+    applicant_pk = offer.applicant.pk
+
+    if not request.user.is_superuser and offer.created_by != request.user:
+        messages.error(request, 'Bạn không có quyền xóa offer này.')
+        return redirect('talent:applicant_detail', pk=applicant_pk)
+
+    if offer.status != 'draft':
+        messages.error(request, 'Chỉ có thể xóa offer ở trạng thái Nháp.')
+        return redirect('talent:applicant_detail', pk=applicant_pk)
+
+    if request.method == 'POST':
+        offer.delete()
+        log_activity(request.user, 'delete', 'talent',
+                     f'Offer cho {offer.applicant.full_name}', ip=_get_client_ip(request))
+        messages.success(request, 'Đã xóa offer.')
+        return redirect('talent:applicant_detail', pk=applicant_pk)
+
+    return render(request, 'talent/offer_confirm_delete.html', {
+        'features': features,
+        'offer': offer,
+    })
+
+
 # ─────────────────────────────────────────────────────────────
 # RECRUITMENT DASHBOARD
 # ─────────────────────────────────────────────────────────────
@@ -886,10 +930,11 @@ def recruitment_dashboard(request):
 
     from django.db.models.functions import TruncMonth
 
-    # Tổng quan theo trạng thái job
+    # Tổng quan theo trạng thái job — 1 query thay vì N queries
+    status_raw = {row['status']: row['cnt'] for row in JobPosition.objects.values('status').annotate(cnt=Count('id'))}
     job_status_counts = {}
     for key, label in JOB_STATUS:
-        job_status_counts[key] = {'label': label, 'count': JobPosition.objects.filter(status=key).count()}
+        job_status_counts[key] = {'label': label, 'count': status_raw.get(key, 0)}
 
     # Ứng viên theo giai đoạn + tỷ lệ chuyển đổi
     total_applicants = Applicant.objects.count()
@@ -1088,6 +1133,11 @@ def course_update(request, pk):
         return redirect('home')
 
     course = get_object_or_404(TrainingCourse, pk=pk)
+
+    if not request.user.is_superuser and not features.get('can_approve_talent'):
+        messages.error(request, 'Bạn không có quyền chỉnh sửa khóa học.')
+        return redirect('talent:course_detail', pk=course.pk)
+
     if request.method == 'POST':
         form = TrainingCourseForm(request.POST, instance=course)
         if form.is_valid():
@@ -1213,6 +1263,11 @@ def session_update(request, pk):
         return redirect('home')
 
     session = get_object_or_404(TrainingSession, pk=pk)
+
+    if not request.user.is_superuser and not features.get('can_approve_talent'):
+        messages.error(request, 'Bạn không có quyền chỉnh sửa buổi học.')
+        return redirect('talent:session_detail', pk=session.pk)
+
     if request.method == 'POST':
         form = TrainingSessionForm(request.POST, instance=session)
         if form.is_valid():
@@ -1733,6 +1788,38 @@ def need_create(request):
 
 
 @login_required
+def need_delete(request, pk):
+    features = _check_talent(request)
+    if features is None:
+        return redirect('home')
+
+    need = get_object_or_404(
+        TrainingNeedAssessment.objects.select_related('employee'), pk=pk
+    )
+
+    if not request.user.is_superuser and need.requested_by != request.user:
+        messages.error(request, 'Bạn không có quyền xóa đề xuất này.')
+        return redirect('talent:need_list')
+
+    if need.status != 'pending':
+        messages.error(request, 'Chỉ có thể xóa đề xuất ở trạng thái Chờ duyệt.')
+        return redirect('talent:need_list')
+
+    if request.method == 'POST':
+        name = need.employee.full_name
+        need.delete()
+        log_activity(request.user, 'delete', 'talent', name,
+                     detail='Xóa đề xuất nhu cầu đào tạo', ip=_get_client_ip(request))
+        messages.success(request, 'Đã xóa đề xuất.')
+        return redirect('talent:need_list')
+
+    return render(request, 'talent/need_confirm_delete.html', {
+        'features': features,
+        'need': need,
+    })
+
+
+@login_required
 def need_review(request, pk):
     features = _check_talent(request)
     if features is None:
@@ -1910,6 +1997,45 @@ def plan_delete(request, pk):
 
 
 @login_required
+def plan_update(request, pk):
+    features = _check_talent(request)
+    if features is None:
+        return redirect('home')
+
+    plan = get_object_or_404(
+        EmployeeTrainingPlan.objects.select_related('employee', 'course'), pk=pk
+    )
+
+    if not request.user.is_superuser and not _can_review_talent(request.user, plan.employee):
+        messages.error(request, 'Bạn không có quyền chỉnh sửa kế hoạch này.')
+        return redirect('talent:plan_list')
+
+    if plan.approval_status not in (APPROVAL_PENDING, APPROVAL_APPROVED) and not request.user.is_superuser:
+        messages.error(request, 'Không thể sửa kế hoạch đã bị từ chối.')
+        return redirect('talent:plan_list')
+
+    if request.method == 'POST':
+        form = EmployeeTrainingPlanForm(request.POST, instance=plan)
+        if form.is_valid():
+            form.save()
+            log_activity(request.user, 'edit', 'talent',
+                         plan.employee.full_name,
+                         detail=f'Sửa kế hoạch đào tạo: {plan.course.name} ({plan.year})',
+                         ip=_get_client_ip(request))
+            messages.success(request, 'Đã cập nhật kế hoạch đào tạo.')
+            return redirect('talent:plan_list')
+    else:
+        form = EmployeeTrainingPlanForm(instance=plan)
+
+    return render(request, 'talent/plan_form.html', {
+        'features': features,
+        'form': form,
+        'plan': plan,
+        'title': f'Sửa kế hoạch: {plan.employee.full_name} — {plan.course.name}',
+    })
+
+
+@login_required
 def plan_request_create(request):
     """Nhân viên tự đề xuất kế hoạch học — yêu cầu nhân viên đó phải có tài khoản Employee."""
     features = _check_talent(request)
@@ -2015,7 +2141,7 @@ def plan_reject(request, pk):
         success_msg=f'Đã từ chối kế hoạch học của {plan.employee.full_name}.',
         notif_user=plan.employee.user,
         notif_title='Kế hoạch học tập bị từ chối',
-        notif_message=f'Kế hoạch học "{plan.course.name}" ({plan.year}) bị từ chối. Lý do: {plan.approval_note}',
+        notif_message=f'Kế hoạch học "{plan.course.name}" ({plan.year}) đã bị từ chối. Xem lý do chi tiết tại mục Kế hoạch đào tạo.',
         notif_type=Notification.TYPE_DANGER,
         notif_link=reverse('talent:plan_list'),
     )

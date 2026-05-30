@@ -125,6 +125,9 @@
                         {% else %}
                         <a href="{% url 'talent:need_review' need.pk %}">Xem</a>
                         {% endif %}
+                        {% if need.status == 'pending' and need.requested_by == request.user or request.user.is_superuser %}
+                        <a href="{% url 'talent:need_delete' need.pk %}" style="color:#c62828;">Xóa</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

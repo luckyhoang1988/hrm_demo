@@ -156,6 +156,9 @@
                         <a href="{% url 'talent:plan_approve' plan.pk %}" class="approve-btn">Duyệt</a>
                         <a href="{% url 'talent:plan_reject' plan.pk %}" class="reject-btn">Từ chối</a>
                         {% else %}
+                        {% if request.user.is_superuser or plan.approval_status != 'rejected' %}
+                        <a href="{% url 'talent:plan_update' plan.pk %}">Sửa</a>
+                        {% endif %}
                         <a href="{% url 'talent:plan_delete' plan.pk %}" class="del">Xóa</a>
                         {% endif %}
                     </td>

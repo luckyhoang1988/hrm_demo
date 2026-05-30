@@ -6,14 +6,14 @@
 - Nếu tính năng liên quan đến model → cần tạo migration
 
 ## Khi thay đổi models.py
-1. Sửa `employees/models.py`
-2. Chạy `python manage.py makemigrations`
-3. Chạy `python manage.py migrate`
-4. Kiểm tra `python manage.py check` không có lỗi
+1. Sửa `<app>/models.py`
+2. Chạy `python -X utf8 manage.py makemigrations <app>`
+3. Chạy `python -X utf8 manage.py migrate`
+4. Kiểm tra `python -X utf8 manage.py check` không có lỗi
 
 ## Khi thêm quyền mới (permission)
-- Thêm vào cả `UserProfile` VÀ `StaffGroup` trong models.py
-- Cập nhật hàm `get_user_features()` trong views.py
+- Thêm vào cả `UserProfile` VÀ `StaffGroup` trong `employees/models.py`
+- Cập nhật hàm `get_user_features()` trong `employees/helpers.py`
 - Tạo migration
 
 ## Khi thêm trạng thái nhân viên mới
@@ -23,7 +23,8 @@
 - Thêm CSS pill màu tương ứng trong employee_list.html
 
 ## Sau khi hoàn thành tính năng
-- Cập nhật section "Tính năng đã hoàn thành" trong CLAUDE.md
+- Cập nhật section "Phiên bản hiện tại" trong CLAUDE.md
+- Nếu thêm model/field mới → cập nhật phần Models trong CLAUDE.md
 - Xóa thông tin lỗi thời trong CLAUDE.md nếu có
 
 ## Quy tắc code
