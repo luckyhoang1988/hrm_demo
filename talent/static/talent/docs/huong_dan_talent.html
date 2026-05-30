@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hướng dẫn sử dụng — Tuyển dụng & Đào tạo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #fff;
+    }
+
+    /* ===== COVER PAGE ===== */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      padding: 60px 40px;
+      page-break-after: always;
+    }
+    .cover .logo {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #e94560;
+      margin-bottom: 8px;
+    }
+    .cover .logo span { color: #fff; }
+    .cover .tagline {
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #a8b2d8;
+      margin-bottom: 60px;
+    }
+    .cover h1 {
+      font-size: 34px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+    .cover .subtitle {
+      font-size: 16px;
+      color: #a8b2d8;
+      margin-bottom: 60px;
+    }
+    .cover .badge-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+    .cover .badge {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 12px;
+      color: #ccd6f6;
+    }
+    .cover .meta {
+      font-size: 12px;
+      color: #495670;
+    }
+
+    /* ===== TOC ===== */
+    .toc-page {
+      padding: 60px 80px;
+      page-break-after: always;
+    }
+    .toc-page h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f3460;
+      border-bottom: 3px solid #e94560;
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+    }
+    .toc-group { margin-bottom: 24px; }
+    .toc-group-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #e94560;
+      margin-bottom: 10px;
+    }
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dotted #e0e0e0;
+      color: #1a1a2e;
+    }
+    .toc-item.sub { padding-left: 20px; color: #555; }
+    .toc-page-num { color: #888; font-size: 11px; }
+
+    /* ===== CONTENT ===== */
+    .page {
+      padding: 50px 80px;
+      page-break-before: auto;
+    }
+
+    /* Section header */
+    .section-banner {
+      background: linear-gradient(135deg, #0f3460, #16213e);
+      color: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      page-break-before: always;
+    }
+    .section-banner .section-num {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #e94560;
+      margin-bottom: 6px;
+    }
+    .section-banner h2 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .section-banner p {
+      font-size: 13px;
+      color: #a8b2d8;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f3460;
+      margin: 28px 0 12px;
+      padding-left: 12px;
+      border-left: 4px solid #e94560;
+    }
+    h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #16213e;
+      margin: 18px 0 8px;
+    }
+    p { margin-bottom: 10px; color: #333; }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 16px 0 24px;
+    }
+    .card {
+      border: 1px solid #e0e7ff;
+      border-radius: 8px;
+      padding: 16px;
+      background: #f8f9ff;
+    }
+    .card .card-icon { font-size: 22px; margin-bottom: 8px; }
+    .card .card-title { font-weight: 700; font-size: 13px; color: #0f3460; margin-bottom: 4px; }
+    .card .card-desc { font-size: 11px; color: #666; line-height: 1.5; }
+
+    /* Steps */
+    .steps { margin: 16px 0 24px; }
+    .step {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: flex-start;
+    }
+    .step-num {
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #e94560;
+      color: white;
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-content .step-title { font-weight: 700; color: #0f3460; margin-bottom: 3px; }
+    .step-content .step-desc { font-size: 12px; color: #555; }
+
+    /* Workflow */
+    .workflow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+      margin: 16px 0 24px;
+      background: #f8f9ff;
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #e0e7ff;
+    }
+    .wf-stage {
+      text-align: center;
+      padding: 8px 14px;
+    }
+    .wf-stage .wf-dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      margin: 0 auto 6px;
+    }
+    .wf-stage .wf-label { font-size: 10px; font-weight: 600; color: #555; }
+    .wf-arrow { color: #ccc; font-size: 18px; padding: 0 4px; }
+
+    .wf-new .wf-dot { background: #e3f2fd; }
+    .wf-screen .wf-dot { background: #fff3e0; }
+    .wf-interview .wf-dot { background: #f3e5f5; }
+    .wf-offer .wf-dot { background: #e8f5e9; }
+    .wf-hired .wf-dot { background: #e8f5e9; }
+    .wf-rejected .wf-dot { background: #ffebee; }
+
+    /* Permission table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 24px;
+      font-size: 12px;
+    }
+    th {
+      background: #0f3460;
+      color: white;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #fafafa; }
+    .check { color: #2e7d32; font-weight: 700; }
+    .cross { color: #c62828; }
+    .partial { color: #e65100; }
+
+    /* Info boxes */
+    .info-box {
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 12px;
+    }
+    .info-box.tip { background: #e8f5e9; border-left: 4px solid #43a047; }
+    .info-box.warning { background: #fff8e1; border-left: 4px solid #ffb300; }
+    .info-box.note { background: #e3f2fd; border-left: 4px solid #1e88e5; }
+    .info-box strong { display: block; margin-bottom: 4px; }
+
+    /* Field list */
+    .field-list { margin: 10px 0 20px; }
+    .field-item {
+      display: flex;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 12px;
+    }
+    .field-name { font-weight: 600; color: #0f3460; min-width: 160px; }
+    .field-req { color: #e94560; min-width: 60px; font-size: 11px; }
+    .field-desc { color: #555; }
+
+    /* Status badges */
+    .badge-row-inline { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .s-blue { background: #e3f2fd; color: #1565c0; }
+    .s-orange { background: #fff3e0; color: #e65100; }
+    .s-purple { background: #f3e5f5; color: #6a1b9a; }
+    .s-green { background: #e8f5e9; color: #2e7d32; }
+    .s-red { background: #ffebee; color: #c62828; }
+    .s-gray { background: #f5f5f5; color: #555; }
+
+    /* Auto feature highlight */
+    .auto-feature {
+      background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 12px 0;
+    }
+    .auto-feature .af-title {
+      font-weight: 700;
+      color: #2e7d32;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .auto-feature ul { padding-left: 18px; font-size: 12px; color: #444; }
+    .auto-feature ul li { margin-bottom: 3px; }
+
+    /* Print */
+    @media print {
+      body { font-size: 11px; }
+      .cover { min-height: 100vh; }
+      .page { padding: 40px 60px; }
+      .section-banner { page-break-before: always; }
+      h3 { page-break-after: avoid; }
+      .step, .card { page-break-inside: avoid; }
+      @page { margin: 1.5cm; size: A4; }
+    }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+
+    /* Footer */
+    .page-footer {
+      margin-top: 40px;
+      padding-top: 14px;
+      border-top: 1px solid #eee;
+      font-size: 10px;
+      color: #aaa;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== TRANG BÌA ===== -->
+<div class="cover">
+  <div class="logo">HRM<span>.</span></div>
+  <div class="tagline">Human Resource Management System</div>
+  <h1>Hướng dẫn sử dụng<br>Tuyển dụng & Đào tạo</h1>
+  <p class="subtitle">Tài liệu hướng dẫn toàn diện cho người dùng cuối</p>
+  <div class="badge-row">
+    <span class="badge">📋 Tuyển dụng (Recruitment)</span>
+    <span class="badge">🎓 Đào tạo (Training)</span>
+    <span class="badge">Phiên bản v45</span>
+  </div>
+  <p class="meta">Cập nhật: Tháng 5/2026 &nbsp;|&nbsp; Phòng Nhân sự</p>
+</div>
+
+<!-- ===== MỤC LỤC ===== -->
+<div class="toc-page">
+  <h2>Mục lục</h2>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Phần I — Tuyển dụng</div>
+    <div class="toc-item"><span>1. Tổng quan module tuyển dụng</span><span class="toc-page-num">trang 3</span></div>
+    <div class="toc-item sub"><span>1.1 Quyền hạn người dùng</span></div>
+    <div class="toc-item sub"><span>1.2 Quy trình tổng thể</span></div>
+    <div class="toc-item"><span>2. Quản lý vị trí tuyển dụng</span><span class="toc-page-num">trang 4</span></div>
+    <div class="toc-item sub"><span>2.1 Tạo vị trí tuyển dụng</span></div>
+    <div class="toc-item sub"><span>2.2 Duyệt vị trí tuyển dụng</span></div>
+    <div class="toc-item"><span>3. Quản lý ứng viên</span><span class="toc-page-num">trang 5</span></div>
+    <div class="toc-item sub"><span>3.1 Thêm và tìm kiếm ứng viên</span></div>
+    <div class="toc-item sub"><span>3.2 Chuyển giai đoạn ứng viên</span></div>
+    <div class="toc-item sub"><span>3.3 Chuyển ứng viên thành nhân viên</span></div>
+    <div class="toc-item"><span>4. Quản lý phỏng vấn</span><span class="toc-page-num">trang 7</span></div>
+    <div class="toc-item"><span>5. Quản lý offer (đề nghị làm việc)</span><span class="toc-page-num">trang 8</span></div>
+    <div class="toc-item"><span>6. Dashboard & Xuất báo cáo tuyển dụng</span><span class="toc-page-num">trang 9</span></div>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Phần II — Đào tạo</div>
+    <div class="toc-item"><span>7. Tổng quan module đào tạo</span><span class="toc-page-num">trang 10</span></div>
+    <div class="toc-item"><span>8. Quản lý khóa học</span><span class="toc-page-num">trang 11</span></div>
+    <div class="toc-item"><span>9. Quản lý buổi học</span><span class="toc-page-num">trang 12</span></div>
+    <div class="toc-item"><span>10. Đăng ký học & Nhập điểm</span><span class="toc-page-num">trang 13</span></div>
+    <div class="toc-item"><span>11. Chứng chỉ đào tạo</span><span class="toc-page-num">trang 14</span></div>
+    <div class="toc-item"><span>12. Đề xuất nhu cầu đào tạo</span><span class="toc-page-num">trang 15</span></div>
+    <div class="toc-item"><span>13. Kế hoạch đào tạo nhân viên</span><span class="toc-page-num">trang 16</span></div>
+    <div class="toc-item"><span>14. Dashboard & Xuất báo cáo đào tạo</span><span class="toc-page-num">trang 17</span></div>
+  </div>
+</div>
+
+<!-- ===================================== -->
+<!--        PHẦN I — TUYỂN DỤNG           -->
+<!-- ===================================== -->
+
+<div class="page">
+  <div class="section-banner">
+    <div class="section-num">Phần I</div>
+    <h2>Tuyển dụng (Recruitment)</h2>
+    <p>Quản lý toàn bộ quy trình từ khi đăng vị trí tuyển dụng đến khi ứng viên trở thành nhân viên chính thức.</p>
+  </div>
+
+  <h3>1. Tổng quan & Quyền hạn</h3>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">👑</div>
+      <div class="card-title">Quản trị viên (Superuser)</div>
+      <div class="card-desc">Toàn quyền. Tạo vị trí được duyệt ngay, không cần chờ.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">👩‍💼</div>
+      <div class="card-title">HR / Người duyệt</div>
+      <div class="card-desc">Có quyền <strong>can_approve_talent</strong>. Duyệt vị trí, quản lý toàn bộ ứng viên.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">👤</div>
+      <div class="card-title">Nhân viên thường</div>
+      <div class="card-desc">Tạo đề xuất vị trí (chờ HR duyệt), xem ứng viên phòng mình.</div>
+    </div>
+  </div>
+
+  <h3>2. Vị trí tuyển dụng</h3>
+  <h4>2.1 Tạo vị trí tuyển dụng mới</h4>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Vào menu Tuyển dụng → Vị trí tuyển dụng → Tạo mới</div>
+        <div class="step-desc">Nhấn nút "Tạo vị trí" ở góc trên bên phải màn hình danh sách.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Điền thông tin vị trí</div>
+        <div class="step-desc">Các trường có dấu (*) là bắt buộc.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Lưu và chờ duyệt</div>
+        <div class="step-desc">Superuser/HR → duyệt tự động, trạng thái "Đang mở". Nhân viên thường → trạng thái "Chờ duyệt".</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Tên vị trí *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tên công việc cụ thể, VD: "Kế toán trưởng", "Lập trình viên Backend"</span></div>
+    <div class="field-item"><span class="field-name">Phòng ban *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Phòng ban cần tuyển</span></div>
+    <div class="field-item"><span class="field-name">Số lượng cần tuyển *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Số người cần tuyển cho vị trí này</span></div>
+    <div class="field-item"><span class="field-name">Loại hợp đồng *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Toàn thời gian / Bán thời gian / Thực tập / Thời vụ</span></div>
+    <div class="field-item"><span class="field-name">Mức lương (min–max)</span><span class="field-req">Tùy chọn</span><span class="field-desc">Khoảng lương đề nghị (đơn vị: VNĐ). Lương max phải ≥ lương min</span></div>
+    <div class="field-item"><span class="field-name">Địa điểm làm việc *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Thành phố hoặc địa chỉ làm việc</span></div>
+    <div class="field-item"><span class="field-name">Ngày mở hồ sơ *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Ngày bắt đầu nhận hồ sơ</span></div>
+    <div class="field-item"><span class="field-name">Ngày đóng hồ sơ</span><span class="field-req">Tùy chọn</span><span class="field-desc">Hạn nộp hồ sơ. Phải sau ngày mở hồ sơ</span></div>
+    <div class="field-item"><span class="field-name">Ưu tiên *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Thấp / Bình thường / Cao / Khẩn cấp</span></div>
+    <div class="field-item"><span class="field-name">Mô tả / Yêu cầu / Quyền lợi</span><span class="field-req">Tùy chọn</span><span class="field-desc">Nội dung hiển thị với ứng viên</span></div>
+  </div>
+
+  <h4>2.2 Trạng thái vị trí</h4>
+  <div class="badge-row-inline">
+    <span class="status-badge s-gray">Nháp</span>
+    <span class="status-badge s-blue">Đang mở</span>
+    <span class="status-badge s-purple">Đang phỏng vấn</span>
+    <span class="status-badge s-green">Đã tuyển xong</span>
+    <span class="status-badge s-red">Đã hủy</span>
+  </div>
+
+  <h4>2.3 Duyệt vị trí (dành cho HR / Superuser)</h4>
+  <p>Vào tab <strong>"Chờ duyệt"</strong> trong danh sách vị trí. Nhấn vào vị trí cần xem, chọn <strong>Duyệt</strong> hoặc <strong>Từ chối</strong> (phải nhập lý do từ chối).</p>
+
+  <div class="info-box tip">
+    <strong>💡 Mẹo</strong>
+    Sau khi duyệt, hệ thống tự động chuyển trạng thái từ "Nháp" → "Đang mở" và người tạo sẽ nhận thông báo.
+  </div>
+
+  <h3>3. Quản lý ứng viên</h3>
+  <h4>3.1 Thêm ứng viên mới</h4>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Vào Tuyển dụng → Ứng viên → Thêm ứng viên</div>
+        <div class="step-desc">Hoặc vào chi tiết vị trí tuyển dụng và nhấn "Thêm ứng viên" từ đó.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Chọn vị trí ứng tuyển</div>
+        <div class="step-desc">Bắt buộc chọn vị trí. Mỗi email chỉ được ứng tuyển 1 lần vào cùng vị trí.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Điền thông tin ứng viên</div>
+        <div class="step-desc">Họ tên, email, số điện thoại, địa chỉ, nguồn ứng tuyển, đính kèm CV.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Vị trí ứng tuyển *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Chọn từ danh sách vị trí đang mở</span></div>
+    <div class="field-item"><span class="field-name">Họ và tên *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tên đầy đủ của ứng viên</span></div>
+    <div class="field-item"><span class="field-name">Email *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Email liên lạc (không được trùng trong cùng vị trí)</span></div>
+    <div class="field-item"><span class="field-name">Số điện thoại</span><span class="field-req">Tùy chọn</span><span class="field-desc">Số điện thoại liên lạc</span></div>
+    <div class="field-item"><span class="field-name">Nguồn ứng tuyển *</span><span class="field-req">Bắt buộc</span><span class="field-desc">TopCV / VietnamWorks / LinkedIn / Facebook / Website / Giới thiệu nội bộ / Nộp trực tiếp</span></div>
+    <div class="field-item"><span class="field-name">Người giới thiệu</span><span class="field-req">Tùy chọn</span><span class="field-desc">Chọn nếu nguồn là "Giới thiệu nội bộ"</span></div>
+    <div class="field-item"><span class="field-name">File CV</span><span class="field-req">Tùy chọn</span><span class="field-desc">Upload file CV (PDF, Word)</span></div>
+    <div class="field-item"><span class="field-name">Link LinkedIn</span><span class="field-req">Tùy chọn</span><span class="field-desc">URL profile LinkedIn của ứng viên</span></div>
+    <div class="field-item"><span class="field-name">Ngày nộp *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Ngày nhận hồ sơ</span></div>
+  </div>
+
+  <h4>3.2 Giai đoạn ứng viên (Pipeline)</h4>
+  <p>Mỗi ứng viên trải qua các giai đoạn sau:</p>
+
+  <div class="workflow">
+    <div class="wf-stage wf-new"><div class="wf-dot">📥</div><div class="wf-label">Mới tiếp nhận</div></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-stage wf-screen"><div class="wf-dot">🔍</div><div class="wf-label">Sàng lọc</div></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-stage wf-interview"><div class="wf-dot">🎤</div><div class="wf-label">Phỏng vấn</div></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-stage wf-offer"><div class="wf-dot">📄</div><div class="wf-label">Offer</div></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-stage wf-hired"><div class="wf-dot">✅</div><div class="wf-label">Đã tuyển</div></div>
+  </div>
+
+  <div class="info-box warning">
+    <strong>⚠️ Lưu ý khi từ chối ứng viên</strong>
+    Khi chuyển sang giai đoạn "Từ chối", bắt buộc phải nhập lý do từ chối. Thao tác này không thể bỏ trống.
+  </div>
+
+  <h4>3.3 Cách chuyển giai đoạn</h4>
+  <p><strong>Cách 1 — Đơn lẻ:</strong> Mở chi tiết ứng viên → nhấn "Chuyển giai đoạn" → chọn giai đoạn mới → lưu.</p>
+  <p><strong>Cách 2 — Hàng loạt (bulk):</strong> Trong danh sách ứng viên, tick chọn nhiều ứng viên → chọn hành động "Chuyển giai đoạn" → áp dụng.</p>
+  <p><strong>Cách 3 — Kanban:</strong> Vào tab Kanban để xem toàn bộ pipeline trực quan theo cột.</p>
+
+  <h4>3.4 Chuyển ứng viên đã tuyển thành nhân viên</h4>
+  <p>Sau khi ứng viên ở giai đoạn <strong>Đã tuyển</strong>, mở chi tiết và nhấn <strong>"Chuyển thành nhân viên"</strong>.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Hệ thống tự sinh mã nhân viên</div>
+        <div class="step-desc">Format: NV-YY#### (VD: NV-260001). Có thể chỉnh sửa nếu cần.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Nhập thông tin nhân viên</div>
+        <div class="step-desc">Chức vụ, phòng ban, mức lương, ngày vào làm. Thông tin cơ bản (tên, email) tự điền từ hồ sơ ứng viên.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Xác nhận tạo nhân viên</div>
+        <div class="step-desc">Nhân viên mới xuất hiện trong danh sách Employee. Ứng viên được đánh dấu đã chuyển đổi.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>4. Quản lý phỏng vấn</h3>
+  <p>Từ trang chi tiết ứng viên, nhấn <strong>"Lên lịch phỏng vấn"</strong> để tạo lịch mới.</p>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Vòng phỏng vấn *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Số vòng (1, 2, 3...). Một ứng viên có thể có nhiều vòng.</span></div>
+    <div class="field-item"><span class="field-name">Hình thức *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Điện thoại / Online / Trực tiếp / Chuyên môn</span></div>
+    <div class="field-item"><span class="field-name">Ngày phỏng vấn *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Phải từ hôm nay trở đi (không được trong quá khứ)</span></div>
+    <div class="field-item"><span class="field-name">Giờ bắt đầu *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Giờ phỏng vấn</span></div>
+    <div class="field-item"><span class="field-name">Thời lượng *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Số phút dự kiến phỏng vấn</span></div>
+    <div class="field-item"><span class="field-name">Địa điểm / Link meeting</span><span class="field-req">Tùy chọn</span><span class="field-desc">Địa chỉ hoặc link Zoom/Meet/Teams</span></div>
+    <div class="field-item"><span class="field-name">Người phỏng vấn</span><span class="field-req">Tùy chọn</span><span class="field-desc">Chọn nhiều người dùng trong hệ thống</span></div>
+    <div class="field-item"><span class="field-name">Điểm (sau phỏng vấn)</span><span class="field-req">Tùy chọn</span><span class="field-desc">Chung, Chuyên môn, Giao tiếp, Phù hợp văn hóa — thang 1–5</span></div>
+    <div class="field-item"><span class="field-name">Đánh giá</span><span class="field-req">Tùy chọn</span><span class="field-desc">Rất đồng ý / Đồng ý / Cân nhắc / Không đồng ý tuyển</span></div>
+  </div>
+
+  <div class="info-box note">
+    <strong>📌 Lưu điểm sau khi phỏng vấn</strong>
+    Vào chỉnh sửa lịch phỏng vấn, nhập điểm cho từng tiêu chí và đổi trạng thái thành "Đã hoàn thành". Điểm trung bình sẽ được tính tự động.
+  </div>
+
+  <h3>5. Quản lý Offer (Đề nghị làm việc)</h3>
+  <p>Ứng viên ở giai đoạn <strong>Offer</strong>, từ trang chi tiết nhấn <strong>"Tạo offer"</strong>.</p>
+
+  <div class="info-box warning">
+    <strong>⚠️ Mỗi ứng viên chỉ có 1 offer</strong>
+    Nếu đã có offer, nút tạo mới sẽ ẩn. Cần sửa offer hiện tại hoặc xóa (chỉ xóa được khi trạng thái "Nháp").
+  </div>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Lương đề nghị *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Mức lương đề nghị (VNĐ)</span></div>
+    <div class="field-item"><span class="field-name">Ngày bắt đầu *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Ngày ứng viên bắt đầu làm việc</span></div>
+    <div class="field-item"><span class="field-name">Thử việc (tháng) *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Số tháng thử việc</span></div>
+    <div class="field-item"><span class="field-name">Hạn phản hồi</span><span class="field-req">Tùy chọn</span><span class="field-desc">Phải trước hoặc bằng ngày bắt đầu</span></div>
+    <div class="field-item"><span class="field-name">File thư offer</span><span class="field-req">Tùy chọn</span><span class="field-desc">Upload file PDF offer letter</span></div>
+    <div class="field-item"><span class="field-name">Quyền lợi</span><span class="field-req">Tùy chọn</span><span class="field-desc">Ghi chú quyền lợi đặc biệt</span></div>
+  </div>
+
+  <h4>Trạng thái offer</h4>
+  <div class="badge-row-inline">
+    <span class="status-badge s-gray">Nháp</span>
+    <span class="status-badge s-blue">Đã gửi</span>
+    <span class="status-badge s-green">Đã chấp nhận</span>
+    <span class="status-badge s-red">Đã từ chối</span>
+    <span class="status-badge s-orange">Hết hạn</span>
+  </div>
+
+  <h3>6. Dashboard & Xuất báo cáo tuyển dụng</h3>
+  <p>Vào <strong>Tuyển dụng → Dashboard</strong> để xem các thống kê:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-title">Funnel ứng viên</div>
+      <div class="card-desc">Số ứng viên theo từng giai đoạn: tiếp nhận → sàng lọc → PV → offer → tuyển.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📌</div>
+      <div class="card-title">Top nguồn ứng viên</div>
+      <div class="card-desc">Kênh nào mang lại nhiều ứng viên nhất: TopCV, Giới thiệu, LinkedIn...</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📈</div>
+      <div class="card-title">Xu hướng tuyển dụng</div>
+      <div class="card-desc">Ứng viên mới theo tháng trong 6 tháng gần nhất.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏱️</div>
+      <div class="card-title">Thời gian tuyển dụng TB</div>
+      <div class="card-desc">Số ngày trung bình từ khi nộp hồ sơ đến khi được tuyển.</div>
+    </div>
+  </div>
+
+  <p><strong>Xuất file Excel:</strong> Nhấn nút "Xuất Excel" (cần quyền can_export). File gồm: STT, họ tên, email, SĐT, vị trí, phòng ban, nguồn, giai đoạn, ngày nộp.</p>
+
+  <div class="page-footer">
+    <span>HRM System — Hướng dẫn sử dụng Tuyển dụng & Đào tạo</span>
+    <span>Phần I — Tuyển dụng</span>
+  </div>
+</div>
+
+<!-- ===================================== -->
+<!--         PHẦN II — ĐÀO TẠO            -->
+<!-- ===================================== -->
+
+<div class="page">
+  <div class="section-banner">
+    <div class="section-num">Phần II</div>
+    <h2>Đào tạo (Training)</h2>
+    <p>Quản lý khóa học, buổi học, kết quả đào tạo, chứng chỉ và kế hoạch phát triển nhân viên.</p>
+  </div>
+
+  <h3>7. Tổng quan module đào tạo</h3>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">📚</div>
+      <div class="card-title">Khóa học</div>
+      <div class="card-desc">Danh mục khóa học của tổ chức: soft skill, kỹ thuật, an toàn, tuân thủ, onboarding.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗓️</div>
+      <div class="card-title">Buổi học</div>
+      <div class="card-desc">Lịch cụ thể cho từng khóa: ngày, giờ, địa điểm, người hướng dẫn.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">👩‍🎓</div>
+      <div class="card-title">Đăng ký & Điểm</div>
+      <div class="card-desc">Đăng ký nhân viên vào buổi học, nhập điểm, hệ thống tự cấp chứng chỉ khi đạt.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🏆</div>
+      <div class="card-title">Chứng chỉ</div>
+      <div class="card-desc">Tự động tạo khi nhân viên đạt điểm. Có số unique, ngày hết hạn, in được.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Nhu cầu đào tạo</div>
+      <div class="card-desc">Nhân viên/manager đề xuất nhu cầu học → HR/trưởng phòng duyệt.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗺️</div>
+      <div class="card-title">Kế hoạch đào tạo</div>
+      <div class="card-desc">HR giao kế hoạch học hoặc nhân viên tự đề xuất. Theo dõi tiến độ theo năm.</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Chức năng</th><th>Superuser</th><th>HR (can_approve_talent)</th><th>Trưởng phòng</th><th>Nhân viên</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Tạo/sửa khóa học</td><td class="check">✓</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+      <tr><td>Tạo/sửa buổi học</td><td class="check">✓</td><td class="check">✓</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+      <tr><td>Đăng ký học viên</td><td class="check">✓</td><td class="check">✓</td><td class="partial">✓ (phòng mình)</td><td class="cross">✗</td></tr>
+      <tr><td>Nhập điểm</td><td class="check">✓</td><td class="check">✓</td><td class="partial">✓ (phòng mình)</td><td class="cross">✗</td></tr>
+      <tr><td>Duyệt nhu cầu đào tạo</td><td class="check">✓</td><td class="check">✓</td><td class="partial">✓ (phòng mình)</td><td class="cross">✗</td></tr>
+      <tr><td>Giao kế hoạch cho NV</td><td class="check">✓</td><td class="check">✓</td><td class="partial">✓ (phòng mình)</td><td class="cross">✗</td></tr>
+      <tr><td>Tự đề xuất kế hoạch học</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="partial">✓ (có NV record)</td></tr>
+      <tr><td>Xem chứng chỉ / In</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="partial">Của mình</td></tr>
+      <tr><td>Xuất file Excel</td><td class="check">✓</td><td class="partial">✓ (can_export)</td><td class="cross">✗</td><td class="cross">✗</td></tr>
+    </tbody>
+  </table>
+
+  <h3>8. Quản lý khóa học</h3>
+  <p>Vào <strong>Đào tạo → Khóa học → Tạo khóa học</strong>.</p>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Mã khóa học *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Mã định danh duy nhất, VD: "TRN-001", "SAFETY-2026"</span></div>
+    <div class="field-item"><span class="field-name">Tên khóa học *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tên đầy đủ của khóa học</span></div>
+    <div class="field-item"><span class="field-name">Loại khóa *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Kỹ năng mềm / Kỹ thuật / An toàn / Tuân thủ / Hội nhập (onboarding)</span></div>
+    <div class="field-item"><span class="field-name">Hình thức *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tập trung tại lớp / Online / Thực chiến (on-job) / Kết hợp</span></div>
+    <div class="field-item"><span class="field-name">Thời lượng (giờ) *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tổng số giờ học</span></div>
+    <div class="field-item"><span class="field-name">Nhà cung cấp *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tên đơn vị/cá nhân cung cấp đào tạo</span></div>
+    <div class="field-item"><span class="field-name">Điểm đạt (%) *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Ngưỡng điểm để được cấp chứng chỉ (0–100). VD: 70 nghĩa là ≥70% thì đạt</span></div>
+    <div class="field-item"><span class="field-name">Bắt buộc?</span><span class="field-req">Bắt buộc</span><span class="field-desc">Có (bắt buộc toàn bộ NV) hoặc Không (tự nguyện)</span></div>
+    <div class="field-item"><span class="field-name">Hiệu lực chứng chỉ (tháng)</span><span class="field-req">Tùy chọn</span><span class="field-desc">Nếu để trống → chứng chỉ không hết hạn. Nếu điền → chứng chỉ hết hạn sau N tháng</span></div>
+    <div class="field-item"><span class="field-name">Chi phí/người</span><span class="field-req">Tùy chọn</span><span class="field-desc">Chi phí đào tạo mỗi học viên (VNĐ)</span></div>
+    <div class="field-item"><span class="field-name">Phòng ban đích</span><span class="field-req">Tùy chọn</span><span class="field-desc">Phòng ban nào cần học khóa này (chọn nhiều)</span></div>
+  </div>
+
+  <h3>9. Quản lý buổi học</h3>
+  <p>Sau khi có khóa học, tạo buổi học cụ thể: <strong>Đào tạo → Buổi học → Tạo buổi học</strong>.</p>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Khóa học *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Chọn khóa học tương ứng</span></div>
+    <div class="field-item"><span class="field-name">Mã buổi học *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Mã duy nhất, VD: "TRN-001-2026-01"</span></div>
+    <div class="field-item"><span class="field-name">Tên người hướng dẫn *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Tên giảng viên/huấn luyện viên</span></div>
+    <div class="field-item"><span class="field-name">NV hướng dẫn (nội bộ)</span><span class="field-req">Tùy chọn</span><span class="field-desc">Nếu giảng viên là nhân viên trong công ty</span></div>
+    <div class="field-item"><span class="field-name">Địa điểm *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Phòng học, địa chỉ hoặc "Online"</span></div>
+    <div class="field-item"><span class="field-name">Ngày bắt đầu / Kết thúc *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Ngày kết thúc phải ≥ ngày bắt đầu</span></div>
+    <div class="field-item"><span class="field-name">Số chỗ tối đa</span><span class="field-req">Tùy chọn</span><span class="field-desc">Giới hạn số học viên. Hệ thống cảnh báo khi đăng ký vượt số chỗ</span></div>
+    <div class="field-item"><span class="field-name">Link meeting online</span><span class="field-req">Tùy chọn</span><span class="field-desc">Link Zoom, Google Meet, Teams...</span></div>
+    <div class="field-item"><span class="field-name">Tài liệu học</span><span class="field-req">Tùy chọn</span><span class="field-desc">Upload file tài liệu học viên cần đọc</span></div>
+  </div>
+
+  <h4>Trạng thái buổi học</h4>
+  <div class="badge-row-inline">
+    <span class="status-badge s-blue">Đã lên kế hoạch</span>
+    <span class="status-badge s-orange">Đang diễn ra</span>
+    <span class="status-badge s-green">Đã hoàn thành</span>
+    <span class="status-badge s-red">Đã hủy</span>
+  </div>
+
+  <h3>10. Đăng ký học & Nhập điểm</h3>
+
+  <h4>10.1 Đăng ký học viên vào buổi học</h4>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Vào chi tiết buổi học → "Đăng ký học viên"</div>
+        <div class="step-desc">Chỉ HR/Trưởng phòng mới thực hiện được.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Chọn nhân viên cần đăng ký</div>
+        <div class="step-desc">Danh sách hiển thị nhân viên đang đi làm (đang làm, thử việc, thực tập sinh). Tick chọn 1 hoặc nhiều người.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Xác nhận đăng ký</div>
+        <div class="step-desc">Hệ thống cảnh báo nếu số học viên vượt số chỗ tối đa. Vẫn có thể xác nhận nếu muốn.</div>
+      </div>
+    </div>
+  </div>
+
+  <h4>10.2 Nhập điểm đơn lẻ</h4>
+  <p>Vào danh sách học viên của buổi → nhấn "Cập nhật" bên cạnh từng học viên → điền điểm và trạng thái tham dự.</p>
+
+  <h4>10.3 Nhập điểm hàng loạt (Bulk Score)</h4>
+  <p>Từ chi tiết buổi học, nhấn <strong>"Nhập điểm hàng loạt"</strong> để điền điểm cho tất cả học viên trên một màn hình duy nhất.</p>
+
+  <div class="auto-feature">
+    <div class="af-title">🤖 Hệ thống tự động xử lý sau khi nhập điểm</div>
+    <ul>
+      <li>Nếu điểm ≥ điểm đạt của khóa học → kết quả = <strong>Đạt (Pass)</strong></li>
+      <li>Nếu điểm &lt; điểm đạt → kết quả = <strong>Không đạt (Fail)</strong></li>
+      <li>Khi kết quả = Đạt → <strong>tự động tạo chứng chỉ</strong> với số CERT-YYYYMMDD-xxxx</li>
+      <li>Nếu khóa học có thời hạn chứng chỉ → tự tính ngày hết hạn</li>
+    </ul>
+  </div>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Trạng thái tham dự *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Đã đăng ký / Đã tham dự / Vắng mặt / Đã hủy</span></div>
+    <div class="field-item"><span class="field-name">Điểm số</span><span class="field-req">Tùy chọn</span><span class="field-desc">Từ 0 đến 100. Khi điền điểm → hệ thống tự tính kết quả</span></div>
+    <div class="field-item"><span class="field-name">Kết quả *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Chờ kết quả / Đạt / Không đạt (tự động nếu có điểm)</span></div>
+    <div class="field-item"><span class="field-name">Đánh giá buổi học</span><span class="field-req">Tùy chọn</span><span class="field-desc">Xếp loại 1–5 sao</span></div>
+    <div class="field-item"><span class="field-name">Nhận xét</span><span class="field-req">Tùy chọn</span><span class="field-desc">Góp ý của học viên về buổi học</span></div>
+  </div>
+
+  <h3>11. Chứng chỉ đào tạo</h3>
+
+  <div class="auto-feature">
+    <div class="af-title">🏆 Chứng chỉ được tạo tự động — không cần thao tác thủ công</div>
+    <ul>
+      <li>Số chứng chỉ: <strong>CERT-YYYYMMDD-xxxx</strong> (VD: CERT-20260530-0001)</li>
+      <li>Mỗi lần đạt = 1 chứng chỉ mới (unique)</li>
+      <li>Có thể in chứng chỉ trực tiếp từ hệ thống</li>
+    </ul>
+  </div>
+
+  <div class="info-box warning">
+    <strong>⚠️ Chứng chỉ sắp hết hạn</strong>
+    Hệ thống sẽ cảnh báo trên Dashboard khi chứng chỉ còn ≤30 ngày nữa là hết hạn. Celery task tự động vô hiệu hóa chứng chỉ đã hết hạn vào 8:35 hàng ngày.
+  </div>
+
+  <p><strong>Xem và in chứng chỉ:</strong> Vào <strong>Đào tạo → Chứng chỉ</strong> → tìm chứng chỉ → nhấn "In chứng chỉ". Hệ thống mở trang in, nhấn Ctrl+P để in hoặc lưu PDF.</p>
+
+  <h3>12. Đề xuất nhu cầu đào tạo</h3>
+  <p>Chức năng cho phép nhân viên/manager đề xuất nhu cầu học thêm kỹ năng, chờ HR hoặc trưởng phòng phê duyệt.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Vào Đào tạo → Nhu cầu đào tạo → Tạo đề xuất</div>
+        <div class="step-desc">Ai cũng có thể đề xuất (kể cả nhân viên thường).</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Chọn nhân viên cần đào tạo và khóa học</div>
+        <div class="step-desc">Chọn khóa học có sẵn, hoặc tự nhập tên khóa nếu chưa có trong hệ thống. Phải chọn 1 trong 2.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Nhập lý do đề xuất (bắt buộc)</div>
+        <div class="step-desc">Giải thích tại sao nhân viên cần học khóa này.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Chờ duyệt</div>
+        <div class="step-desc">HR hoặc trưởng phòng (với nhân viên trong phòng) duyệt qua tab "Chờ tôi duyệt".</div>
+      </div>
+    </div>
+  </div>
+
+  <h4>Trạng thái đề xuất</h4>
+  <div class="badge-row-inline">
+    <span class="status-badge s-orange">Chờ duyệt</span>
+    <span class="status-badge s-green">Đã duyệt</span>
+    <span class="status-badge s-red">Đã từ chối</span>
+    <span class="status-badge s-blue">Đã đăng ký học</span>
+  </div>
+
+  <h3>13. Kế hoạch đào tạo nhân viên</h3>
+  <p>Theo dõi lộ trình học tập của từng nhân viên theo năm.</p>
+
+  <h4>13.1 HR giao kế hoạch cho nhân viên</h4>
+  <p>Vào <strong>Đào tạo → Kế hoạch đào tạo → Tạo kế hoạch</strong>. Kế hoạch do HR tạo được duyệt tự động (không cần chờ).</p>
+
+  <h4>13.2 Nhân viên tự đề xuất kế hoạch học</h4>
+  <p>Vào <strong>Đào tạo → Kế hoạch đào tạo → Đề xuất kế hoạch học</strong>. Cần có hồ sơ nhân viên trong hệ thống.</p>
+
+  <div class="info-box note">
+    <strong>📌 Điều kiện khi tự đề xuất</strong>
+    Năm kế hoạch phải ≥ năm hiện tại. Không được tạo trùng cùng nhân viên + cùng khóa học + cùng năm.
+  </div>
+
+  <div class="field-list">
+    <div class="field-item"><span class="field-name">Nhân viên *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Người cần học (khi tự đề xuất: tự động là mình)</span></div>
+    <div class="field-item"><span class="field-name">Khóa học *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Khóa học cần hoàn thành trong năm</span></div>
+    <div class="field-item"><span class="field-name">Năm *</span><span class="field-req">Bắt buộc</span><span class="field-desc">Năm kế hoạch (≥ năm hiện tại)</span></div>
+    <div class="field-item"><span class="field-name">Hạn hoàn thành</span><span class="field-req">Tùy chọn</span><span class="field-desc">Deadline hoàn thành khóa học. Phải từ hôm nay trở đi</span></div>
+  </div>
+
+  <h4>Trạng thái tiến độ kế hoạch</h4>
+  <div class="badge-row-inline">
+    <span class="status-badge s-gray">Chưa bắt đầu</span>
+    <span class="status-badge s-blue">Đang học</span>
+    <span class="status-badge s-green">Đã hoàn thành</span>
+    <span class="status-badge s-red">Quá hạn</span>
+  </div>
+
+  <div class="auto-feature">
+    <div class="af-title">🤖 Hệ thống tự động cập nhật tiến độ</div>
+    <ul>
+      <li>Khi nhân viên hoàn thành đăng ký học và đạt → kế hoạch tự chuyển sang <strong>Đã hoàn thành</strong></li>
+      <li>Celery task mỗi thứ Hai 9:00 tự đồng bộ trạng thái các kế hoạch</li>
+    </ul>
+  </div>
+
+  <h3>14. Dashboard & Xuất báo cáo đào tạo</h3>
+  <p>Vào <strong>Đào tạo → Dashboard</strong> để xem toàn cảnh:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-title">Tỷ lệ đạt theo phòng ban</div>
+      <div class="card-desc">Tổng học viên, số đạt, tỷ lệ % cho từng phòng ban.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">Chứng chỉ sắp hết hạn</div>
+      <div class="card-desc">Top 10 chứng chỉ hết hạn trong ≤30 ngày tới — cần gia hạn kịp.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗓️</div>
+      <div class="card-title">Buổi học sắp diễn ra</div>
+      <div class="card-desc">Top 10 buổi học trong thời gian tới — theo dõi lịch.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⭐</div>
+      <div class="card-title">Điểm TB theo khóa học</div>
+      <div class="card-desc">Top 10 khóa học có điểm trung bình cao nhất.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📈</div>
+      <div class="card-title">Kết quả đào tạo</div>
+      <div class="card-desc">Tổng enrollment: bao nhiêu đạt, không đạt, chờ kết quả.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔴</div>
+      <div class="card-title">Bắt buộc vs Tự nguyện</div>
+      <div class="card-desc">Tỷ lệ phân chia giữa khóa bắt buộc và tự nguyện.</div>
+    </div>
+  </div>
+
+  <p><strong>Xuất file Excel:</strong> Nhấn "Xuất Excel" (cần quyền can_export). File gồm: STT, nhân viên, phòng ban, mã buổi học, khóa học, ngày bắt đầu, trạng thái tham dự, điểm, kết quả.</p>
+
+  <hr/>
+
+  <div class="info-box tip">
+    <strong>💡 Mẹo sử dụng hiệu quả</strong>
+    Quy trình đào tạo hiệu quả nhất: Tạo khóa học → Lên lịch buổi học → Đăng ký nhân viên → Tổ chức học → Nhập điểm hàng loạt → Hệ thống tự cấp chứng chỉ. Dashboard giúp theo dõi tổng quan, phát hiện chứng chỉ sắp hết hạn để tái đào tạo kịp thời.
+  </div>
+
+  <div class="page-footer">
+    <span>HRM System — Hướng dẫn sử dụng Tuyển dụng & Đào tạo v45</span>
+    <span>Phần II — Đào tạo</span>
+  </div>
+</div>
+
+</body>
+</html>

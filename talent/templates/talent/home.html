@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -21,6 +22,13 @@
             padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none;
         }
         .btn-back:hover { background: rgba(255,255,255,0.28); }
+        .btn-guide {
+            background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 14px; border-radius: 6px; font-size: 13px; text-decoration: none;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn-guide:hover { background: rgba(255,255,255,0.28); }
 
         .hero {
             background: linear-gradient(135deg, #1565C0 0%, #6A1B9A 100%);
@@ -77,6 +85,7 @@
 <div class="topbar">
     <div class="topbar-brand">🎯 Tuyển dụng & Đào tạo</div>
     <div class="topbar-right">
+        <a href="{% static 'talent/docs/huong_dan_talent.html' %}" target="_blank" class="btn-guide">📖 Hướng dẫn sử dụng</a>
         <a href="{% url 'home' %}" class="btn-back">← Trang chủ</a>
     </div>
 </div>
