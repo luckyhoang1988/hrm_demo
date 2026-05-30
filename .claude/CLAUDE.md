@@ -53,9 +53,10 @@ Toggle: `app_contracts_active` `app_attendance_active` `app_payroll_active` `app
 **Tuyển dụng:**
 - `Applicant`: 6 stage (`new/screening/interview/offer/hired/rejected`). `hired_at` tự set khi stage→hired.
 - `Interview`: `average_score` property tính từ 3 điểm kỹ năng (1–5).
-- `ApplicantStageHistory`: audit trail tự động khi đổi stage.
+- `ApplicantStageHistory`: audit trail tự động khi đổi stage. **`related_name='stage_history'`** — dùng `applicant.stage_history`, không phải `stagehistory_set`.
 
 **Đào tạo:**
+- `TrainingCourse.passing_score`: bắt buộc (default=60), phải có trong template form.
 - `TrainingEnrollment.save()`: tự set `result='pass'/'fail'` và tạo `TrainingCertificate` khi pass.
 - `TrainingCertificate`: số `CERT-YYYYMMDD-NNNN` đếm theo ngày.
 - `EmployeeTrainingPlan`: `unique_together = (employee, course, year)`.
